@@ -110,6 +110,9 @@ SELECT * FROM day_pain;
 selectAllDayTags:
 SELECT * FROM day_tag;
 
+countLogs:
+SELECT COUNT(*) FROM day_log;
+
 -- one day (Log sheet, quick actions): no full-table reads
 selectLog:
 SELECT * FROM day_log WHERE day = ?;

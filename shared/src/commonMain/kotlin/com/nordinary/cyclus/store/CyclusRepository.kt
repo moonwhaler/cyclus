@@ -58,6 +58,8 @@ class CyclusRepository(
 
     suspend fun log(day: Day): DayLog? = withContext(io) { readLog(day) }
 
+    suspend fun hasLogs(): Boolean = withContext(io) { q.countLogs().executeAsOne() > 0 }
+
     /**
      * Read-modify-write of one day in a single transaction (SQLite serialises writers), so two quick changes to the
      * same day can never overwrite each other. Returns the log as it was before.

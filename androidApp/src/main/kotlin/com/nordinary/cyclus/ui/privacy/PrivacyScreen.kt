@@ -175,7 +175,7 @@ fun PrivacyScreen(
                     Divider()
                     Link(stringResource(R.string.import_t), stringResource(R.string.import_s), onImport)
                 }
-                if (state.deviceOnly) Note(stringResource(R.string.device_only_note))
+                Note(stringResource(if (state.deviceOnly) R.string.device_only_note else R.string.bk_how))
             }
             Group { Link(fmt.s("eraseT"), null, onErase, danger = true) }
             Spacer(Modifier.height(32.dp))

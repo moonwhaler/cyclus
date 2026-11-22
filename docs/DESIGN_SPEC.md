@@ -717,7 +717,7 @@ struct LocalDate: Codable, Hashable, Comparable, Sendable { // civil date, no ti
 4. **Precedence per (day, field):** Cyclus user entry > Apple Health / Apple Watch entry > other apps. Lower-precedence values are kept and shown in day detail but not counted. **Never double-count flow.**
 5. **Cycle start flag.** On write, `HKMetadataKeyMenstrualCycleStart` (required) = Cyclus's detected start (§11.5.1). On import, an external start flag ranks above Cyclus's heuristic and below the user override.
 6. **Deletion of own samples in Health** (seen via the anchored query's `deletedObjects`): keep local data and set `HealthLink.state = .removedInHealth`. Show a non-blocking review in Settings: "3 entries were removed in Apple Health — Keep in Cyclus only / Remove from Cyclus too". Never auto-rewrite.
-7. **Reinstall / recovery.** Own samples (prefix match) found on import are reconstructed as local `DayLog` fields, which restores data after reinstall for mirrored categories.
+7. **Reinstall / recovery.** Own samples (prefix match) found on import can be reconstructed as local `DayLog` fields, which restores data after reinstall for mirrored categories. Only into an empty store and **only after the person agrees** („Frühere Einträge gefunden … In Cyclus übernehmen / Nicht übernehmen“): after an erase that kept the Health Connect records, reconnecting must never silently bring erased entries back.
 8. **Permissions.**
    - Read set requested at import.
    - Write per category, requested when toggled.

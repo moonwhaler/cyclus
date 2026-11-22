@@ -130,7 +130,7 @@ class MainActivity : FragmentActivity() {
                             }
                         }
                     }
-                    else -> CyclusApp(vm, debug = BuildConfig.DEBUG)
+                    else -> CyclusApp(vm)
                 }
             }
         }

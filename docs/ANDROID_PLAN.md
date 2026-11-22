@@ -257,7 +257,7 @@ Pin exact versions at project start and record them in the SOUP list.
 - Health Connect values are merged **before** `CycleData` (`HealthMerge`), so the engine and its golden vectors are unchanged; they fill only fields the person left empty. A user `flow = none` hides an external flow; other external values can't be hidden yet.
 - External `MenstruationPeriodRecord` days become bleeding without a level, so the engine finds the start itself (no external START overrides).
 - Writes come from the person's own entries only; `clientRecordVersion = max(previous + 1, now)` so imports with older timestamps still update. Local deletes keep a `deleting` tombstone until Health Connect confirms.
-- Reinstall recovery (rule 7) only into an empty store, so deleted or deliberately unmirrored entries never come back.
+- Reinstall recovery (rule 7) only into an empty store and only after an explicit „In Cyclus übernehmen“ in the Privacy Center (offer shown once per connection), so deleted, erased or deliberately unmirrored entries never come back on their own.
 - Reads run outside the erase lock; each page is stored together with its changes token in one transaction; writes run inside the lock for the current store only.
 - Imported samples, links and tokens are device data: not in `.cyclus` exports or device snapshots; gone with erase and „Trennen“.
 - Release task: Play **Health apps declaration** with the per-type justification (read: import; write: opt-in mirror).

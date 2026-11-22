@@ -186,7 +186,7 @@
     <string name="vis_widget_off">Ausgeblendet. Das Widget zeigt nur „Cyclus“.</string>
     <string name="vis_shortcut_t">Kurzbefehl „Eintragen“</string>
     <string name="vis_shortcut_s">Beim langen Drücken auf das App-Symbol</string>
-    <string name="vis_files_note">Damit Erinnerungen und das Widget auch bei gesperrtem Handy funktionieren, liegen deren Termine getrennt von der verschlüsselten Datenbank im App-Speicher. Sie sind nie in Backups.</string>
+    <string name="vis_files_note">Damit Erinnerungen und das Widget auch bei gesperrtem Handy funktionieren, liegen deren Termine getrennt von der Datenbank, mit eigenem Schlüssel auf diesem Gerät verschlüsselt. Sie sind nie in Backups.</string>
     <string name="w_small_label">Cyclus</string>
     <string name="w_medium_label">Cyclus · Eintragen</string>
     <string name="w_small_desc">Zyklustag und nächste Periode, wenn du Details erlaubst</string>
@@ -273,4 +273,10 @@
     <string name="rep_name_note">Steht nur auf dem PDF, damit die Praxis den Bericht zuordnen kann. Leer lassen für eine Linie zum Ausfüllen. Wird nur auf diesem Gerät gemerkt.</string>
     <string name="rep_brand_tag">Privates Zyklustagebuch</string>
     <string name="error_save">Konnte nicht gespeichert werden. Bitte versuch es noch einmal.</string>
+    <string name="hc_restore_t">Frühere Einträge gefunden</string>
+    <string name="hc_restore_b">In Health Connect liegen %d Tage, die Cyclus früher dort gespeichert hat. Sollen sie wieder deine Cyclus-Einträge werden?</string>
+    <string name="hc_restore_yes">In Cyclus übernehmen</string>
+    <string name="hc_restore_no">Nicht übernehmen</string>
+    <string name="hc_restore_done">Frühere Einträge übernommen.</string>
+    <string name="bk_how">Ist das Google-Backup an, legt Cyclus eine verschlüsselte Kopie samt Schlüssel hinein. Beides schützt die Ende-zu-Ende-Verschlüsselung mit deiner Displaysperre; ohne sie sendet Cyclus nichts.</string>
 </resources>

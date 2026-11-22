@@ -88,7 +88,9 @@ private enum class Sheet { NONE, LOG, DAY, WHY, METHOD }
 
 /** Root: pushed screens via Navigation 3 (predictive back, survives recreation), shared snackbar, sheets on top. */
 @Composable
-fun CyclusApp(vm: AppViewModel, debug: Boolean) {
+fun CyclusApp(vm: AppViewModel) {
+    // compile-time constant: R8 removes the demo data, wipe and test tools from release builds
+    val debug = com.nordinary.cyclus.BuildConfig.DEBUG
     val fmt = rememberFmt()
     val model by vm.model.collectAsStateWithLifecycle()
     val backStack = rememberNavBackStack(MainKey)
@@ -201,7 +203,7 @@ fun CyclusApp(vm: AppViewModel, debug: Boolean) {
                         app.lock.suspendForExternalActivity()
                         ctx.startActivity(com.nordinary.cyclus.notify.Notifier.channelSettingsIntent(ctx))
                     },
-                    onTest = vm::testNotification,
+                    onTest = { if (com.nordinary.cyclus.BuildConfig.DEBUG) vm.testNotification() },
                 )
             }
             entry<ReportKey> {
@@ -307,7 +309,7 @@ private fun MainScreen(
             topBar = {
                 LargeFlexibleTopAppBar(
                     title = {
-                        Text(fmt.s(shownTab.key), Modifier.combinedClickable(onClick = {}, onLongClick = { if (debug) debugMenu = true }), fontWeight = FontWeight.Bold)
+                        Text(fmt.s(shownTab.key), Modifier.combinedClickable(onClick = {}, onLongClick = { if (com.nordinary.cyclus.BuildConfig.DEBUG) debugMenu = true }), fontWeight = FontWeight.Bold)
                     },
                     subtitle = { Text(fmt.wmd(model?.snapshot?.today ?: java.time.LocalDate.now().toEpochDay().toInt()), color = c.ink2) },
                     actions = {
@@ -334,7 +336,7 @@ private fun MainScreen(
             val today: @Composable () -> Unit = {
                 TodayContent(
                     state = m.today, fmt = fmt, contentPadding = padding,
-                    debugNote = if (debug) stringResource(R.string.debug_note) else null,
+                    debugNote = if (com.nordinary.cyclus.BuildConfig.DEBUG) stringResource(R.string.debug_note) else null,
                     onOpenLog = { onOpenLog(m.snapshot.today) },
                     onPeriodStarted = vm::periodStartedToday,
                     onQuickFlow = vm::quickFlow,
@@ -364,7 +366,7 @@ private fun MainScreen(
             }
         }
     }
-    if (debugMenu) DebugMenu(onPick = { vm.loadDemo(it); debugMenu = false }, onWipe = { vm.eraseAll(); debugMenu = false }, onClose = { debugMenu = false })
+    if (com.nordinary.cyclus.BuildConfig.DEBUG && debugMenu) DebugMenu(onPick = { vm.loadDemo(it); debugMenu = false }, onWipe = { vm.eraseAll(); debugMenu = false }, onClose = { debugMenu = false })
 }
 
 /** Content no wider than [max], centred (medium/expanded widths: tablets, foldables, landscape). */

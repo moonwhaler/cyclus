@@ -42,6 +42,10 @@ object HealthKeys {
     const val WROTE = "hc.wrote"
     /** Only the last 30 days could be read (history permission missing or unsupported). */
     const val NO_HISTORY = "hc.noHistory"
+    /** Days Cyclus once wrote to Health Connect that could come back into an empty Cyclus (asked, never automatic). */
+    const val RESTORE_OFFER = "hc.restoreOffer"
+    /** The person said no to that offer (until Health Connect is disconnected). */
+    const val RESTORE_DECLINED = "hc.restoreDeclined"
     const val PREFIX = "cyclus:"
 
     fun enabled(settings: Map<String, String>) = HealthCategory.entries.filter { settings[write(it)] == "1" }.toSet()

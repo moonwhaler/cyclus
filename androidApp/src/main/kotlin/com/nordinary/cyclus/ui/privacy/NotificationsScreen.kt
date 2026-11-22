@@ -115,7 +115,7 @@ fun NotificationsScreen(
                 }
                 Group { Link(stringResource(R.string.nf_channels), null, onOpenSystem) }
                 Note(stringResource(R.string.nf_visibility_note))
-                if (debug) Group { Link(stringResource(R.string.nf_test), null, onTest) }
+                if (com.nordinary.cyclus.BuildConfig.DEBUG && debug) Group { Link(stringResource(R.string.nf_test), null, onTest) }
                 Spacer(Modifier.height(32.dp))
             }
         }

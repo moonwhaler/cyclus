@@ -328,6 +328,7 @@ class AppViewModel(
 
     /** Debug: a real notification through the normal path, 10 s later (lock the phone to see the lock-screen version). */
     fun testNotification() {
+        if (!com.nordinary.cyclus.BuildConfig.DEBUG) return
         val discreet = model.value?.settings?.get(com.nordinary.cyclus.presenter.NotifyKeys.DISCREET) != "0"
         viewModelScope.launch(errors) {
             delay(10_000)
@@ -519,6 +520,8 @@ class AppViewModel(
         val imported: Long,
         val removed: List<com.nordinary.cyclus.health.HealthLink>,
         val wrote: Boolean,
+        /** Days Cyclus wrote earlier that could come back into this empty Cyclus (0 = no offer). */
+        val restoreOffer: Int = 0,
     )
 
     suspend fun healthUi(settings: Map<String, String>): HealthUi {
@@ -535,6 +538,7 @@ class AppViewModel(
             imported = repo.healthSampleCount(),
             removed = repo.healthLinks().values.filter { it.state == com.nordinary.cyclus.health.LinkState.REMOVED },
             wrote = settings[com.nordinary.cyclus.health.HealthKeys.WROTE] == "1",
+            restoreOffer = settings[com.nordinary.cyclus.health.HealthKeys.RESTORE_OFFER]?.toIntOrNull() ?: 0,
         )
     }
 
@@ -553,6 +557,19 @@ class AppViewModel(
     }
 
     fun healthSyncNow() { app.healthKick.tryEmit(false) }
+
+    /** Answer to „Frühere Einträge übernehmen?“; no means not asked again until Health Connect is disconnected. */
+    fun answerHealthRestore(accept: Boolean) {
+        viewModelScope.launch(errors) {
+            if (accept) {
+                val n = health.restoreOwn(app.backup, app.store, repo)
+                if (n > 0) msg(com.nordinary.cyclus.R.string.hc_restore_done)
+            } else {
+                repo.setSetting(com.nordinary.cyclus.health.HealthKeys.RESTORE_DECLINED, "1")
+                repo.setSetting(com.nordinary.cyclus.health.HealthKeys.RESTORE_OFFER, null)
+            }
+        }
+    }
 
     /** Switch writing of [c]. Off: [deleteThere] deletes what Cyclus wrote, else the records stay and are forgotten. */
     fun setHealthWrite(c: com.nordinary.cyclus.health.HealthCategory, on: Boolean, deleteThere: Boolean = false) {
@@ -604,6 +621,7 @@ class AppViewModel(
 
     /** Debug builds only: replace all data with a prototype scenario anchored on today. */
     fun loadDemo(scenario: SampleScenario) {
+        if (!com.nordinary.cyclus.BuildConfig.DEBUG) return
         val today = LocalDate.now().toEpochDay().toInt()
         viewModelScope.launch(errors) {
             val s = SampleScenarios.generate(scenario, today)
@@ -617,7 +635,11 @@ class AppViewModel(
         }
     }
 
-    fun eraseAll() { viewModelScope.launch(errors) { repo.eraseAll() } }
+    /** Debug builds only. */
+    fun eraseAll() {
+        if (!com.nordinary.cyclus.BuildConfig.DEBUG) return
+        viewModelScope.launch(errors) { repo.eraseAll() }
+    }
 
     companion object {
         const val KEY_MODE = "mode"

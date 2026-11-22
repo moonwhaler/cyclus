@@ -87,6 +87,15 @@ fun HealthSection(vm: AppViewModel, fmt: Fmt, ui: AppViewModel.HealthUi, onChang
                 PrimaryButton(stringResource(R.string.hc_connect), { external { readLauncher.launch(vm.health.readPermissions()) } }, Modifier.fillMaxWidth())
             }
             else -> {
+                if (ui.restoreOffer > 0) {
+                    Group {
+                        Info(stringResource(R.string.hc_restore_t), stringResource(R.string.hc_restore_b, ui.restoreOffer))
+                        Divider()
+                        Link(stringResource(R.string.hc_restore_yes), null, { vm.answerHealthRestore(true); onChanged() })
+                        Divider()
+                        Link(stringResource(R.string.hc_restore_no), null, { vm.answerHealthRestore(false); onChanged() })
+                    }
+                }
                 Group {
                     val status = when {
                         ui.error -> stringResource(R.string.hc_status_error)

@@ -83,10 +83,13 @@ class HealthSync(private val ctx: Context) {
                 if (token == null || full) imported += fullRead(backup, repo, t, own, ::current)
                 else imported += changes(backup, repo, t, token, own, ::current)
             }
-            // ---- reinstall recovery and links for own records (enabled categories only, so „lassen“ stays left alone)
+            // ---- reinstall recovery is offered, never automatic (it could bring back what was erased); links for own
+            // records of enabled categories, so „lassen“ stays left alone
             if (own.isNotEmpty()) backup.exclusive {
                 if (!current()) return@exclusive
-                repo.restoreFromHealth(HealthPlanner.reconstruct(emptyMap(), own.map { it.first }))
+                val days = HealthPlanner.reconstruct(emptyMap(), own.map { it.first }).size
+                val offer = days > 0 && !repo.hasLogs() && repo.setting(HealthKeys.RESTORE_DECLINED) != "1"
+                repo.setSetting(HealthKeys.RESTORE_OFFER, if (offer) days.toString() else null)
                 val enabled = HealthKeys.enabled(repo.observeSettings().first()).flatMap { it.types }.toSet()
                 val links = repo.healthLinks()
                 for ((r, v) in own) if (r.type in enabled && r.syncId !in links) {
@@ -190,6 +193,32 @@ class HealthSync(private val ctx: Context) {
             if (written > 0) repo.setSetting(HealthKeys.WROTE, "1")
             written to deleted
         }
+
+    /**
+     * The person accepted the reinstall offer: reads what Cyclus wrote earlier and makes those days Cyclus entries again,
+     * only while the store is still empty. Returns the number of restored days (0 if anything changed meanwhile).
+     */
+    suspend fun restoreOwn(backup: BackupCoordinator, store: StoreHolder, repo: CyclusRepository): Int = withContext(Dispatchers.IO) {
+        fun current() = (store.state.value as? StoreState.Ready)?.repo === repo
+        val granted = granted()
+        val own = mutableListOf<OwnRecord>()
+        for (t in HealthType.entries) {
+            if (HealthPermission.getReadPermission(recordClass(t)) !in granted) continue
+            var page: String? = null
+            do {
+                val res = client.readRecords(ReadRecordsRequest(recordClass(t), TimeRangeFilter.after(Instant.EPOCH), pageSize = 1000, pageToken = page))
+                for (r in res.records) classify(r)?.second?.let { own += it.first }
+                page = res.pageToken
+            } while (page != null)
+        }
+        backup.exclusive {
+            if (!current()) return@exclusive 0
+            val logs = HealthPlanner.reconstruct(emptyMap(), own)
+            val n = if (repo.restoreFromHealth(logs)) logs.size else 0
+            repo.setSetting(HealthKeys.RESTORE_OFFER, null)
+            n
+        }
+    }
 
     /** Erase / „Dort löschen“: every record Cyclus wrote of these types (Health Connect limits this to our own). */
     suspend fun deleteOwn(types: Collection<HealthType>) {

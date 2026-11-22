@@ -10,6 +10,10 @@ xcuserdata/
 # Secrets / local
 *.env
 *.p12
+# Android release signing
+keystore.properties
+*.jks
+*.keystore
 *.mobileprovision
 .playwright-mcp/
 # Gradle / Android

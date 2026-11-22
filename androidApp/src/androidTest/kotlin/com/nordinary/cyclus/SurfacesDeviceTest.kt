@@ -105,6 +105,21 @@ class SurfacesDeviceTest {
         assertTrue(Manifest.permission.INTERNET !in requested && Manifest.permission.ACCESS_NETWORK_STATE !in requested, requested.toString())
     }
 
+    @Test fun sideFilesAreSealedAndLegacyPlaintextIsReadOnceThenRemoved() {
+        NotifyFiles.deleteAll(ctx)
+        val plan = NotifyPlan(listOf(NotifyItem(NotifyKind.PERIOD_SOON.key, today + 3, 9 * 60)))
+        // an update from a version with plaintext files: still read, replaced by the sealed file on the next write
+        val legacy = File(ctx.filesDir, "notify/plan.json").also { it.parentFile!!.mkdirs(); it.writeText(plan.encode()) }
+        assertEquals(plan, NotifyFiles.readPlan(ctx))
+        NotifyFiles.writePlan(ctx, plan, System.currentTimeMillis())
+        assertFalse(legacy.exists())
+        val sealed = File(ctx.filesDir, "notify/plan.sealed").readBytes().decodeToString()
+        assertFalse(NotifyKind.PERIOD_SOON.key in sealed, "plan must not be readable on disk")
+        assertEquals(plan, NotifyFiles.readPlan(ctx))
+        NotifyFiles.deleteAll(ctx)
+        assertEquals(NotifyPlan.EMPTY, NotifyFiles.readPlan(ctx))
+    }
+
     @Test fun eraseRemovesSideFilesAlarmAndShortcutAndALateSyncCannotBringThemBack(): Unit = runBlocking {
         val keys = BackupKeyStore("cyclus_test_surfaces")
         val coord = BackupCoordinator(ctx, File(ctx.cacheDir, "surfaces-backup"), keys).also { it.files.ensureDir() }

@@ -185,7 +185,7 @@
     <string name="vis_widget_off">Hidden. The widget only shows “Cyclus”.</string>
     <string name="vis_shortcut_t">“Log” shortcut</string>
     <string name="vis_shortcut_s">When you long-press the app icon</string>
-    <string name="vis_files_note">So reminders and the widget work while your phone is locked, their dates are kept in app storage apart from the encrypted database. They are never in backups.</string>
+    <string name="vis_files_note">So reminders and the widget work while your phone is locked, their dates are kept apart from the database, encrypted with their own key on this device. They are never in backups.</string>
     <string name="w_small_label">Cyclus</string>
     <string name="w_medium_label">Cyclus · Log</string>
     <string name="w_small_desc">Cycle day and next period, if you allow details</string>
@@ -272,4 +272,10 @@
     <string name="rep_name_note">Only appears on the PDF so the practice can match the report. Leave empty for a line to fill in by hand. Remembered on this device only.</string>
     <string name="rep_brand_tag">Private cycle diary</string>
     <string name="error_save">Couldn’t save. Please try again.</string>
+    <string name="hc_restore_t">Earlier entries found</string>
+    <string name="hc_restore_b">Health Connect holds %d days that Cyclus saved there before. Bring them back as your Cyclus entries?</string>
+    <string name="hc_restore_yes">Bring them back</string>
+    <string name="hc_restore_no">Don’t bring them back</string>
+    <string name="hc_restore_done">Earlier entries brought back.</string>
+    <string name="bk_how">With Google backup on, Cyclus adds an encrypted copy and its key. Both are protected by end-to-end encryption with your screen lock; without it, Cyclus sends nothing.</string>
 </resources>
