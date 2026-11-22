@@ -37,6 +37,7 @@ Published (private) link: see `prototype/README.md`.
 ```sh
 ./gradlew :shared:jvmTest        # engine golden tests (JVM)
 ./gradlew check                  # lint, no-INTERNET check, tests
-tools/deploy.sh                  # build, install and launch on the paired phone (wireless adb)
+tools/deploy.sh                  # build, install, launch on the local emulator (AVD cyclus-pixel9pro)
+tools/deploy.sh --phone          # same, on the paired phone (wireless adb)
 ```
 Debug builds (`com.nordinary.cyclus.debug`) hold **throwaway test data** until export/backup lands.
