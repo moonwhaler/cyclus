@@ -1,5 +1,14 @@
 package com.nordinary.cyclus.ui
 
+import androidx.compose.animation.togetherWith
+import androidx.compose.animation.slideOutHorizontally
+import androidx.compose.animation.slideInHorizontally
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.core.LinearOutSlowInEasing
+import androidx.compose.animation.core.LinearEasing
+import androidx.compose.animation.core.FastOutSlowInEasing
+import androidx.compose.animation.core.Easing
+import androidx.compose.animation.ContentTransform
 import com.nordinary.cyclus.presenter.LogGroup
 import android.Manifest
 import android.appwidget.AppWidgetManager
@@ -195,6 +204,11 @@ fun CyclusApp(vm: AppViewModel) {
             if (backStack.lastOrNull() == ReportKey) vm.report.close()
             backStack.removeLastOrNull()
         },
+        // horizontal slide: a pushed screen comes in from the right over the previous one, which shifts a third to the
+        // left; back is the reverse, and the back swipe moves the page with the finger
+        transitionSpec = { pushSlide() },
+        popTransitionSpec = { popSlide(LinearOutSlowInEasing) },
+        predictivePopTransitionSpec = { _ -> popSlide(LinearEasing) },
         entryProvider = entryProvider {
             entry<MainKey> {
                 MainScreen(
@@ -476,3 +490,14 @@ private fun DebugMenu(onPick: (SampleScenario) -> Unit, onWipe: () -> Unit, onCl
         confirmButton = { TextButton(onClick = onClose) { Text(stringResource(R.string.debug_close)) } },
     )
 }
+
+private const val SLIDE_MS = 320
+
+private fun pushSlide(): ContentTransform =
+    slideInHorizontally(tween(SLIDE_MS, easing = FastOutSlowInEasing)) { it } togetherWith
+        slideOutHorizontally(tween(SLIDE_MS, easing = FastOutSlowInEasing)) { -it / 3 }
+
+/** The leaving screen stays on top while it slides out to the right. */
+private fun popSlide(easing: Easing): ContentTransform =
+    (slideInHorizontally(tween(SLIDE_MS, easing = easing)) { -it / 3 } togetherWith
+        slideOutHorizontally(tween(SLIDE_MS, easing = easing)) { it }).apply { targetContentZIndex = -1f }
