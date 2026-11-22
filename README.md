@@ -27,7 +27,7 @@ Published (private) link: see `prototype/README.md`.
   - „Deine Muster“ + „Ausblick“ in v1.
 - **Android first** (ANDROID_PLAN D11 revised), Kotlin Multiplatform shared core confirmed (D10). iOS follows on the same `shared/` module.
 - Trust rules: no `INTERNET` permission, no third-party services, all intelligence on-device, encrypted at rest (ANDROID_PLAN §0.1).
-- In progress: slice 1 (A0 + A1): engines ported with golden vectors, encrypted store, Today + Log sheet. See `docs/PARITY.md`.
+- Slice 1 (A0 + A1) done: engines ported and verified against the prototype (138 golden cases, JVM + Android), encrypted store (SQLCipher + Keystore), Today + Log sheet, deploy script. Next: Calendar, Insights, Conceive UI. See `docs/PARITY.md`.
 - Open owner decisions:
   - legal entity + organization developer accounts (Apple, Google);
   - regulatory specialist;
@@ -42,7 +42,9 @@ tools/deploy.sh --phone          # same, on the paired phone (wireless adb)
 ```
 Debug builds (`com.nordinary.cyclus.debug`) hold **throwaway test data** until export/backup lands.
 
-Engines are checked against golden vectors exported from the prototype (`tools/golden/`).
+Engines are checked against golden vectors exported from the prototype (`tools/golden/`). App strings are generated from the prototype's translation table: `node tools/strings/export.mjs`.
+
+Debug builds: long-press the screen title („Heute“) for the demo-data menu (prototype scenarios, erase).
 
 Troubleshooting: if Gradle reports `Plugin ... was not found` or `Could not find androidx...` although the version exists,
 Google Maven may be failing over IPv4 on your network (seen behind a VPN). Run Gradle with IPv6 preferred:

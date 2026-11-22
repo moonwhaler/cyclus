@@ -63,3 +63,30 @@ dependencies {
     implementation(libs.compose.ui.tooling.preview)
     debugImplementation(libs.compose.ui.tooling)
 }
+
+// ---- Trust rule (ANDROID_PLAN §0.1): the app never gets network access. Fails assemble/check otherwise. ----
+abstract class VerifyNoNetworkPermission : DefaultTask() {
+    @get:InputFile @get:PathSensitive(PathSensitivity.NONE) abstract val manifest: RegularFileProperty
+    @get:OutputFile abstract val marker: RegularFileProperty
+
+    @TaskAction fun verify() {
+        val text = manifest.get().asFile.readText()
+        val banned = listOf("android.permission.INTERNET", "android.permission.ACCESS_NETWORK_STATE", "android.permission.ACCESS_WIFI_STATE")
+        val found = banned.filter { text.contains("\"$it\"") }
+        if (found.isNotEmpty()) throw GradleException("Trust rule violated (ANDROID_PLAN §0.1): merged manifest requests $found")
+        marker.get().asFile.writeText("no network permissions\n")
+    }
+}
+
+androidComponents {
+    onVariants { variant ->
+        val cap = variant.name.replaceFirstChar { it.uppercase() }
+        val verify = tasks.register<VerifyNoNetworkPermission>("verifyNoInternet$cap") {
+            group = "verification"
+            description = "Fails if the merged $cap manifest requests a network permission."
+            manifest.set(variant.artifacts.get(com.android.build.api.artifact.SingleArtifact.MERGED_MANIFEST))
+            marker.set(layout.buildDirectory.file("verifyNoInternet/${variant.name}.txt"))
+        }
+        tasks.configureEach { if (name == "assemble$cap" || name == "check") dependsOn(verify) }
+    }
+}

@@ -1,3 +1,24 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+    <string name="soon_title">Coming soon</string>
+    <string name="soon_body">This part comes in the next step.</string>
+    <string name="debug_title">Debug · test data</string>
+    <string name="debug_body">Replaces all data in this debug build. Test data only, no real entries.</string>
+    <string name="debug_note">Debug build · test data only</string>
+    <string name="debug_wipe">Erase all data</string>
+    <string name="debug_close">Close</string>
+    <string name="debug_sc_day12">Day 12</string>
+    <string name="debug_sc_expected">Period due</string>
+    <string name="debug_sc_period">Period day 2</string>
+    <string name="debug_sc_hbc">On the pill</string>
+    <string name="debug_sc_conceive">Trying · before LH+</string>
+    <string name="debug_sc_conceive2ww">Trying · after temperature rise</string>
+    <string name="debug_sc_empty">No data</string>
+    <string name="store_error_title">Your data can\'t be opened right now</string>
+    <string name="store_error_locked">Unlock your device and try again.</string>
+    <string name="store_error_key">The key to your encrypted data isn\'t available on this device.</string>
+    <string name="store_error_other">Something went wrong while opening.</string>
+    <string name="store_error_safe">Nothing was deleted. Your data stays encrypted on this device.</string>
+    <string name="store_retry">Try again</string>
+    <string name="undo_label">Undo</string>
 </resources>

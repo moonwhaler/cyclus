@@ -32,15 +32,15 @@ start_emulator() {
   local emu="${ANDROID_HOME:-$HOME/Android/Sdk}/emulator/emulator"
   [[ -x "$emu" ]] || die "emulator binary not found at $emu"
   echo "deploy: starting emulator $AVD..."
-  # The emulator needs the desktop session; fall back to KDE/XWayland defaults when run from a plain shell.
-  local xauth; xauth="$(ls /run/user/$(id -u)/xauth_* 2>/dev/null | head -n1 || true)"
-  DISPLAY="${DISPLAY:-:0}" XAUTHORITY="${XAUTHORITY:-$xauth}" \
-    nohup "$emu" -avd "$AVD" -no-snapshot-save -no-boot-anim -gpu host >/tmp/cyclus-emulator.log 2>&1 &
-  adb wait-for-device
-  local tries=0
-  until [[ "$(adb -s "$(emulators | head -n1)" shell getprop sys.boot_completed 2>/dev/null | tr -d '\r')" == "1" ]]; do
+  # With a desktop session (DISPLAY/WAYLAND_DISPLAY set) the emulator gets a window, otherwise it runs headless.
+  local window=()
+  [[ -z "${DISPLAY:-}" && -z "${WAYLAND_DISPLAY:-}" ]] && window=(-no-window)
+  nohup "$emu" -avd "$AVD" -no-snapshot-save -no-boot-anim -gpu "${CYCLUS_EMU_GPU:-auto}" "${window[@]}" >/tmp/cyclus-emulator.log 2>&1 &
+  local tries=0 serial=""
+  until [[ -n "$serial" && "$(adb -s "$serial" shell getprop sys.boot_completed 2>/dev/null | tr -d '\r')" == "1" ]]; do
     (( tries++ < 120 )) || die "emulator did not boot (see /tmp/cyclus-emulator.log)"
     sleep 2
+    serial="$(emulators | head -n1)"
   done
 }
 

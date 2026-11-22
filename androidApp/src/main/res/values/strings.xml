@@ -1,4 +1,25 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="app_name">Cyclus</string>
+    <string name="app_name" translatable="false">Cyclus</string>
+    <string name="soon_title">Kommt bald</string>
+    <string name="soon_body">Dieser Bereich folgt im nächsten Schritt.</string>
+    <string name="debug_title">Debug · Testdaten</string>
+    <string name="debug_body">Ersetzt alle Daten in diesem Debug-Build. Nur Testdaten, keine echten Einträge.</string>
+    <string name="debug_note">Debug-Build · nur Testdaten</string>
+    <string name="debug_wipe">Alle Daten löschen</string>
+    <string name="debug_close">Schließen</string>
+    <string name="debug_sc_day12">Tag 12</string>
+    <string name="debug_sc_expected">Periode fällig</string>
+    <string name="debug_sc_period">Periodentag 2</string>
+    <string name="debug_sc_hbc">Mit Pille</string>
+    <string name="debug_sc_conceive">Kinderwunsch · vor LH+</string>
+    <string name="debug_sc_conceive2ww">Kinderwunsch · nach Temperaturanstieg</string>
+    <string name="debug_sc_empty">Ohne Daten</string>
+    <string name="store_error_title">Deine Daten lassen sich gerade nicht öffnen</string>
+    <string name="store_error_locked">Entsperre dein Gerät und versuche es erneut.</string>
+    <string name="store_error_key">Der Schlüssel zu deinen verschlüsselten Daten ist auf diesem Gerät nicht verfügbar.</string>
+    <string name="store_error_other">Beim Öffnen ist ein Fehler aufgetreten.</string>
+    <string name="store_error_safe">Es wurde nichts gelöscht. Deine Daten bleiben verschlüsselt auf dem Gerät.</string>
+    <string name="store_retry">Erneut versuchen</string>
+    <string name="undo_label">Rückgängig</string>
 </resources>
