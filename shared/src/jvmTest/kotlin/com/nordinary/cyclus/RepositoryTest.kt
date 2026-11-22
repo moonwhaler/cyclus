@@ -17,6 +17,7 @@ import com.nordinary.cyclus.store.CyclusRepository
 import com.nordinary.cyclus.store.db.CyclusDatabase
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -152,5 +153,22 @@ class RepositoryTest {
         val sample = SampleScenarios.generate(SampleScenario.CONCEIVE_2WW, 20_779)
         r.replaceAll(sample.logs)
         assertEquals(sample.logs.filterValues { !it.isEmpty }, r.observeLogs().first())
+    }
+}
+
+class RepositoryUpdateTest {
+    @Test fun concurrentUpdatesOfOneDayAreNeverLost(): Unit = runBlocking {
+        val driver = JdbcSqliteDriver(JdbcSqliteDriver.IN_MEMORY)
+        CyclusDatabase.Schema.create(driver)
+        val r = CyclusRepository(CyclusDatabase(driver), Dispatchers.IO) { 1L }
+        val symptoms = com.nordinary.cyclus.core.Catalog.SYMPTOMS
+        kotlinx.coroutines.coroutineScope {
+            for (s in symptoms) launch { r.updateLog(20_000) { it.copy(symptoms = it.symptoms + s) } }
+        }
+        assertEquals(symptoms.toSet(), r.log(20_000)?.symptoms)
+        // the previous state comes back for undo; an unchanged transform writes nothing
+        assertEquals(symptoms.toSet(), r.updateLog(20_000) { it }?.symptoms)
+        assertNull(r.updateLog(20_001) { it })
+        assertNull(r.log(20_001))
     }
 }

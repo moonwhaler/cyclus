@@ -80,9 +80,17 @@ class AppViewModel(
     private val _messages = MutableSharedFlow<UiMessage>(extraBufferCapacity = 4)
     val messages: SharedFlow<UiMessage> = _messages
 
+    /**
+     * A failed write (storage full, I/O error) shows a message instead of crashing the app; nothing is half-written
+     * because every repository write is one transaction.
+     */
+    private val errors = kotlinx.coroutines.CoroutineExceptionHandler { _, _ ->
+        _messages.tryEmit(UiMessage("", res = com.nordinary.cyclus.R.string.error_save))
+    }
+
     init {
         // shown once the UI listens (after the lock screen), not into the void
-        if (restored) viewModelScope.launch {
+        if (restored) viewModelScope.launch(errors) {
             _messages.subscriptionCount.first { it > 0 }
             _messages.emit(UiMessage("", res = com.nordinary.cyclus.R.string.restored))
         }
@@ -124,7 +132,7 @@ class AppViewModel(
     init {
         // Health Connect: triggered by the person's own data and the HC toggles only (its own writes never retrigger it)
         @OptIn(kotlinx.coroutines.FlowPreview::class)
-        viewModelScope.launch {
+        viewModelScope.launch(errors) {
             val userData = combine(
                 repo.observeLogs(), repo.observeOverrides(),
                 repo.observeSettings().map { st ->
@@ -140,7 +148,7 @@ class AppViewModel(
     init {
         // reminders, widget and shortcut follow the data and settings (planning only here, with the DB open)
         @OptIn(kotlinx.coroutines.FlowPreview::class)
-        viewModelScope.launch {
+        viewModelScope.launch(errors) {
             model.filterNotNull().debounce(1_000).collectLatest { m ->
                 runCatching { com.nordinary.cyclus.surfaces.SystemSurfaces.sync(app, repo, m.snapshot, m.settings) }
             }
@@ -148,23 +156,21 @@ class AppViewModel(
     }
 
 
+    /** Every change to a day is one read-modify-write transaction: quick taps never overwrite each other. */
     fun updateLog(day: Day, transform: (DayLog) -> DayLog) {
-        viewModelScope.launch {
-            val current = repo.log(day) ?: DayLog.EMPTY
-            repo.saveLog(day, transform(current))
-        }
+        viewModelScope.launch(errors) { repo.updateLog(day, transform) }
     }
 
     /** „Periode hat heute begonnen“: medium flow today + start override if detection wouldn't see it. Undoable. */
     fun periodStartedToday() {
         val m = model.value ?: return
         val today = m.snapshot.today
-        viewModelScope.launch {
-            val before = repo.log(today)
-            if (before?.flow?.isBleed == true) return@launch // already logged: never downgrade a logged level
+        viewModelScope.launch(errors) {
+            var after = DayLog.EMPTY
+            // already logged bleeding: never downgrade a logged level
+            val before = repo.updateLog(today) { l -> (if (l.isBleed) l else l.copy(flow = Flow.MEDIUM)).also { after = it } }
+            if (before?.isBleed == true) return@launch
             val overrideBefore = m.snapshot.data.overrides[today]
-            val after = (before ?: DayLog.EMPTY).copy(flow = Flow.MEDIUM)
-            repo.saveLog(today, after)
             val starts = CycleData(m.logs + (today to after), m.snapshot.data.overrides, today).cycleStarts
             if (today !in starts) repo.setOverride(today, CycleOverride(OverrideKind.START))
             _messages.emit(UiMessage("tPeriod") {
@@ -177,9 +183,8 @@ class AppViewModel(
     /** Quick flow buttons on Today while in period (incl. "Vorbei" = none). Undoable. */
     fun quickFlow(flow: Flow) {
         val today = model.value?.snapshot?.today ?: return
-        viewModelScope.launch {
-            val before = repo.log(today)
-            repo.saveLog(today, (before ?: DayLog.EMPTY).copy(flow = flow))
+        viewModelScope.launch(errors) {
+            val before = repo.updateLog(today) { it.copy(flow = flow) }
             _messages.emit(UiMessage(if (flow == Flow.NONE) "tEnded" else "tFlow") { repo.saveLog(today, before ?: DayLog.EMPTY) })
         }
     }
@@ -188,10 +193,9 @@ class AppViewModel(
     fun markStart(day: Day) {
         val m = model.value ?: return
         if (day > m.snapshot.today) return
-        viewModelScope.launch {
-            val before = repo.log(day)
+        viewModelScope.launch(errors) {
             val overrideBefore = m.snapshot.data.overrides[day]
-            if (before?.isBleed != true) repo.saveLog(day, (before ?: DayLog.EMPTY).copy(flow = Flow.MEDIUM))
+            val before = repo.updateLog(day) { if (it.isBleed) it else it.copy(flow = Flow.MEDIUM) }
             repo.setOverride(day, CycleOverride(OverrideKind.START))
             _messages.emit(UiMessage("tMarked") {
                 repo.saveLog(day, before ?: DayLog.EMPTY)
@@ -203,24 +207,22 @@ class AppViewModel(
     /** One-tap LH result on Today (conceive). Tapping the same result again clears it. Undoable. */
     fun todayLh(result: LhResult) {
         val today = model.value?.snapshot?.today ?: return
-        viewModelScope.launch {
-            val before = repo.log(today)
-            val cur = before ?: DayLog.EMPTY
-            repo.saveLog(today, cur.copy(lh = if (cur.lh == result) null else result))
+        viewModelScope.launch(errors) {
+            val before = repo.updateLog(today) { it.copy(lh = if (it.lh == result) null else result) }
             _messages.emit(UiMessage(if (result == LhResult.POSITIVE) "tLhPos" else "tLh") { repo.saveLog(today, before ?: DayLog.EMPTY) })
         }
     }
 
-    fun setMode(mode: Mode) { viewModelScope.launch { repo.setSetting(KEY_MODE, if (mode == Mode.CONCEIVE) "conceive" else null) } }
+    fun setMode(mode: Mode) { viewModelScope.launch(errors) { repo.setSetting(KEY_MODE, if (mode == Mode.CONCEIVE) "conceive" else null) } }
 
-    fun setShowFertility(on: Boolean) { viewModelScope.launch { repo.setSetting(KEY_SHOW_FERT, if (on) "1" else null) } }
+    fun setShowFertility(on: Boolean) { viewModelScope.launch(errors) { repo.setSetting(KEY_SHOW_FERT, if (on) "1" else null) } }
 
     fun mute(patternId: String) {
         val m = model.value ?: return
-        viewModelScope.launch { repo.setSetting(KEY_MUTED, (m.muted + patternId).sorted().joinToString(",")) }
+        viewModelScope.launch(errors) { repo.setSetting(KEY_MUTED, (m.muted + patternId).sorted().joinToString(",")) }
     }
 
-    fun unmuteAll() { viewModelScope.launch { repo.setSetting(KEY_MUTED, null) } }
+    fun unmuteAll() { viewModelScope.launch(errors) { repo.setSetting(KEY_MUTED, null) } }
 
     /**
      * Life stage (pauses predictions). Re-selecting the active stage does nothing, so the real start date is kept.
@@ -231,7 +233,7 @@ class AppViewModel(
         val today = m.snapshot.today
         val active = m.activeEpisode
         if (LifeStage.of(active?.kind) == stage && (stage != null || active == null)) return
-        viewModelScope.launch {
+        viewModelScope.launch(errors) {
             if (active != null) {
                 if (active.start >= today) repo.deleteEpisode(active.id) else repo.saveEpisode(active.copy(end = today - 1))
             }
@@ -246,20 +248,20 @@ class AppViewModel(
 
     // ---------------- privacy, backup, export / import, erase (slice 3) ----------------
 
-    private fun msg(res: Int) { viewModelScope.launch { _messages.emit(UiMessage("", res = res)) } }
+    private fun msg(res: Int) { viewModelScope.launch(errors) { _messages.emit(UiMessage("", res = res)) } }
 
     fun setDeviceOnly(on: Boolean) {
         deviceOnly.value = on
-        viewModelScope.launch { app.backup.setDeviceOnly(on, repo, app.appLabel()) }
+        viewModelScope.launch(errors) { app.backup.setDeviceOnly(on, repo, app.appLabel()) }
     }
 
     fun backupStatus() = app.backup.status()
 
-    fun setSetting(key: String, value: String?) { viewModelScope.launch { repo.setSetting(key, value) } }
+    fun setSetting(key: String, value: String?) { viewModelScope.launch(errors) { repo.setSetting(key, value) } }
 
     /** Opt-in for reminders (also answers the Today offer). Off removes every planned reminder. */
     fun setNotifyConsent(on: Boolean) {
-        viewModelScope.launch {
+        viewModelScope.launch(errors) {
             repo.setSetting(com.nordinary.cyclus.presenter.NotifyKeys.CONSENT, if (on) "1" else null)
             repo.setSetting(com.nordinary.cyclus.presenter.NotifyKeys.ASKED, "1")
         }
@@ -268,7 +270,7 @@ class AppViewModel(
     fun declineReminderOffer() { setSetting(com.nordinary.cyclus.presenter.NotifyKeys.ASKED, "1") }
 
     fun setNotifyKind(k: com.nordinary.cyclus.presenter.NotifyKind, on: Boolean) {
-        viewModelScope.launch {
+        viewModelScope.launch(errors) {
             repo.setSetting(com.nordinary.cyclus.presenter.NotifyKeys.kind(k), if (on == k.defaultOn) null else if (on) "1" else "0")
             if (k == com.nordinary.cyclus.presenter.NotifyKind.BACKUP) {
                 repo.setSetting(com.nordinary.cyclus.presenter.NotifyKeys.BACKUP_SINCE, if (on) LocalDate.now().toEpochDay().toString() else null)
@@ -279,14 +281,14 @@ class AppViewModel(
     /** Debug: a real notification through the normal path, 10 s later (lock the phone to see the lock-screen version). */
     fun testNotification() {
         val discreet = model.value?.settings?.get(com.nordinary.cyclus.presenter.NotifyKeys.DISCREET) != "0"
-        viewModelScope.launch {
+        viewModelScope.launch(errors) {
             delay(10_000)
             com.nordinary.cyclus.notify.Notifier.post(app, com.nordinary.cyclus.presenter.NotifyKind.PERIOD_SOON, discreet)
         }
     }
 
     fun setPin(pin: String) {
-        viewModelScope.launch(Dispatchers.Default) {
+        viewModelScope.launch(errors + Dispatchers.Default) {
             val (salt, hash) = com.nordinary.cyclus.security.Pin.hash(pin)
             repo.setSetting(SettingKeys.LOCK_PIN_SALT, salt)
             repo.setSetting(SettingKeys.LOCK_PIN_HASH, hash)
@@ -294,19 +296,21 @@ class AppViewModel(
     }
 
     fun removePin() {
-        viewModelScope.launch {
+        viewModelScope.launch(errors) {
             repo.setSetting(SettingKeys.LOCK_PIN_HASH, null); repo.setSetting(SettingKeys.LOCK_PIN_SALT, null)
             repo.setSetting(SettingKeys.LOCK_PIN_ONLY, null)
         }
     }
 
-    /** Verifies a PIN on the lock screen (PBKDF2 off the main thread is short enough to block once per entry). */
-    fun checkPin(pin: String, config: com.nordinary.cyclus.lock.LockConfig): Boolean {
-        val ok = config.pinSalt != null && config.pinHash != null && com.nordinary.cyclus.security.Pin.verify(pin, config.pinSalt, config.pinHash)
-        viewModelScope.launch {
-            if (ok) repo.setSetting(SettingKeys.LOCK_BACKOFF, null)
-            else repo.setSetting(SettingKeys.LOCK_BACKOFF, app.lock.registerFailure(config.failures).toString())
+    /** Verifies a PIN on the lock screen. PBKDF2 (200k rounds) runs on a background thread, never on the main thread. */
+    suspend fun checkPin(pin: String, config: com.nordinary.cyclus.lock.LockConfig): Boolean {
+        val ok = kotlinx.coroutines.withContext(Dispatchers.Default) {
+            config.pinSalt != null && config.pinHash != null && com.nordinary.cyclus.security.Pin.verify(pin, config.pinSalt, config.pinHash)
         }
+        // the failure count is read from the store, not the (possibly older) config: fast entries all count
+        val failures = repo.setting(SettingKeys.LOCK_BACKOFF)?.toIntOrNull() ?: 0
+        if (ok) repo.setSetting(SettingKeys.LOCK_BACKOFF, null)
+        else repo.setSetting(SettingKeys.LOCK_BACKOFF, app.lock.registerFailure(failures).toString())
         return ok
     }
 
@@ -315,7 +319,7 @@ class AppViewModel(
     /** Encrypts all data with [passphrase] (mode 1) and writes it to the picked document. */
     fun export(uri: android.net.Uri, passphrase: CharArray) {
         exporting.value = true
-        viewModelScope.launch {
+        viewModelScope.launch(errors) {
             try {
                 val model = repo.exportAll(java.time.Instant.now().toString(), app.appLabel(), includeSecurity = false)
                 val bytes = kotlinx.coroutines.withContext(Dispatchers.Default) { com.nordinary.cyclus.backup.CyclusFile.sealWithPassphrase(model.encode(), passphrase) }
@@ -344,7 +348,7 @@ class AppViewModel(
     fun openImport(passphrase: CharArray) {
         val uri = importUri ?: return
         importStage.value = com.nordinary.cyclus.ui.privacy.ImportStage.Working
-        viewModelScope.launch {
+        viewModelScope.launch(errors) {
             val stage = try {
                 val bytes = kotlinx.coroutines.withContext(Dispatchers.IO) {
                     app.contentResolver.openInputStream(uri)!!.use { s -> readCapped(s, com.nordinary.cyclus.backup.CyclusFile.MAX_FILE_BYTES) }
@@ -369,12 +373,13 @@ class AppViewModel(
 
     fun applyImport(replace: Boolean, onDone: () -> Unit) {
         val file = pendingImport ?: return
-        viewModelScope.launch {
-            app.backup.exclusive { if (replace) repo.importReplace(file) else repo.importMerge(file) }
+        viewModelScope.launch(errors) {
+            // the file was validated before the preview; a failure here (storage) rolls the transaction back
+            val ok = runCatching { app.backup.exclusive { if (replace) repo.importReplace(file) else repo.importMerge(file) } }.isSuccess
             pendingImport = null; importUri = null
-            importStage.value = com.nordinary.cyclus.ui.privacy.ImportStage.Passphrase
-            msg(com.nordinary.cyclus.R.string.import_done)
-            onDone()
+            importStage.value = if (ok) com.nordinary.cyclus.ui.privacy.ImportStage.Passphrase
+            else com.nordinary.cyclus.ui.privacy.ImportStage.Error(com.nordinary.cyclus.R.string.import_bad)
+            if (ok) { msg(com.nordinary.cyclus.R.string.import_done); onDone() }
         }
     }
 
@@ -394,7 +399,7 @@ class AppViewModel(
             reportOptions.value = com.nordinary.cyclus.presenter.ReportOptions(questions = defaultQuestions)
             reportLocale.value = if (uiLocale.language == "en") java.util.Locale.ENGLISH else java.util.Locale.GERMAN
             // the name is remembered on this device only (encrypted DB, never exported)
-            viewModelScope.launch {
+            viewModelScope.launch(errors) {
                 repo.setting(KEY_REPORT_NAME)?.let { n -> updateReport { if (it.name.isEmpty()) it.copy(name = n) else it } }
             }
         }
@@ -406,12 +411,12 @@ class AppViewModel(
 
     /** Builds the PDF (same file is previewed and shared). */
     fun buildReport(regionLocale: java.util.Locale) {
-        reportOptions.value?.name?.trim()?.let { n -> viewModelScope.launch { repo.setSetting(KEY_REPORT_NAME, n.ifEmpty { null }) } }
+        reportOptions.value?.name?.trim()?.let { n -> viewModelScope.launch(errors) { repo.setSetting(KEY_REPORT_NAME, n.ifEmpty { null }) } }
         val m = model.value ?: return
         val opts = reportOptions.value ?: return
         val locale = reportLocale.value
         reportWorking.value = true
-        viewModelScope.launch {
+        viewModelScope.launch(errors) {
             try {
                 val file = kotlinx.coroutines.withContext(Dispatchers.Default) {
                     val r = com.nordinary.cyclus.presenter.ReportPresenter.build(m.snapshot, opts, m.muted, m.episodes) ?: return@withContext null
@@ -439,7 +444,7 @@ class AppViewModel(
     fun finishOnboarding(enableLock: Boolean) {
         val today = LocalDate.now().toEpochDay().toInt()
         val choices = onboardingChoices.value
-        viewModelScope.launch {
+        viewModelScope.launch(errors) {
             com.nordinary.cyclus.presenter.Onboarding.apply(repo, choices, today) { Uuid.random().toString() }
             if (enableLock) repo.setSetting(SettingKeys.LOCK_ENABLED, "1")
             onboardingActive.value = false
@@ -491,7 +496,7 @@ class AppViewModel(
             androidx.health.connect.client.permission.HealthPermission.getReadPermission(com.nordinary.cyclus.health.HealthSync.recordClass(it))
         }
         if (granted.none { it in reads }) return
-        viewModelScope.launch {
+        viewModelScope.launch(errors) {
             repo.setSetting(com.nordinary.cyclus.health.HealthKeys.CONNECTED, "1")
             val history = androidx.health.connect.client.permission.HealthPermission.PERMISSION_READ_HEALTH_DATA_HISTORY
             repo.setSetting(com.nordinary.cyclus.health.HealthKeys.NO_HISTORY, if (history in granted) null else "1")
@@ -503,7 +508,7 @@ class AppViewModel(
 
     /** Switch writing of [c]. Off: [deleteThere] deletes what Cyclus wrote, else the records stay and are forgotten. */
     fun setHealthWrite(c: com.nordinary.cyclus.health.HealthCategory, on: Boolean, deleteThere: Boolean = false) {
-        viewModelScope.launch {
+        viewModelScope.launch(errors) {
             if (!on && !deleteThere) app.backup.exclusive { c.types.forEach { repo.deleteHealthLinksOfType(it) } }
             repo.setSetting(com.nordinary.cyclus.health.HealthKeys.write(c), if (on) "1" else null)
         }
@@ -511,13 +516,12 @@ class AppViewModel(
 
     /** Rule 6 review: keep only in Cyclus (never written again) or remove the values from Cyclus too. */
     fun reviewRemoved(links: List<com.nordinary.cyclus.health.HealthLink>, keep: Boolean) {
-        viewModelScope.launch {
+        viewModelScope.launch(errors) {
             app.backup.exclusive {
                 for (l in links) {
                     if (keep) { repo.upsertHealthLink(l.copy(state = com.nordinary.cyclus.health.LinkState.KEPT)); continue }
                     val days = if (l.type == com.nordinary.cyclus.health.HealthType.PERIOD) {
-                        val end = model.value?.userLogs?.keys?.filter { it >= l.day && it <= l.day + 14 } ?: emptyList()
-                        (listOf(l.day) + end).distinct()
+                        com.nordinary.cyclus.health.HealthPlanner.removedPeriodDays(model.value?.userLogs ?: emptyMap(), l.day)
                     } else listOf(l.day)
                     for (d in days) {
                         val before = repo.log(d) ?: continue
@@ -540,20 +544,20 @@ class AppViewModel(
 
     /** Revokes access and drops imported samples, links and tokens; Cyclus' own entries and what it wrote stay. */
     fun disconnectHealth() {
-        viewModelScope.launch {
+        viewModelScope.launch(errors) {
             health.revokeAll()
             app.backup.exclusive { repo.clearHealth() }
         }
     }
 
-    fun saved() { viewModelScope.launch { _messages.emit(UiMessage("tSaved")) } }
+    fun saved() { viewModelScope.launch(errors) { _messages.emit(UiMessage("tSaved")) } }
 
-    fun undo(message: UiMessage) { message.undo?.let { u -> viewModelScope.launch { u() } } }
+    fun undo(message: UiMessage) { message.undo?.let { u -> viewModelScope.launch(errors) { u() } } }
 
     /** Debug builds only: replace all data with a prototype scenario anchored on today. */
     fun loadDemo(scenario: SampleScenario) {
         val today = LocalDate.now().toEpochDay().toInt()
-        viewModelScope.launch {
+        viewModelScope.launch(errors) {
             val s = SampleScenarios.generate(scenario, today)
             repo.replaceAll(
                 logs = s.logs,
@@ -565,7 +569,7 @@ class AppViewModel(
         }
     }
 
-    fun eraseAll() { viewModelScope.launch { repo.eraseAll() } }
+    fun eraseAll() { viewModelScope.launch(errors) { repo.eraseAll() } }
 
     companion object {
         const val KEY_MODE = "mode"

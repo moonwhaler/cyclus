@@ -196,6 +196,13 @@ object HealthPlanner {
      * Reinstall recovery (rule 7): Cyclus' own records become user entries — **only into an empty store**, so nothing
      * the user deleted (or kept out of Health Connect) can come back.
      */
+    /**
+     * Rule 6 „Auch aus Cyclus entfernen“ for a period record deleted in Health Connect: the bleeding days of that one
+     * period (as the engine groups them), never a later period that happens to start within two weeks.
+     */
+    fun removedPeriodDays(user: Map<Day, DayLog>, start: Day): List<Day> =
+        CycleData(user, emptyMap(), start).periodDays(start).ifEmpty { listOf(start) }
+
     fun reconstruct(user: Map<Day, DayLog>, own: List<OwnRecord>): Map<Day, DayLog> {
         if (user.isNotEmpty()) return emptyMap()
         val out = mutableMapOf<Day, DayLog>()

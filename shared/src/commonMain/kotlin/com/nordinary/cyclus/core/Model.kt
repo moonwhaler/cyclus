@@ -13,6 +13,7 @@ enum class Flow(val key: String) {
 
     companion object {
         fun of(key: String): Flow = entries.first { it.key == key }
+        fun ofOrNull(key: String): Flow? = entries.firstOrNull { it.key == key }
         /** Order shown in the log sheet (prototype `FLOWS`). */
         val logOrder = listOf(NONE, SPOTTING, LIGHT, MEDIUM, HEAVY)
     }
@@ -24,13 +25,19 @@ enum class Mucus(val key: String) {
     val isFertile: Boolean get() = this == EGGWHITE || this == WATERY
     val isDry: Boolean get() = this == DRY || this == STICKY
 
-    companion object { fun of(key: String): Mucus = entries.first { it.key == key } }
+    companion object {
+        fun of(key: String): Mucus = entries.first { it.key == key }
+        fun ofOrNull(key: String): Mucus? = entries.firstOrNull { it.key == key }
+    }
 }
 
 enum class LhResult(val key: String) {
     NEGATIVE("neg"), POSITIVE("pos"), SURGE("surge");
 
-    companion object { fun of(key: String): LhResult = entries.first { it.key == key } }
+    companion object {
+        fun of(key: String): LhResult = entries.first { it.key == key }
+        fun ofOrNull(key: String): LhResult? = entries.firstOrNull { it.key == key }
+    }
 }
 
 enum class OverrideKind(val key: String) {
@@ -41,7 +48,10 @@ enum class OverrideKind(val key: String) {
     /** Exclude the cycle starting here from statistics (reason in [CycleOverride.reason]). Not used by the engines yet. */
     EXCLUDE("exclude");
 
-    companion object { fun of(key: String): OverrideKind = entries.first { it.key == key } }
+    companion object {
+        fun of(key: String): OverrideKind = entries.first { it.key == key }
+        fun ofOrNull(key: String): OverrideKind? = entries.firstOrNull { it.key == key }
+    }
 }
 
 data class CycleOverride(val kind: OverrideKind, val reason: String? = null)
@@ -50,7 +60,10 @@ enum class EpisodeKind(val key: String) {
     HORMONAL_CONTRACEPTION("hbc"), PREGNANCY("pregnancy"), POSTPARTUM("postpartum"), BREASTFEEDING("breastfeeding"),
     PERIMENOPAUSE("perimenopause"), GENDER_AFFIRMING_HORMONES("gah"), OTHER("other");
 
-    companion object { fun of(key: String): EpisodeKind = entries.first { it.key == key } }
+    companion object {
+        fun of(key: String): EpisodeKind = entries.first { it.key == key }
+        fun ofOrNull(key: String): EpisodeKind? = entries.firstOrNull { it.key == key }
+    }
 }
 
 data class Episode(val id: String, val kind: EpisodeKind, val start: Day, val end: Day? = null) {

@@ -21,6 +21,7 @@ import com.nordinary.cyclus.store.db.CyclusDatabase
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
 
 /**
@@ -55,7 +56,25 @@ class CyclusRepository(
     fun observeSettings(): Flow<Map<String, String>> =
         q.selectAllSettings().asFlow().mapToList(io).map { rows -> rows.associate { it.key to it.value_ } }
 
-    suspend fun log(day: Day): DayLog? = withContext(io) { readAllLogs()[day] }
+    suspend fun log(day: Day): DayLog? = withContext(io) { readLog(day) }
+
+    /**
+     * Read-modify-write of one day in a single transaction (SQLite serialises writers), so two quick changes to the
+     * same day can never overwrite each other. Returns the log as it was before.
+     */
+    suspend fun updateLog(day: Day, transform: (DayLog) -> DayLog): DayLog? = dayLock.withLock {
+        withContext(io) {
+            db.transactionWithResult {
+                val before = readLog(day)
+                val after = transform(before ?: DayLog.EMPTY)
+                if (after != (before ?: DayLog.EMPTY)) writeLog(day, after)
+                before
+            }.also { changes++ }
+        }
+    }
+
+    /** Orders [updateLog] calls in-process too, independent of how the driver handles concurrent transactions. */
+    private val dayLock = kotlinx.coroutines.sync.Mutex()
 
     // ---- Health Connect (schema v2). Imported samples and links are device data: never exported, gone with the DB.
 
@@ -212,9 +231,12 @@ class CyclusRepository(
         val current = if (onlyIfNewer) q.selectAllLogs().executeAsList().associate { it.day.toInt() to it.updated_at } else emptyMap()
         for (e in file.logs) {
             val d = epoch(e.day)
+            // a clock that ran far ahead elsewhere must not make that day win every later merge
+            val now = nowMillis()
+            val at = if (e.updatedAt > now + 86_400_000L) now else e.updatedAt
             val mine = current[d]
-            if (mine != null && mine >= e.updatedAt) continue
-            writeLog(d, e.toDayLog(), e.updatedAt)
+            if (mine != null && mine >= at) continue
+            writeLog(d, e.toDayLog(), at)
         }
         for (o in file.overrides) q.upsertOverride(epoch(o.day).toLong(), OverrideKind.of(o.kind).key, o.reason)
         for (ep in file.episodes) q.upsertEpisode(ep.id, EpisodeKind.of(ep.kind).key, epoch(ep.start).toLong(), ep.end?.let { epoch(it).toLong() })
@@ -247,6 +269,32 @@ class CyclusRepository(
         for (t in log.tags) q.insertDayTag(d, t)
     }
 
+    private fun readLog(day: Day): DayLog? {
+        val d = day.toLong()
+        val r = q.selectLog(d).executeAsOneOrNull() ?: return null
+        return toDayLog(r, q.selectSymptomsOf(d).executeAsList(), q.selectEmotionsOf(d).executeAsList(),
+            q.selectPainsOf(d).executeAsList(), q.selectDayTagsOf(d).executeAsList())
+    }
+
+    private fun toDayLog(
+        r: com.nordinary.cyclus.store.db.Day_log,
+        sym: List<com.nordinary.cyclus.store.db.Day_symptom>,
+        emotions: List<String>,
+        pains: List<com.nordinary.cyclus.store.db.Day_pain>,
+        tags: List<String>,
+    ) = DayLog(
+        flow = r.flow?.let { LogFlow.of(it) },
+        symptoms = sym.map { it.symptom }.toSet(),
+        symptomSeverity = sym.mapNotNull { s -> s.severity?.let { s.symptom to it.toInt() } }.toMap(),
+        pain = pains.associate { it.region to it.score.toInt() },
+        emotions = emotions.toSet(),
+        tags = tags.toSet(),
+        mood = r.mood?.toInt(), energy = r.energy?.toInt(), sleep = r.sleep?.toInt(), libido = r.libido?.toInt(),
+        mucus = r.mucus?.let { Mucus.of(it) }, lh = r.lh?.let { LhResult.of(it) }, bbt = r.bbt,
+        sex = r.sex != 0L, sexProtected = r.sex_protected?.let { it != 0L },
+        note = r.note, nothingElse = r.nothing_else != 0L,
+    )
+
     private fun readAllLogs(): Map<Day, DayLog> {
         val symptoms = q.selectAllSymptoms().executeAsList().groupBy { it.day.toInt() }
         val emotions = q.selectAllEmotions().executeAsList().groupBy({ it.day.toInt() }, { it.emotion })
@@ -254,19 +302,7 @@ class CyclusRepository(
         val tags = q.selectAllDayTags().executeAsList().groupBy({ it.day.toInt() }, { it.tag_id })
         return q.selectAllLogs().executeAsList().associate { r ->
             val d = r.day.toInt()
-            val sym = symptoms[d].orEmpty()
-            d to DayLog(
-                flow = r.flow?.let { LogFlow.of(it) },
-                symptoms = sym.map { it.symptom }.toSet(),
-                symptomSeverity = sym.mapNotNull { s -> s.severity?.let { s.symptom to it.toInt() } }.toMap(),
-                pain = pains[d].orEmpty().associate { it.region to it.score.toInt() },
-                emotions = emotions[d].orEmpty().toSet(),
-                tags = tags[d].orEmpty().toSet(),
-                mood = r.mood?.toInt(), energy = r.energy?.toInt(), sleep = r.sleep?.toInt(), libido = r.libido?.toInt(),
-                mucus = r.mucus?.let { Mucus.of(it) }, lh = r.lh?.let { LhResult.of(it) }, bbt = r.bbt,
-                sex = r.sex != 0L, sexProtected = r.sex_protected?.let { it != 0L },
-                note = r.note, nothingElse = r.nothing_else != 0L,
-            )
+            d to toDayLog(r, symptoms[d].orEmpty(), emotions[d].orEmpty(), pains[d].orEmpty(), tags[d].orEmpty())
         }
     }
 }

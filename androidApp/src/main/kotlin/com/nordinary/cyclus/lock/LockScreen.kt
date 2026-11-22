@@ -44,6 +44,7 @@ import com.nordinary.cyclus.ui.theme.Cyclus
 import com.nordinary.cyclus.ui.theme.Nunito
 import com.nordinary.cyclus.ui.today.PrimaryButton
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 
 /** Full-screen lock (prototype `renderLock`). Nothing from the store is composed behind it. */
 @Composable
@@ -53,7 +54,7 @@ fun LockScreen(
     biometricAvailable: Boolean,
     lockoutUntil: Long,
     onBiometric: () -> Unit,
-    onPin: (String) -> Boolean,
+    onPin: suspend (String) -> Boolean,
 ) {
     val c = Cyclus.colors
     val biometric = biometricAvailable && !config.pinOnly
@@ -71,10 +72,13 @@ fun LockScreen(
 }
 
 @Composable
-fun PinPad(lockoutUntil: Long, onPin: (String) -> Boolean, modifier: Modifier = Modifier) {
+fun PinPad(lockoutUntil: Long, onPin: suspend (String) -> Boolean, modifier: Modifier = Modifier) {
     val c = Cyclus.colors
     var pin by remember { mutableStateOf("") }
     var wrong by remember { mutableStateOf(false) }
+    // the check (PBKDF2) runs off the main thread; the pad waits meanwhile
+    var checking by remember { mutableStateOf(false) }
+    val scope = androidx.compose.runtime.rememberCoroutineScope()
     var now by remember { mutableLongStateOf(SystemClock.elapsedRealtime()) }
     LaunchedEffect(lockoutUntil) { while (SystemClock.elapsedRealtime() < lockoutUntil) { now = SystemClock.elapsedRealtime(); delay(500) }; now = SystemClock.elapsedRealtime() }
     val waitS = ((lockoutUntil - now) / 1000).coerceAtLeast(0)
@@ -92,12 +96,18 @@ fun PinPad(lockoutUntil: Long, onPin: (String) -> Boolean, modifier: Modifier = 
             for (k in row) {
                 Box(
                     Modifier.size(68.dp).clip(CircleShape).then(if (k.isNotEmpty()) Modifier.background(c.surface) else Modifier)
-                        .clickable(enabled = k.isNotEmpty() && waitS == 0L, role = Role.Button) {
+                        .clickable(enabled = k.isNotEmpty() && waitS == 0L && !checking, role = Role.Button) {
                             wrong = false
                             if (k == "⌫") pin = pin.dropLast(1)
                             else if (pin.length < 6) {
                                 pin += k
-                                if (pin.length == 6) { if (!onPin(pin)) wrong = true; pin = "" }
+                                if (pin.length == 6) {
+                                    val entered = pin
+                                    checking = true
+                                    scope.launch {
+                                        try { if (!onPin(entered)) wrong = true } finally { pin = ""; checking = false }
+                                    }
+                                }
                             }
                         }
                         .semantics { if (k == "⌫") contentDescription = deleteLabel },

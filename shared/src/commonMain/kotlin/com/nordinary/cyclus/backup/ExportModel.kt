@@ -34,8 +34,66 @@ data class ExportFile(
                 throw CyclusFileException.Malformed("invalid export JSON")
             }
             if (f.schema != SCHEMA) throw CyclusFileException.UnsupportedVersion("schema ${f.schema} not supported")
+            f.validate()
             return f
         }
+
+        const val MAX_LOGS = 100_000
+        const val MAX_ITEMS = 200
+        const val MAX_KEY = 200
+        const val MAX_NOTE = 20_000
+    }
+
+    /**
+     * Everything an import writes is checked before the preview (schema v1 ranges, docs/export/cyclus-export.schema.json):
+     * a value this version doesn't know means the file came from a newer app ([CyclusFileException.UnsupportedVersion]),
+     * anything else out of range is a damaged or hand-made file ([CyclusFileException.Malformed]). Nothing half-valid is
+     * ever imported.
+     */
+    fun validate() {
+        fun bad(what: String): Nothing = throw CyclusFileException.Malformed("invalid $what")
+        fun newer(what: String): Nothing = throw CyclusFileException.UnsupportedVersion("unknown $what")
+        fun day(s: String, what: String): Int {
+            val d = runCatching { kotlinx.datetime.LocalDate.parse(s) }.getOrNull() ?: bad(what)
+            if (d.year !in 1900..2200) bad(what)
+            return d.toEpochDays().toInt()
+        }
+        fun key(s: String, what: String) { if (s.isEmpty() || s.length > MAX_KEY) bad(what) }
+        fun keys(l: Collection<String>, what: String) { if (l.size > MAX_ITEMS) bad(what); l.forEach { key(it, what) } }
+        fun scale(v: Int?, what: String) { if (v != null && v !in 1..5) bad(what) }
+
+        if (logs.size > MAX_LOGS || overrides.size > MAX_LOGS || episodes.size > MAX_ITEMS * 10 || tags.size > MAX_ITEMS * 10) bad("size")
+        for (l in logs) {
+            day(l.day, "log day")
+            l.flow?.let { com.nordinary.cyclus.core.Flow.ofOrNull(it) ?: newer("flow") }
+            l.mucus?.let { com.nordinary.cyclus.core.Mucus.ofOrNull(it) ?: newer("mucus") }
+            l.lh?.let { com.nordinary.cyclus.core.LhResult.ofOrNull(it) ?: newer("lh") }
+            keys(l.symptoms, "symptoms"); keys(l.emotions, "emotions"); keys(l.tags, "tags")
+            keys(l.symptomSeverity.keys, "severity"); if (l.symptomSeverity.values.any { it !in 1..3 }) bad("severity")
+            keys(l.pain.keys, "pain"); if (l.pain.values.any { it !in 0..10 }) bad("pain")
+            scale(l.mood, "mood"); scale(l.energy, "energy"); scale(l.sleep, "sleep"); scale(l.libido, "libido")
+            l.bbt?.let { if (it.isNaN() || it !in 30.0..45.0) bad("bbt") }
+            l.note?.let { if (it.length > MAX_NOTE) bad("note") }
+            if (l.updatedAt < 0) bad("updatedAt")
+        }
+        for (o in overrides) {
+            day(o.day, "override day")
+            com.nordinary.cyclus.core.OverrideKind.ofOrNull(o.kind) ?: newer("override")
+            o.reason?.let { if (it.length > MAX_NOTE) bad("reason") }
+        }
+        for (e in episodes) {
+            key(e.id, "episode id")
+            com.nordinary.cyclus.core.EpisodeKind.ofOrNull(e.kind) ?: newer("episode")
+            val s = day(e.start, "episode start")
+            e.end?.let { if (day(it, "episode end") < s) bad("episode end") }
+        }
+        for (t in tags) {
+            key(t.id, "tag id")
+            t.name?.let { if (it.length > MAX_KEY) bad("tag name") }
+            t.symbol?.let { if (it.length > MAX_KEY) bad("tag symbol") }
+        }
+        if (prefs.size > MAX_ITEMS || prefs.values.any { it.length > MAX_NOTE }) bad("prefs")
+        security?.let { if (it.size > MAX_ITEMS || it.values.any { v -> v.length > MAX_KEY }) bad("security") }
     }
 
     fun encode(): ByteArray = json.encodeToString(serializer(), this).encodeToByteArray()

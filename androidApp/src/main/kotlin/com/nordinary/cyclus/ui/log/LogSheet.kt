@@ -54,6 +54,7 @@ import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.compositeOver
 import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.selected
@@ -111,7 +112,8 @@ fun LogSheet(
                 Text("›", fontSize = 24.sp, color = if (day < today) c.ink else c.ink2.copy(alpha = .3f))
             }
         }
-        Column(
+        // keyed by day: switching days disposes the old fields, which save what was typed to their own day first
+        androidx.compose.runtime.key(day) { Column(
             Modifier.fillMaxWidth().verticalScroll(rememberScrollState()).imePadding().padding(start = 16.dp, end = 16.dp, bottom = 28.dp),
             verticalArrangement = Arrangement.spacedBy(18.dp),
         ) {
@@ -166,7 +168,7 @@ fun LogSheet(
             NoteGroup(day, log, fmt, onUpdate)
             NothingElse(log, fmt, onUpdate)
             PrimaryButton(fmt.s("done"), onDone, Modifier.fillMaxWidth())
-        }
+        } }
     }
 }
 
@@ -205,16 +207,26 @@ private fun MucusGroup(log: DayLog, fmt: Fmt, onUpdate: ((DayLog) -> DayLog) -> 
 private fun BbtGroup(label: String, hint: String, log: DayLog, fmt: Fmt, onUpdate: ((DayLog) -> DayLog) -> Unit) = Group(label, hint) {
     val c = Cyclus.colors
     var text by remember(log.bbt) { mutableStateOf(log.bbt?.let { fmt.temp(it) } ?: "") }
+    var dirty by remember { mutableStateOf(false) }
+    val parsed = text.trim().replace(',', '.').toDoubleOrNull()
+    // a plausible body temperature or an empty field (clears the value); anything else stays unsaved and is marked
+    val invalid = text.isNotBlank() && (parsed == null || parsed !in BBT_RANGE)
     fun commit(t: String) {
-        val n = t.replace(',', '.').toDoubleOrNull()
+        dirty = false
+        val n = t.trim().replace(',', '.').toDoubleOrNull()
+        if (t.isNotBlank() && (n == null || n !in BBT_RANGE)) return
         onUpdate { it.copy(bbt = n?.let { v -> Js.round(v * 100) / 100 }) }
     }
+    // typed but not confirmed: saved when the field loses focus, the sheet closes or the day changes
+    val pending = androidx.compose.runtime.rememberUpdatedState { if (dirty) commit(text) }
+    androidx.compose.runtime.DisposableEffect(Unit) { onDispose { pending.value() } }
     fun step(d: Double) = onUpdate { val base = it.bbt ?: 36.40; it.copy(bbt = Js.round((base + d) * 100) / 100) }
     Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
         StepButton("−", fmt.s("lower")) { step(-0.05) }
         OutlinedTextField(
-            value = text, onValueChange = { text = it },
-            modifier = Modifier.width(110.dp).semantics { contentDescription = fmt.s("bbtAria") },
+            value = text, onValueChange = { text = it; dirty = true }, isError = invalid,
+            modifier = Modifier.width(110.dp).semantics { contentDescription = fmt.s("bbtAria") }
+                .onFocusChanged { if (!it.isFocused) pending.value() },
             singleLine = true, placeholder = { Text(fmt.temp(36.4), fontFamily = Nunito, color = c.ink2) },
             textStyle = androidx.compose.ui.text.TextStyle(fontFamily = Nunito, fontWeight = FontWeight.SemiBold, fontSize = 17.sp, textAlign = TextAlign.Center, color = c.ink),
             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal, imeAction = ImeAction.Done),
@@ -241,12 +253,17 @@ private fun StepButton(symbol: String, label: String, onClick: () -> Unit) {
 private fun NoteGroup(day: Day, log: DayLog, fmt: Fmt, onUpdate: ((DayLog) -> DayLog) -> Unit) = Group(fmt.s("note")) {
     val c = Cyclus.colors
     var text by rememberSaveable(day) { mutableStateOf(log.note ?: "") }
-    // save shortly after typing stops
-    LaunchedEffect(text) {
-        if (text == (log.note ?: "")) return@LaunchedEffect
-        delay(600)
-        onUpdate { it.copy(note = text.ifBlank { null }) }
+    val saved = log.note ?: ""
+    // save shortly after typing stops, and right away when the sheet closes or the day changes
+    val pending = androidx.compose.runtime.rememberUpdatedState {
+        if (text != saved) { val t = text; onUpdate { it.copy(note = t.ifBlank { null }) } }
     }
+    LaunchedEffect(text) {
+        if (text == saved) return@LaunchedEffect
+        delay(600)
+        pending.value()
+    }
+    androidx.compose.runtime.DisposableEffect(Unit) { onDispose { pending.value() } }
     OutlinedTextField(
         value = text, onValueChange = { text = it }, modifier = Modifier.fillMaxWidth(), minLines = 2,
         placeholder = { Text(fmt.s("notePh"), color = c.ink2) },
@@ -347,3 +364,6 @@ private fun DrawScope.drawRegion(r: Region, s: Float, color: Color, stroke: Stro
         else -> drawRoundRect(color, Offset(r.x * s, r.y * s), Size(r.w * s, r.h * s), CornerRadius(r.r * s), style = style)
     }
 }
+
+/** Plausible basal body temperatures (°C); anything outside is a typo, not a measurement. */
+private val BBT_RANGE = 34.0..43.0

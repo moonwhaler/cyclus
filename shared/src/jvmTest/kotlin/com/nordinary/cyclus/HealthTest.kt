@@ -105,6 +105,14 @@ class HealthTest {
         assertTrue(HealthPlanner.reconstruct(mapOf(today - 5 to DayLog(mood = 2)), own).isEmpty())
     }
 
+    @Test fun removingAPeriodTouchesOnlyThatPeriod() {
+        val bleed = DayLog(flow = Flow.MEDIUM)
+        // period on days 0–3 (with a one-day gap), next period starts on day 12
+        val user = mapOf(today to bleed, today + 1 to bleed, today + 3 to bleed, today + 12 to bleed, today + 13 to bleed)
+        assertEquals(listOf(today, today + 1, today + 3), HealthPlanner.removedPeriodDays(user, today))
+        assertEquals(listOf(today + 20), HealthPlanner.removedPeriodDays(user, today + 20))
+    }
+
     @Test fun repositoryAppliesPagesAtomicallyAndRestoresOnlyWhenEmpty(): Unit = runBlocking {
         val driver = JdbcSqliteDriver(JdbcSqliteDriver.IN_MEMORY)
         CyclusDatabase.Schema.create(driver)

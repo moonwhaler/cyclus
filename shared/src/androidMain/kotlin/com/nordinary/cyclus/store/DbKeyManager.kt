@@ -44,7 +44,8 @@ internal class DbKeyManager(private val context: Context, dbName: String = Andro
         val dbKey = ByteArray(32).also { SecureRandom().nextBytes(it) }
         val wrapped = wrap(dbKey)
         val tmp = File(keyFile.parentFile, keyFile.name + ".tmp")
-        tmp.writeBytes(wrapped)
+        // fsync before the rename: a crash right after creation must never leave an empty key file behind
+        java.io.FileOutputStream(tmp).use { out -> out.write(wrapped); out.fd.sync() }
         if (!tmp.renameTo(keyFile)) throw DbKeyException(DbKeyException.Reason.CRYPTO_FAILURE)
         return dbKey
     }

@@ -110,6 +110,22 @@ SELECT * FROM day_pain;
 selectAllDayTags:
 SELECT * FROM day_tag;
 
+-- one day (Log sheet, quick actions): no full-table reads
+selectLog:
+SELECT * FROM day_log WHERE day = ?;
+
+selectSymptomsOf:
+SELECT * FROM day_symptom WHERE day = ?;
+
+selectEmotionsOf:
+SELECT emotion FROM day_emotion WHERE day = ?;
+
+selectPainsOf:
+SELECT * FROM day_pain WHERE day = ?;
+
+selectDayTagsOf:
+SELECT tag_id FROM day_tag WHERE day = ?;
+
 upsertLog:
 INSERT OR REPLACE INTO day_log (day, flow, mood, energy, sleep, libido, mucus, lh, bbt, sex, sex_protected, note, nothing_else, updated_at)
 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);

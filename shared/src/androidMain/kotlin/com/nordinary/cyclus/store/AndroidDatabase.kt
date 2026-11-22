@@ -20,11 +20,12 @@ object AndroidDatabase {
         val dbFile = app.getDatabasePath(fileName)
         val key = DbKeyManager(app, fileName).obtainKey(databaseExists = dbFile.exists())
         // Raw-key form x'…' skips SQLCipher's PBKDF2 (the key is already 256 random bits).
-        val passphrase = "x'${key.toHex()}'".toByteArray(Charsets.US_ASCII)
+        // built byte by byte (no String): every copy of the key can be wiped
+        val passphrase = rawKeyPassphrase(key)
         key.fill(0)
         val factory = SupportOpenHelperFactory(passphrase, null, true)
         val driver = AndroidSqliteDriver(CyclusDatabase.Schema, app, fileName, factory)
-        return CyclusRepository(CyclusDatabase(driver), Dispatchers.IO, onClose = { driver.close() }) { System.currentTimeMillis() }
+        return CyclusRepository(CyclusDatabase(driver), Dispatchers.IO, onClose = { driver.close(); passphrase.fill(0) }) { System.currentTimeMillis() }
     }
 
     fun exists(context: Context, fileName: String = FILE_NAME): Boolean = context.applicationContext.getDatabasePath(fileName).exists()
@@ -39,5 +40,15 @@ object AndroidDatabase {
         DbKeyManager(app, fileName).destroy()
     }
 
-    private fun ByteArray.toHex(): String = joinToString("") { (it.toInt() and 0xFF).toString(16).padStart(2, '0') }
+    /** SQLCipher raw-key literal `x'<64 hex>'` as ASCII bytes. */
+    internal fun rawKeyPassphrase(key: ByteArray): ByteArray {
+        val hex = "0123456789abcdef"
+        val out = ByteArray(3 + key.size * 2)
+        out[0] = 'x'.code.toByte(); out[1] = '\''.code.toByte(); out[out.size - 1] = '\''.code.toByte()
+        for ((i, b) in key.withIndex()) {
+            val v = b.toInt() and 0xFF
+            out[2 + i * 2] = hex[v ushr 4].code.toByte(); out[3 + i * 2] = hex[v and 0xF].code.toByte()
+        }
+        return out
+    }
 }
