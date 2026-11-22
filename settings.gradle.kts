@@ -13,4 +13,4 @@ dependencyResolutionManagement {
     }
 }
 rootProject.name = "cyclus"
-include(":shared", ":androidApp")
+include(":shared", ":androidApp", ":baselineprofile")

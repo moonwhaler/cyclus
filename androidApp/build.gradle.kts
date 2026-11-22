@@ -2,6 +2,7 @@ plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.compose)
     alias(libs.plugins.kotlin.serialization)
+    alias(libs.plugins.androidx.baselineprofile)
 }
 
 android {
@@ -64,6 +65,12 @@ kotlin {
     jvmToolchain(21)
 }
 
+// One startup profile for every build type (release and the optimized test build); generated on an emulator with
+// ./gradlew :androidApp:generateReleaseBaselineProfile (see baselineprofile/).
+baselineProfile {
+    mergeIntoMain = true
+}
+
 dependencies {
     implementation(project(":shared"))
     implementation(libs.androidx.core.ktx)
@@ -78,6 +85,9 @@ dependencies {
     implementation(libs.androidx.work.runtime)
     implementation(libs.health.connect)
     implementation(libs.kotlinx.coroutines.android)
+    // installs the generated startup profile (src/release/generated/baselineProfiles) on devices without Play
+    implementation(libs.androidx.profileinstaller)
+    baselineProfile(project(":baselineprofile"))
     implementation(platform(libs.compose.bom))
     implementation(libs.compose.ui)
     implementation(libs.compose.material3)

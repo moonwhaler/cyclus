@@ -222,14 +222,22 @@ fun CyclusApp(vm: AppViewModel, debug: Boolean) {
     val m = model ?: return
     val day = sheetDay
     when (sheet) {
-        Sheet.LOG -> if (day != null) LogSheet(
-            day = day, today = m.snapshot.today, log = m.userLogs[day] ?: DayLog.EMPTY, mode = m.mode,
+        Sheet.LOG -> if (day != null) {
+            // a tap shows at once; the stored value takes over again once the write and recompute have landed
+            val stored = m.userLogs[day] ?: DayLog.EMPTY
+            var shown by remember(day) { mutableStateOf<DayLog?>(null) }
+            LaunchedEffect(stored) { if (stored == shown) shown = null }
+            LaunchedEffect(shown) { if (shown != null) { delay(2_000); shown = null } }
+            val log = shown ?: stored
+            LogSheet(
+            day = day, today = m.snapshot.today, log = log, mode = m.mode,
             suggestions = remember(m, day) { TodayPresenter.suggestions(m.snapshot, day) }, fmt = fmt,
             onDayChange = { sheetDay = it },
-            onUpdate = { t -> logChanged = true; vm.updateLog(day, t) },
+            onUpdate = { t -> logChanged = true; shown = t(shown ?: stored); vm.updateLog(day, t) },
             onDone = { sheet = Sheet.NONE; if (logChanged) vm.saved(); logChanged = false },
             onDismiss = { sheet = Sheet.NONE; if (logChanged) vm.saved(); logChanged = false },
-        )
+            )
+        }
         Sheet.DAY -> if (day != null) DaySheet(
             model = remember(m, day) { CalendarPresenter.daySheet(m.snapshot, day, m.userLogs[day]) }, fmt = fmt,
             onEdit = { openLog(day) },

@@ -37,6 +37,8 @@ import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.flow.shareIn
+import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.debounce
@@ -99,33 +101,77 @@ class AppViewModel(
     /** „Nur auf dem Gerät“ (file marker, not a DB setting). */
     val deviceOnly = kotlinx.coroutines.flow.MutableStateFlow(app.backup.deviceOnly)
 
-    /** Local calendar day; re-checked so the app rolls over at midnight. */
-    private val todayFlow = flow {
-        while (true) { emit(LocalDate.now().toEpochDay().toInt()); delay(30_000) }
-    }.distinctUntilChanged()
+    // ---- the store, read once and shared by the model, the Health Connect trigger and the lock (no duplicate queries)
+    private val logs = repo.observeLogs().shareIn(viewModelScope, SharingStarted.Eagerly, 1)
+    private val overrides = repo.observeOverrides().shareIn(viewModelScope, SharingStarted.Eagerly, 1)
+    /** All settings (the lock configuration in MainActivity reads these too). */
+    val settings: kotlinx.coroutines.flow.SharedFlow<Map<String, String>> = repo.observeSettings().shareIn(viewModelScope, SharingStarted.Eagerly, 1)
 
-    val model: StateFlow<AppModel?> = combine(
-        combine(repo.observeLogs(), repo.observeHealthSamples()) { l, h -> l to h },
-        repo.observeOverrides(), repo.observeEpisodes(), repo.observeSettings(), todayFlow,
-    ) { (logs, samples), overrides, episodes, settings, today ->
-        val mode = if (settings[KEY_MODE] == "conceive") Mode.CONCEIVE else Mode.TRACK
-        val showFert = settings[KEY_SHOW_FERT] == "1"
-        val muted = settings[KEY_MUTED]?.split(',')?.filter { it.isNotBlank() }?.toSet() ?: emptySet()
+    /**
+     * Local calendar day. Re-read at the next midnight (a coroutine delay doesn't count deep sleep, so also), when the
+     * app comes to the foreground and when the date, time or time zone changes. No polling.
+     */
+    private val todayFlow = kotlinx.coroutines.flow.merge(
+        flow {
+            while (true) {
+                emit(Unit)
+                val now = java.time.ZonedDateTime.now()
+                delay(java.time.Duration.between(now, now.toLocalDate().plusDays(1).atStartOfDay(now.zone)).toMillis() + 1_000)
+            }
+        },
+        kotlinx.coroutines.flow.callbackFlow {
+            val receiver = object : android.content.BroadcastReceiver() {
+                override fun onReceive(c: android.content.Context, i: android.content.Intent) { trySend(Unit) }
+            }
+            val filter = android.content.IntentFilter().apply {
+                addAction(android.content.Intent.ACTION_DATE_CHANGED); addAction(android.content.Intent.ACTION_TIME_CHANGED)
+                addAction(android.content.Intent.ACTION_TIMEZONE_CHANGED)
+            }
+            androidx.core.content.ContextCompat.registerReceiver(app, receiver, filter, androidx.core.content.ContextCompat.RECEIVER_NOT_EXPORTED)
+            val owner = androidx.lifecycle.ProcessLifecycleOwner.get()
+            val observer = androidx.lifecycle.LifecycleEventObserver { _, e -> if (e == androidx.lifecycle.Lifecycle.Event.ON_START) trySend(Unit) }
+            owner.lifecycle.addObserver(observer)
+            awaitClose { app.unregisterReceiver(receiver); owner.lifecycle.removeObserver(observer) }
+        }.flowOn(Dispatchers.Main),
+    ).map { LocalDate.now().toEpochDay().toInt() }.distinctUntilChanged()
+
+    /** The expensive part (engine + presenters): recomputed only when data, the engine settings or the day change. */
+    private class Computed(
+        val snapshot: CycleSnapshot, val today: TodayUiState, val insights: InsightsUiState, val why: WhyModel?,
+        val mode: Mode, val showFertility: Boolean, val muted: Set<String>, val episode: Episode?,
+        val logs: Map<Day, DayLog>, val samples: List<com.nordinary.cyclus.health.HealthSample>,
+        val overrides: Map<Day, CycleOverride>, val episodes: List<Episode>,
+    )
+
+    private val computed = combine(
+        combine(logs, repo.observeHealthSamples()) { l, h -> l to h },
+        overrides, repo.observeEpisodes(),
+        // bookkeeping (Health Connect tokens, last sync, PIN back-off, export counters …) never recomputes the engine
+        settings.map { st -> st.filterKeys { it in ENGINE_KEYS } }.distinctUntilChanged(),
+        todayFlow,
+    ) { (logs, samples), overrides, episodes, engine, today ->
+        val mode = if (engine[KEY_MODE] == "conceive") Mode.CONCEIVE else Mode.TRACK
+        val showFert = engine[KEY_SHOW_FERT] == "1"
+        val muted = engine[KEY_MUTED]?.split(',')?.filter { it.isNotBlank() }?.toSet() ?: emptySet()
         val episode = episodes.lastOrNull { it.isActiveOn(today) }
         // Health Connect values fill fields the person left empty (spec §11.4 rule 4); the engine is unchanged
         val effective = com.nordinary.cyclus.health.HealthMerge.effectiveLogs(logs, samples)
         val snap = CycleSnapshot.compute(CycleData(effective, overrides, today), mode, showFertilityInTrack = showFert, paused = episode != null)
-        AppModel(
-            snapshot = snap,
-            today = TodayPresenter.present(snap, episode?.kind, muted),
-            insights = InsightsPresenter.present(snap, muted),
-            why = WhyPresenter.present(snap),
-            mode = mode, showFertility = showFert, muted = muted, activeEpisode = episode, settings = settings,
-            episodes = episodes,
-            showOnboarding = com.nordinary.cyclus.presenter.Onboarding.shouldShow(logs, overrides, episodes, settings),
-            userLogs = logs, healthSamples = samples,
+        Computed(
+            snap, TodayPresenter.present(snap, episode?.kind, muted), InsightsPresenter.present(snap, muted), WhyPresenter.present(snap),
+            mode, showFert, muted, episode, logs, samples, overrides, episodes,
         )
-    }.flowOn(Dispatchers.Default).stateIn(viewModelScope, SharingStarted.WhileSubscribed(0), null)
+    }.flowOn(Dispatchers.Default)
+
+    val model: StateFlow<AppModel?> = combine(computed, settings) { c, settings ->
+        AppModel(
+            snapshot = c.snapshot, today = c.today, insights = c.insights, why = c.why,
+            mode = c.mode, showFertility = c.showFertility, muted = c.muted, activeEpisode = c.episode, settings = settings,
+            episodes = c.episodes,
+            showOnboarding = com.nordinary.cyclus.presenter.Onboarding.shouldShow(c.logs, c.overrides, c.episodes, settings),
+            userLogs = c.logs, healthSamples = c.samples,
+        )
+    }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), null)
 
     val health = com.nordinary.cyclus.health.HealthSync(app)
 
@@ -134,8 +180,8 @@ class AppViewModel(
         @OptIn(kotlinx.coroutines.FlowPreview::class)
         viewModelScope.launch(errors) {
             val userData = combine(
-                repo.observeLogs(), repo.observeOverrides(),
-                repo.observeSettings().map { st ->
+                logs, overrides,
+                settings.map { st ->
                     st.filterKeys { it.startsWith("hc.w.") || it == com.nordinary.cyclus.health.HealthKeys.CONNECTED }
                 }.distinctUntilChanged(),
             ) { a, b, c -> Triple(a, b, c) }.distinctUntilChanged()
@@ -149,9 +195,11 @@ class AppViewModel(
         // reminders, widget and shortcut follow the data and settings (planning only here, with the DB open)
         @OptIn(kotlinx.coroutines.FlowPreview::class)
         viewModelScope.launch(errors) {
-            model.filterNotNull().debounce(1_000).collectLatest { m ->
-                runCatching { com.nordinary.cyclus.surfaces.SystemSurfaces.sync(app, repo, m.snapshot, m.settings) }
-            }
+            model.filterNotNull()
+                .map { m -> m.snapshot to m.settings.filterKeys { !isBookkeeping(it) } }
+                .distinctUntilChanged { a, b -> a.first === b.first && a.second == b.second }
+                .debounce(1_000)
+                .collectLatest { (snap, st) -> runCatching { com.nordinary.cyclus.surfaces.SystemSurfaces.sync(app, repo, snap, st) } }
         }
     }
 
@@ -577,6 +625,13 @@ class AppViewModel(
         const val KEY_MUTED = "mutedPatterns"
         /** Device setting: name for the Arztbericht (not in exports). */
         const val KEY_REPORT_NAME = "report.name"
+
+        /** Settings the engine and presenters read; any other change only refreshes the cheap part of the model. */
+        private val ENGINE_KEYS = setOf(KEY_MODE, KEY_SHOW_FERT, KEY_MUTED)
+
+        /** Device bookkeeping no system surface (reminders, widget, shortcut) depends on. */
+        private fun isBookkeeping(k: String) = k.startsWith("hc.") || k == SettingKeys.LOCK_BACKOFF ||
+            k == SettingKeys.EXPORT_COUNT || k == KEY_REPORT_NAME
     }
 }
 

@@ -92,7 +92,7 @@ class MainActivity : FragmentActivity() {
     private fun Ready(s: StoreState.Ready) {
         val repo = s.repo
         val vm = viewModel(key = "app-${System.identityHashCode(repo)}") { AppViewModel(repo, app, restored = s.restored) }
-        val settings by remember(repo) { repo.observeSettings() }.collectAsStateWithLifecycle(null)
+        val settings by vm.settings.collectAsStateWithLifecycle(null)
         LaunchedEffect(settings) {
             settings?.let { st ->
                 val cfg = LockConfig.from(st)
