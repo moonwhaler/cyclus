@@ -19,9 +19,11 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyListScope
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.selection.toggleable
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.HorizontalDivider
@@ -60,6 +62,7 @@ import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -74,12 +77,12 @@ import com.nordinary.cyclus.ui.common.CyclusIcons
 import com.nordinary.cyclus.ui.theme.Cyclus
 import com.nordinary.cyclus.ui.today.PrimaryButton
 import com.nordinary.cyclus.ui.today.SecondaryButton
+import java.io.File
+import java.util.Locale
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
-import java.io.File
-import java.util.Locale
 
 /** Arztbericht builder (prototype `renderReport`) with a preview of the real PDF. */
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterial3ExpressiveApi::class)
@@ -91,14 +94,14 @@ fun ReportScreen(vm: AppViewModel, fmt: Fmt, snackbar: SnackbarHostState, onBack
     val uiLocale = LocalConfiguration.current.locales[0]
     val defaultQ = fmt.s("qDefault")
     val shareTitle = stringResource(R.string.rep_share_title)
-    LaunchedEffect(Unit) { vm.initReport(defaultQ, uiLocale) }
-    val options by vm.reportOptions.collectAsStateWithLifecycle()
-    val file by vm.reportFile.collectAsStateWithLifecycle()
-    val working by vm.reportWorking.collectAsStateWithLifecycle()
-    val pdfLocale by vm.reportLocale.collectAsStateWithLifecycle()
+    LaunchedEffect(Unit) { vm.report.start(defaultQ, uiLocale) }
+    val options by vm.report.options.collectAsStateWithLifecycle()
+    val file by vm.report.file.collectAsStateWithLifecycle()
+    val working by vm.report.working.collectAsStateWithLifecycle()
+    val pdfLocale by vm.report.locale.collectAsStateWithLifecycle()
     val pdfDe = pdfLocale.language == "de"
     val o = options ?: return
-    val back = { vm.closeReport(); onBack() }
+    val back = { vm.report.close(); onBack() }
     val scroll = TopAppBarDefaults.exitUntilCollapsedScrollBehavior()
 
     Scaffold(
@@ -122,7 +125,7 @@ fun ReportScreen(vm: AppViewModel, fmt: Fmt, snackbar: SnackbarHostState, onBack
             item { Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                 Label("${fmt.s("timeSpan")} · ${fmt.s("cyclesW")}")
                 Segments(listOf(3, 6, 12).map { fmt.s("lastN", it) }, listOf(3, 6, 12).indexOf(o.cycles)) { i ->
-                    vm.updateReport { it.copy(cycles = listOf(3, 6, 12)[i]) }
+                    vm.report.update { it.copy(cycles = listOf(3, 6, 12)[i]) }
                 }
             } }
             item { Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -133,7 +136,7 @@ fun ReportScreen(vm: AppViewModel, fmt: Fmt, snackbar: SnackbarHostState, onBack
                         val on = sec in o.include
                         Row(
                             Modifier.fillMaxWidth().toggleable(on, role = Role.Switch) { v ->
-                                vm.updateReport { it.copy(include = if (v) it.include + sec else it.include - sec) }
+                                vm.report.update { it.copy(include = if (v) it.include + sec else it.include - sec) }
                             }.padding(horizontal = 14.dp, vertical = 10.dp),
                             verticalAlignment = Alignment.CenterVertically,
                         ) {
@@ -147,20 +150,20 @@ fun ReportScreen(vm: AppViewModel, fmt: Fmt, snackbar: SnackbarHostState, onBack
                 }
             } }
             item { Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                Label(androidx.compose.ui.res.stringResource(com.nordinary.cyclus.R.string.rep_name_field))
+                Label(androidx.compose.ui.res.stringResource(R.string.rep_name_field))
                 OutlinedTextField(
-                    o.name, { n -> vm.updateReport { it.copy(name = n.take(80)) } }, Modifier.fillMaxWidth(), singleLine = true,
-                    placeholder = { Text(androidx.compose.ui.res.stringResource(com.nordinary.cyclus.R.string.rep_name_hint)) },
-                    keyboardOptions = androidx.compose.foundation.text.KeyboardOptions(capitalization = androidx.compose.ui.text.input.KeyboardCapitalization.Words),
+                    o.name, { n -> vm.report.update { it.copy(name = n.take(80)) } }, Modifier.fillMaxWidth(), singleLine = true,
+                    placeholder = { Text(androidx.compose.ui.res.stringResource(R.string.rep_name_hint)) },
+                    keyboardOptions = KeyboardOptions(capitalization = KeyboardCapitalization.Words),
                     shape = RoundedCornerShape(12.dp),
                     colors = OutlinedTextFieldDefaults.colors(unfocusedBorderColor = c.line, focusedBorderColor = c.period, unfocusedContainerColor = c.surface, focusedContainerColor = c.surface),
                 )
-                Text(androidx.compose.ui.res.stringResource(com.nordinary.cyclus.R.string.rep_name_note), fontSize = 12.sp, color = c.ink2)
+                Text(androidx.compose.ui.res.stringResource(R.string.rep_name_note), fontSize = 12.sp, color = c.ink2)
             } }
             item { Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                 Label(fmt.s("questions"))
                 OutlinedTextField(
-                    o.questions, { q -> vm.updateReport { it.copy(questions = q) } }, Modifier.fillMaxWidth(), minLines = 2,
+                    o.questions, { q -> vm.report.update { it.copy(questions = q) } }, Modifier.fillMaxWidth(), minLines = 2,
                     shape = RoundedCornerShape(12.dp),
                     colors = OutlinedTextFieldDefaults.colors(unfocusedBorderColor = c.line, focusedBorderColor = c.period, unfocusedContainerColor = c.surface, focusedContainerColor = c.surface),
                 )
@@ -168,15 +171,15 @@ fun ReportScreen(vm: AppViewModel, fmt: Fmt, snackbar: SnackbarHostState, onBack
             item { Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                 Label(fmt.s("pdfLang"))
                 Segments(listOf("Deutsch", "English"), if (pdfDe) 0 else 1) { i ->
-                    vm.reportLocale.value = if (i == 0) Locale.GERMAN else Locale.ENGLISH
+                    vm.report.locale.value = if (i == 0) Locale.GERMAN else Locale.ENGLISH
                 }
             } }
             item { Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                 if (working) {
                     Text(stringResource(R.string.rep_working), color = c.ink2)
                     LinearWavyProgressIndicator(Modifier.fillMaxWidth())
-                } else if (file == null) PrimaryButton(fmt.s("previewBtn"), { vm.buildReport(uiLocale) }, Modifier.fillMaxWidth())
-                else SecondaryButton(fmt.s("updatePrev"), { vm.buildReport(uiLocale) }, Modifier.fillMaxWidth())
+                } else if (file == null) PrimaryButton(fmt.s("previewBtn"), { vm.report.build(uiLocale) }, Modifier.fillMaxWidth())
+                else SecondaryButton(fmt.s("updatePrev"), { vm.report.build(uiLocale) }, Modifier.fillMaxWidth())
             } }
             val f = file
             if (f != null && !working) {
@@ -195,7 +198,7 @@ fun ReportScreen(vm: AppViewModel, fmt: Fmt, snackbar: SnackbarHostState, onBack
 }
 
 /** Renders the real PDF page by page, lazily, at screen width (one renderer per file). */
-private fun androidx.compose.foundation.lazy.LazyListScope.pdfPages(file: File) {
+private fun LazyListScope.pdfPages(file: File) {
     item(key = file.path) {
         val c = Cyclus.colors
         val renderer = remember(file) { PdfRenderer(ParcelFileDescriptor.open(file, ParcelFileDescriptor.MODE_READ_ONLY)) }

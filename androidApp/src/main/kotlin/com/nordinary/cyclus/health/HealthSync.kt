@@ -26,14 +26,15 @@ import com.nordinary.cyclus.core.Day
 import com.nordinary.cyclus.store.CyclusRepository
 import com.nordinary.cyclus.store.StoreHolder
 import com.nordinary.cyclus.store.StoreState
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.flow.first
-import kotlinx.coroutines.withContext
 import java.time.Instant
 import java.time.LocalDate
 import java.time.ZoneId
 import java.time.ZoneOffset
 import kotlin.reflect.KClass
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.withContext
 
 enum class HealthAvailability { AVAILABLE, NEEDS_INSTALL, UNAVAILABLE }
 
@@ -102,7 +103,7 @@ class HealthSync(private val ctx: Context) {
             repo.setSetting(HealthKeys.ERROR, null)
             Result(imported, w.first, w.second)
         } catch (e: Exception) {
-            if (e is kotlinx.coroutines.CancellationException) throw e
+            if (e is CancellationException) throw e
             runCatching { if (current()) repo.setSetting(HealthKeys.ERROR, e.javaClass.simpleName) }
             Result(imported, 0, 0, e.javaClass.simpleName)
         }

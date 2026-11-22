@@ -4,6 +4,7 @@ import com.nordinary.cyclus.core.Day
 import com.nordinary.cyclus.core.DayLog
 import com.nordinary.cyclus.core.Js
 import com.nordinary.cyclus.engine.CycleSnapshot
+import com.nordinary.cyclus.engine.EvidenceType
 import com.nordinary.cyclus.engine.Mode
 import com.nordinary.cyclus.engine.OvulationStatus
 import com.nordinary.cyclus.engine.Tier
@@ -117,7 +118,7 @@ data class WhyStep(
     /** 0 for the calendar prior, else the cycle day of the new evidence. */
     val cd: Int,
     val date: Day?,
-    val events: List<com.nordinary.cyclus.engine.EvidenceType>,
+    val events: List<EvidenceType>,
     val window: Pair<Day, Day>?,
     /** For later steps: false means the step confirmed the previous window. */
     val changed: Boolean?,

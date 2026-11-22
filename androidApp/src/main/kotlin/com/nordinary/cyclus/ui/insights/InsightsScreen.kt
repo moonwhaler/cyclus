@@ -1,5 +1,6 @@
 package com.nordinary.cyclus.ui.insights
 
+import android.graphics.Paint
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
@@ -8,11 +9,11 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.IntrinsicSize
-import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.aspectRatio
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
@@ -35,9 +36,9 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
-import androidx.compose.ui.graphics.compositeOver
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.PathEffect
+import androidx.compose.ui.graphics.compositeOver
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.nativeCanvas
 import androidx.compose.ui.graphics.toArgb
@@ -46,9 +47,11 @@ import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.nordinary.cyclus.R
 import com.nordinary.cyclus.i18n.Fmt
 import com.nordinary.cyclus.insights.Area
 import com.nordinary.cyclus.insights.Pattern
@@ -62,9 +65,9 @@ import com.nordinary.cyclus.ui.common.Badge
 import com.nordinary.cyclus.ui.common.CyclusCard
 import com.nordinary.cyclus.ui.common.dashedBorder
 import com.nordinary.cyclus.ui.theme.Cyclus
+import com.nordinary.cyclus.ui.theme.CyclusColors
 import com.nordinary.cyclus.ui.theme.Nunito
 import com.nordinary.cyclus.ui.theme.RobotoFlex
-import com.nordinary.cyclus.ui.theme.CyclusColors
 
 /** Einblicke tab (prototype `renderInsights`). */
 @Composable
@@ -110,7 +113,7 @@ fun InsightsContent(
                     PatternSummaryCard(state.patterns, fmt, onOpen = { sheetPattern = it.id }, onAll = onAllPatterns)
                     CyclusCard(onClick = onReport) {
                         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) { Title(fmt.s("reportT")); if (onReport != null) Text("›", color = c.ink2, fontSize = 18.sp) }
-                        Body(if (onReport != null) fmt.s("reportB") else androidx.compose.ui.res.stringResource(com.nordinary.cyclus.R.string.rep_unavailable))
+                        Body(if (onReport != null) fmt.s("reportB") else androidx.compose.ui.res.stringResource(R.string.rep_unavailable))
                     }
                 }
                 val right: @Composable () -> Unit = {
@@ -147,7 +150,7 @@ fun InsightsContent(
                         if (state.history.size > 3) {
                             HorizontalDivider(color = c.line)
                             Text(
-                                androidx.compose.ui.res.stringResource(if (historyAll) com.nordinary.cyclus.R.string.hist_less else com.nordinary.cyclus.R.string.hist_all),
+                                androidx.compose.ui.res.stringResource(if (historyAll) R.string.hist_less else R.string.hist_all),
                                 Modifier.fillMaxWidth().clickable(role = Role.Button) { historyAll = !historyAll }.padding(horizontal = 14.dp, vertical = 14.dp),
                                 fontSize = 14.sp, fontWeight = FontWeight.SemiBold, color = c.period,
                             )
@@ -198,11 +201,11 @@ private fun CycleLengthChart(bars: List<CycleBar>, typLo: Int, typHi: Int, fmt: 
         val u = size.width / 320f
         val l0 = 20f; val l1 = 36f; val x0 = 28f; val x1 = 312f; val y0 = 12f; val y1 = 128f
         fun sy(l: Float) = y1 - (l - l0) / (l1 - l0) * (y1 - y0)
-        val text = android.graphics.Paint(android.graphics.Paint.ANTI_ALIAS_FLAG).apply { textSize = with(density) { 10.sp.toPx() }; color = c.ink2.toArgb() }
+        val text = Paint(Paint.ANTI_ALIAS_FLAG).apply { textSize = with(density) { 10.sp.toPx() }; color = c.ink2.toArgb() }
         drawRect(c.period.copy(alpha = .09f), Offset(x0 * u, sy(typHi.toFloat()) * u), Size((x1 - x0) * u, (sy(typLo.toFloat()) - sy(typHi.toFloat())) * u))
         for (l in listOf(20, 24, 28, 32, 36)) {
             drawLine(c.line, Offset(x0 * u, sy(l.toFloat()) * u), Offset(x1 * u, sy(l.toFloat()) * u), 1f * u)
-            text.textAlign = android.graphics.Paint.Align.RIGHT
+            text.textAlign = Paint.Align.RIGHT
             drawContext.canvas.nativeCanvas.drawText("$l", (x0 - 6) * u, (sy(l.toFloat()) + 3) * u, text)
         }
         val bw = (x1 - x0) / bars.size
@@ -210,7 +213,7 @@ private fun CycleLengthChart(bars: List<CycleBar>, typLo: Int, typHi: Int, fmt: 
             val x = x0 + i * bw + bw * 0.22f; val w = bw * 0.56f
             val top = sy(b.length.toFloat())
             drawRoundRect(c.period.copy(alpha = if (b.latest) 1f else .6f), Offset(x * u, top * u), Size(w * u, (y1 - top) * u), CornerRadius(4f * u))
-            text.textAlign = android.graphics.Paint.Align.CENTER
+            text.textAlign = Paint.Align.CENTER
             text.color = c.ink.toArgb(); text.isFakeBoldText = true
             drawContext.canvas.nativeCanvas.drawText("${b.length}", (x + w / 2) * u, (top - 4) * u, text)
             text.color = c.ink2.toArgb(); text.isFakeBoldText = false
@@ -230,15 +233,15 @@ private fun TemperatureChartView(t: TemperatureChart, fmt: Fmt) {
         val tx0 = 34f; val tx1 = 312f; val ty0 = 14f; val ty1 = 128f; val t0 = 36.1f; val t1 = 36.9f; val n = t.maxCd
         fun sx(cd: Int) = tx0 + (cd - 1).toFloat() / (n - 1) * (tx1 - tx0)
         fun syT(v: Double) = (ty1 - (v.toFloat() - t0) / (t1 - t0) * (ty1 - ty0))
-        val text = android.graphics.Paint(android.graphics.Paint.ANTI_ALIAS_FLAG).apply { textSize = with(density) { 10.sp.toPx() }; color = c.ink2.toArgb() }
+        val text = Paint(Paint.ANTI_ALIAS_FLAG).apply { textSize = with(density) { 10.sp.toPx() }; color = c.ink2.toArgb() }
         for (v in listOf(36.2, 36.4, 36.6, 36.8)) {
             drawLine(c.line, Offset(tx0 * u, syT(v) * u), Offset(tx1 * u, syT(v) * u), 1f * u)
-            text.textAlign = android.graphics.Paint.Align.RIGHT
+            text.textAlign = Paint.Align.RIGHT
             drawContext.canvas.nativeCanvas.drawText(fmt.num(v, 1), (tx0 - 5) * u, (syT(v) + 3) * u, text)
         }
         t.cover?.let { cv ->
             drawLine(c.fertile, Offset(tx0 * u, syT(cv) * u), Offset(tx1 * u, syT(cv) * u), 1f * u, pathEffect = PathEffect.dashPathEffect(floatArrayOf(4f * u, 3f * u)))
-            text.textAlign = android.graphics.Paint.Align.RIGHT; text.color = c.fertile.toArgb()
+            text.textAlign = Paint.Align.RIGHT; text.color = c.fertile.toArgb()
             drawContext.canvas.nativeCanvas.drawText(fmt.s("coverline"), tx1 * u, (syT(cv) - 4) * u, text)
             text.color = c.ink2.toArgb()
         }
@@ -250,7 +253,7 @@ private fun TemperatureChartView(t: TemperatureChart, fmt: Fmt) {
             drawCircle(if (p.afterShift) c.fertile else c.surface, 3f * u, o)
             drawCircle(if (p.afterShift) c.fertile else c.ink, 3f * u, o, style = Stroke(1.5f * u))
         }
-        text.textAlign = android.graphics.Paint.Align.CENTER
+        text.textAlign = Paint.Align.CENTER
         for (cd in listOf(1, 7, 14, 21, 28).filter { it <= n }) {
             drawContext.canvas.nativeCanvas.drawText("${if (fmt.isDe) "ZT" else "CD"} $cd", sx(cd) * u, (150 - 8) * u, text)
         }
@@ -266,7 +269,7 @@ private fun Heat(h: HeatMap, fmt: Fmt) {
             Spacer(Modifier.width(104.dp))
             for (r in h.rel) Text(
                 when { r == 0 -> "P1"; r > 0 -> "+$r"; else -> "$r" }, Modifier.weight(1f),
-                fontSize = 11.sp, color = c.ink2, textAlign = androidx.compose.ui.text.style.TextAlign.Center, fontFamily = RobotoFlex, maxLines = 1,
+                fontSize = 11.sp, color = c.ink2, textAlign = TextAlign.Center, fontFamily = RobotoFlex, maxLines = 1,
             )
         }
         h.symptoms.forEachIndexed { i, s ->

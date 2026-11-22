@@ -6,6 +6,7 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -35,25 +36,31 @@ import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.selected
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.SpanStyle
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.Hyphens
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.nordinary.cyclus.R
 import com.nordinary.cyclus.core.Catalog
 import com.nordinary.cyclus.core.DayLog
 import com.nordinary.cyclus.core.EpisodeKind
 import com.nordinary.cyclus.core.Flow
+import com.nordinary.cyclus.core.LhResult
 import com.nordinary.cyclus.engine.CycleStatus
 import com.nordinary.cyclus.i18n.Fmt
 import com.nordinary.cyclus.insights.Forecast
 import com.nordinary.cyclus.insights.ForecastKind
+import com.nordinary.cyclus.presenter.OvulationLine
 import com.nordinary.cyclus.presenter.TodayHero
 import com.nordinary.cyclus.presenter.TodayUiState
 import com.nordinary.cyclus.ui.common.Badge
 import com.nordinary.cyclus.ui.common.CyclusCard
+import com.nordinary.cyclus.ui.common.CyclusChip
 import com.nordinary.cyclus.ui.common.Droplet
 import com.nordinary.cyclus.ui.theme.Cyclus
 import com.nordinary.cyclus.ui.theme.Nunito
@@ -75,7 +82,7 @@ fun TodayContent(
     onQuickFlow: (Flow) -> Unit,
     onPatterns: () -> Unit,
     onChangeStage: () -> Unit,
-    onLh: (com.nordinary.cyclus.core.LhResult) -> Unit = {},
+    onLh: (LhResult) -> Unit = {},
     onWhy: () -> Unit = {},
     /** In-context opt-in for „Periode bald“ (nothing is armed before the user says yes, on every API level). */
     reminderOffer: Boolean = false,
@@ -113,9 +120,9 @@ fun TodayContent(
                 }
                 is TodayHero.ConceiveFertile -> {
                     val ov = when (val o = hero.ovulation) {
-                        com.nordinary.cyclus.presenter.OvulationLine.TodayOrTomorrow -> fmt.s("ovSoonTT")
-                        is com.nordinary.cyclus.presenter.OvulationLine.Soon -> fmt.s("ovSoon", fmt.range(o.from, o.to))
-                        is com.nordinary.cyclus.presenter.OvulationLine.Estimated -> fmt.s("ovEst", fmt.range(o.from, o.to))
+                        OvulationLine.TodayOrTomorrow -> fmt.s("ovSoonTT")
+                        is OvulationLine.Soon -> fmt.s("ovSoon", fmt.range(o.from, o.to))
+                        is OvulationLine.Estimated -> fmt.s("ovEst", fmt.range(o.from, o.to))
                     }
                     Text(ov, fontSize = 14.sp, fontWeight = FontWeight.SemiBold, color = c.ink, textAlign = TextAlign.Center)
                     Badge(fmt.s(hero.chip.key), dot = c.fertile, color = c.fertile)
@@ -129,11 +136,11 @@ fun TodayContent(
 
         Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
             if (reminderOffer) CyclusCard {
-                CardTitle(androidx.compose.ui.res.stringResource(com.nordinary.cyclus.R.string.offer_t))
-                CardBody(androidx.compose.ui.res.stringResource(com.nordinary.cyclus.R.string.offer_b))
+                CardTitle(androidx.compose.ui.res.stringResource(R.string.offer_t))
+                CardBody(androidx.compose.ui.res.stringResource(R.string.offer_b))
                 Row(Modifier.fillMaxWidth().padding(top = 10.dp), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                    SecondaryButton(androidx.compose.ui.res.stringResource(com.nordinary.cyclus.R.string.offer_no), { onReminderOffer(false) }, Modifier.weight(1f))
-                    PrimaryButton(androidx.compose.ui.res.stringResource(com.nordinary.cyclus.R.string.offer_yes), { onReminderOffer(true) }, Modifier.weight(1f))
+                    SecondaryButton(androidx.compose.ui.res.stringResource(R.string.offer_no), { onReminderOffer(false) }, Modifier.weight(1f))
+                    PrimaryButton(androidx.compose.ui.res.stringResource(R.string.offer_yes), { onReminderOffer(true) }, Modifier.weight(1f))
                 }
             }
             CyclusCard(onClick = onOpenLog) {
@@ -164,8 +171,8 @@ fun TodayContent(
                         CardTitle(fmt.s("lhToday"))
                         Text(fmt.s("lhNegSoFar", conceive.lhNegativesSoFar), fontSize = 12.sp, color = c.ink2)
                     }
-                    androidx.compose.foundation.layout.FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                        for (r in com.nordinary.cyclus.core.LhResult.entries) com.nordinary.cyclus.ui.common.CyclusChip(
+                    FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        for (r in LhResult.entries) CyclusChip(
                             fmt.s("lh_${r.key}"), conceive.todaysLh == r, { onLh(r) }, accent = c.fertile,
                         )
                     }
@@ -283,7 +290,7 @@ fun DropTile(flow: Flow, label: String, selected: Boolean, color: Color, modifie
         horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(4.dp, Alignment.CenterVertically),
     ) {
         Droplet(flow, color)
-        Text(label, fontSize = 11.5.sp, fontWeight = FontWeight.SemiBold, lineHeight = 13.sp, textAlign = TextAlign.Center, color = c.ink, style = androidx.compose.ui.text.TextStyle(hyphens = androidx.compose.ui.text.style.Hyphens.Auto))
+        Text(label, fontSize = 11.5.sp, fontWeight = FontWeight.SemiBold, lineHeight = 13.sp, textAlign = TextAlign.Center, color = c.ink, style = TextStyle(hyphens = Hyphens.Auto))
     }
 }
 

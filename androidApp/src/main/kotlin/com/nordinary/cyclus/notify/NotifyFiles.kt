@@ -1,9 +1,11 @@
 package com.nordinary.cyclus.notify
 
 import android.content.Context
+import com.nordinary.cyclus.backup.BackupKeyStore
 import com.nordinary.cyclus.presenter.NotifyPlan
 import com.nordinary.cyclus.presenter.WidgetSnapshot
 import java.io.File
+import java.io.FileOutputStream
 
 /**
  * Side files for the DB-free system surfaces (ANDROID_PLAN §6.3, §7): the reminder plan (kinds + days) and, only while
@@ -14,7 +16,7 @@ import java.io.File
  */
 object NotifyFiles {
     const val KEY_ALIAS = "cyclus_side_kek_v1"
-    private val keys = com.nordinary.cyclus.backup.BackupKeyStore(KEY_ALIAS)
+    private val keys = BackupKeyStore(KEY_ALIAS)
 
     private fun notifyDir(ctx: Context) = File(ctx.filesDir, "notify")
     private fun widgetDir(ctx: Context) = File(ctx.filesDir, "widget")
@@ -69,7 +71,7 @@ object NotifyFiles {
 
     private fun atomicWrite(f: File, bytes: ByteArray) {
         val tmp = File(f.parentFile, f.name + ".tmp")
-        java.io.FileOutputStream(tmp).use { it.write(bytes); it.fd.sync() }
+        FileOutputStream(tmp).use { it.write(bytes); it.fd.sync() }
         if (!tmp.renameTo(f)) { f.delete(); tmp.renameTo(f) }
     }
 }

@@ -1,5 +1,6 @@
 package com.nordinary.cyclus.backup
 
+import java.io.EOFException
 import java.io.File
 import java.io.InputStream
 
@@ -77,7 +78,7 @@ private fun InputStream.readNBytesCompat(n: Int): ByteArray {
     var off = 0
     while (off < n) {
         val r = read(out, off, n - off)
-        if (r < 0) throw java.io.EOFException("restore stream ended early")
+        if (r < 0) throw EOFException("restore stream ended early")
         off += r
     }
     return out

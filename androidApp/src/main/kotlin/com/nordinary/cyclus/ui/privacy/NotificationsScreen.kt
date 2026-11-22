@@ -33,6 +33,7 @@ import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import com.nordinary.cyclus.BuildConfig
 import com.nordinary.cyclus.R
 import com.nordinary.cyclus.i18n.Fmt
 import com.nordinary.cyclus.presenter.NotifyKind
@@ -115,7 +116,7 @@ fun NotificationsScreen(
                 }
                 Group { Link(stringResource(R.string.nf_channels), null, onOpenSystem) }
                 Note(stringResource(R.string.nf_visibility_note))
-                if (com.nordinary.cyclus.BuildConfig.DEBUG && debug) Group { Link(stringResource(R.string.nf_test), null, onTest) }
+                if (BuildConfig.DEBUG && debug) Group { Link(stringResource(R.string.nf_test), null, onTest) }
                 Spacer(Modifier.height(32.dp))
             }
         }

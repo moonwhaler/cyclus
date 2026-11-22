@@ -2,6 +2,12 @@ package com.nordinary.cyclus.store
 
 import app.cash.sqldelight.coroutines.asFlow
 import app.cash.sqldelight.coroutines.mapToList
+import com.nordinary.cyclus.backup.ExportEpisode
+import com.nordinary.cyclus.backup.ExportFile
+import com.nordinary.cyclus.backup.ExportLog
+import com.nordinary.cyclus.backup.ExportOverride
+import com.nordinary.cyclus.backup.ExportTag
+import com.nordinary.cyclus.backup.SettingKeys
 import com.nordinary.cyclus.core.CycleOverride
 import com.nordinary.cyclus.core.Day
 import com.nordinary.cyclus.core.DayLog
@@ -11,16 +17,19 @@ import com.nordinary.cyclus.core.Flow as LogFlow
 import com.nordinary.cyclus.core.LhResult
 import com.nordinary.cyclus.core.Mucus
 import com.nordinary.cyclus.core.OverrideKind
-import com.nordinary.cyclus.backup.ExportEpisode
-import com.nordinary.cyclus.backup.ExportFile
-import com.nordinary.cyclus.backup.ExportLog
-import com.nordinary.cyclus.backup.ExportOverride
-import com.nordinary.cyclus.backup.ExportTag
-import com.nordinary.cyclus.backup.SettingKeys
+import com.nordinary.cyclus.health.HealthLink
+import com.nordinary.cyclus.health.HealthSample
+import com.nordinary.cyclus.health.HealthType
+import com.nordinary.cyclus.health.LinkState
 import com.nordinary.cyclus.store.db.CyclusDatabase
+import com.nordinary.cyclus.store.db.Day_log
+import com.nordinary.cyclus.store.db.Day_pain
+import com.nordinary.cyclus.store.db.Day_symptom
+import com.nordinary.cyclus.store.db.Health_sample
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
 
@@ -76,43 +85,43 @@ class CyclusRepository(
     }
 
     /** Orders [updateLog] calls in-process too, independent of how the driver handles concurrent transactions. */
-    private val dayLock = kotlinx.coroutines.sync.Mutex()
+    private val dayLock = Mutex()
 
     // ---- Health Connect (schema v2). Imported samples and links are device data: never exported, gone with the DB.
 
-    fun observeHealthSamples(): Flow<List<com.nordinary.cyclus.health.HealthSample>> =
+    fun observeHealthSamples(): Flow<List<HealthSample>> =
         q.selectAllSamples().asFlow().mapToList(io).map { rows -> rows.mapNotNull { it.toSample() } }
 
-    private fun com.nordinary.cyclus.store.db.Health_sample.toSample() =
-        com.nordinary.cyclus.health.HealthType.of(type)?.let { com.nordinary.cyclus.health.HealthSample(record_id, it, day.toInt(), value_, origin, updated_at) }
+    private fun Health_sample.toSample() =
+        HealthType.of(type)?.let { HealthSample(record_id, it, day.toInt(), value_, origin, updated_at) }
 
     suspend fun healthSampleCount(): Long = withContext(io) { q.countSamples().executeAsOne() }
 
-    suspend fun healthLinks(): Map<String, com.nordinary.cyclus.health.HealthLink> = withContext(io) {
+    suspend fun healthLinks(): Map<String, HealthLink> = withContext(io) {
         q.selectAllLinks().executeAsList().mapNotNull { r ->
-            com.nordinary.cyclus.health.HealthType.of(r.type)?.let {
-                r.sync_id to com.nordinary.cyclus.health.HealthLink(
-                    r.sync_id, it, r.day.toInt(), r.record_id, r.version, r.hash, com.nordinary.cyclus.health.LinkState.of(r.state),
+            HealthType.of(r.type)?.let {
+                r.sync_id to HealthLink(
+                    r.sync_id, it, r.day.toInt(), r.record_id, r.version, r.hash, LinkState.of(r.state),
                 )
             }
         }.toMap()
     }
 
-    suspend fun upsertHealthLink(l: com.nordinary.cyclus.health.HealthLink) = withContext(io) {
+    suspend fun upsertHealthLink(l: HealthLink) = withContext(io) {
         q.upsertLink(l.syncId, l.type.key, l.day.toLong(), l.recordId, l.version, l.hash, l.state.key)
     }
 
     suspend fun deleteHealthLink(syncId: String) = withContext(io) { q.deleteLink(syncId) }
 
-    suspend fun deleteHealthLinksOfType(t: com.nordinary.cyclus.health.HealthType) = withContext(io) { q.deleteLinksOfType(t.key) }
+    suspend fun deleteHealthLinksOfType(t: HealthType) = withContext(io) { q.deleteLinksOfType(t.key) }
 
     /**
      * One page of Health Connect data applied atomically together with the token it came with, so a crash or a
      * cancelled read never moves the token past data that wasn't stored. [replaceTypes]: full read, drop old samples first.
      */
     suspend fun applyHealthPage(
-        replaceTypes: Set<com.nordinary.cyclus.health.HealthType>,
-        upserts: List<com.nordinary.cyclus.health.HealthSample>,
+        replaceTypes: Set<HealthType>,
+        upserts: List<HealthSample>,
         deletedRecordIds: List<String>,
         tokens: Map<String, String?>,
     ) = withContext(io) {
@@ -122,7 +131,7 @@ class CyclusRepository(
             for (id in deletedRecordIds) {
                 q.deleteSample(id)
                 // one of ours deleted in Health Connect: keep the Cyclus data, ask the user (rule 6)
-                q.setLinkStateByRecord(com.nordinary.cyclus.health.LinkState.REMOVED.key, id)
+                q.setLinkStateByRecord(LinkState.REMOVED.key, id)
             }
             for ((k, v) in tokens) if (v == null) q.deleteSetting(k) else q.upsertSetting(k, v)
         }
@@ -279,10 +288,10 @@ class CyclusRepository(
     }
 
     private fun toDayLog(
-        r: com.nordinary.cyclus.store.db.Day_log,
-        sym: List<com.nordinary.cyclus.store.db.Day_symptom>,
+        r: Day_log,
+        sym: List<Day_symptom>,
         emotions: List<String>,
-        pains: List<com.nordinary.cyclus.store.db.Day_pain>,
+        pains: List<Day_pain>,
         tags: List<String>,
     ) = DayLog(
         flow = r.flow?.let { LogFlow.of(it) },

@@ -1,5 +1,9 @@
 package com.nordinary.cyclus.backup
 
+import com.nordinary.cyclus.core.EpisodeKind
+import com.nordinary.cyclus.core.LhResult
+import com.nordinary.cyclus.core.Mucus
+import com.nordinary.cyclus.core.OverrideKind
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
 
@@ -66,8 +70,8 @@ data class ExportFile(
         for (l in logs) {
             day(l.day, "log day")
             l.flow?.let { com.nordinary.cyclus.core.Flow.ofOrNull(it) ?: newer("flow") }
-            l.mucus?.let { com.nordinary.cyclus.core.Mucus.ofOrNull(it) ?: newer("mucus") }
-            l.lh?.let { com.nordinary.cyclus.core.LhResult.ofOrNull(it) ?: newer("lh") }
+            l.mucus?.let { Mucus.ofOrNull(it) ?: newer("mucus") }
+            l.lh?.let { LhResult.ofOrNull(it) ?: newer("lh") }
             keys(l.symptoms, "symptoms"); keys(l.emotions, "emotions"); keys(l.tags, "tags")
             keys(l.symptomSeverity.keys, "severity"); if (l.symptomSeverity.values.any { it !in 1..3 }) bad("severity")
             keys(l.pain.keys, "pain"); if (l.pain.values.any { it !in 0..10 }) bad("pain")
@@ -78,12 +82,12 @@ data class ExportFile(
         }
         for (o in overrides) {
             day(o.day, "override day")
-            com.nordinary.cyclus.core.OverrideKind.ofOrNull(o.kind) ?: newer("override")
+            OverrideKind.ofOrNull(o.kind) ?: newer("override")
             o.reason?.let { if (it.length > MAX_NOTE) bad("reason") }
         }
         for (e in episodes) {
             key(e.id, "episode id")
-            com.nordinary.cyclus.core.EpisodeKind.ofOrNull(e.kind) ?: newer("episode")
+            EpisodeKind.ofOrNull(e.kind) ?: newer("episode")
             val s = day(e.start, "episode start")
             e.end?.let { if (day(it, "episode end") < s) bad("episode end") }
         }
@@ -153,6 +157,8 @@ object SettingKeys {
     const val LOCK_BACKOFF = "lock.backoff"
     const val EXPORT_COUNT = "export.count"
     const val EXPORT_LAST = "export.last"
+    /** Name printed on the Doctor Visit Pack; remembered on this device only. */
+    const val REPORT_NAME = "report.name"
 }
 
 /** What an import will bring in (shown before Merge/Replace). */

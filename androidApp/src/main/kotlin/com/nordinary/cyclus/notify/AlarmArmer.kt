@@ -15,7 +15,7 @@ import kotlin.time.Instant
  * receivers while the phone may be locked. Inexact (`setAndAllowWhileIdle`), no exact-alarm permission.
  */
 object AlarmArmer {
-    const val ACTION_FIRE = "com.nordinary.cyclus.notify.FIRE"
+    const val ACTION_FIRE = "FIRE"
     private const val REQUEST = 1
 
     fun pendingIntent(ctx: Context, flags: Int = PendingIntent.FLAG_UPDATE_CURRENT): PendingIntent? =

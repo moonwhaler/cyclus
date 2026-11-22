@@ -20,6 +20,7 @@ import androidx.glance.ImageProvider
 import androidx.glance.LocalContext
 import androidx.glance.action.clickable
 import androidx.glance.appwidget.GlanceAppWidget
+import androidx.glance.appwidget.GlanceAppWidgetManager
 import androidx.glance.appwidget.GlanceAppWidgetReceiver
 import androidx.glance.appwidget.action.actionStartActivity
 import androidx.glance.appwidget.appWidgetBackground
@@ -38,12 +39,14 @@ import androidx.glance.layout.height
 import androidx.glance.layout.padding
 import androidx.glance.layout.size
 import androidx.glance.layout.width
+import androidx.glance.state.PreferencesGlanceStateDefinition
 import androidx.glance.text.FontWeight
 import androidx.glance.text.Text
 import androidx.glance.text.TextAlign
 import androidx.glance.text.TextStyle
 import com.nordinary.cyclus.ActionEntry
 import com.nordinary.cyclus.R
+import com.nordinary.cyclus.notify.AlarmArmer
 import com.nordinary.cyclus.notify.NotifyFiles
 import com.nordinary.cyclus.presenter.WidgetLine
 import com.nordinary.cyclus.presenter.WidgetPresenter
@@ -64,7 +67,7 @@ object CyclusWidgets {
 
     /** Bumps a version in each widget's Glance state so running sessions re-read the side file, then updates. */
     suspend fun refresh(ctx: Context) {
-        val mgr = androidx.glance.appwidget.GlanceAppWidgetManager(ctx)
+        val mgr = GlanceAppWidgetManager(ctx)
         for (w in listOf(SmallWidget(), MediumWidget())) runCatching {
             for (id in mgr.getGlanceIds(w.javaClass)) {
                 androidx.glance.appwidget.state.updateAppWidgetState(ctx, id) { it[VERSION] = System.currentTimeMillis() }
@@ -108,7 +111,7 @@ private fun lineText(ctx: Context, l: WidgetLine): String = when (l) {
 }
 
 abstract class CyclusWidget(private val medium: Boolean) : GlanceAppWidget() {
-    override val stateDefinition = androidx.glance.state.PreferencesGlanceStateDefinition
+    override val stateDefinition = PreferencesGlanceStateDefinition
 
     override suspend fun provideGlance(context: Context, id: GlanceId) {
         provideContent {
@@ -181,8 +184,8 @@ class MediumWidget : CyclusWidget(medium = true)
 
 /** Placing the first widget arms the midnight refresh (DB-free). */
 abstract class CyclusWidgetReceiver : GlanceAppWidgetReceiver() {
-    override fun onEnabled(context: Context) { super.onEnabled(context); com.nordinary.cyclus.notify.AlarmArmer.arm(context) }
-    override fun onDisabled(context: Context) { super.onDisabled(context); com.nordinary.cyclus.notify.AlarmArmer.arm(context) }
+    override fun onEnabled(context: Context) { super.onEnabled(context); AlarmArmer.arm(context) }
+    override fun onDisabled(context: Context) { super.onDisabled(context); AlarmArmer.arm(context) }
 }
 
 class SmallWidgetReceiver : CyclusWidgetReceiver() { override val glanceAppWidget: GlanceAppWidget = SmallWidget() }

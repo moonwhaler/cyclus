@@ -48,6 +48,7 @@ import com.nordinary.cyclus.lock.LockConfig
 import com.nordinary.cyclus.ui.CyclusSnackbarHost
 import com.nordinary.cyclus.ui.common.CyclusIcons
 import com.nordinary.cyclus.ui.theme.Cyclus
+import java.time.ZoneId
 
 /** Everything the Privacy Center shows; built by the caller from settings, backup files and the device. */
 data class PrivacyUiState(
@@ -188,7 +189,7 @@ private fun backupLine(fmt: Fmt, s: PrivacyUiState): String = when {
     s.deviceOnly -> fmt.s("bkDevice")
     !s.deviceSecure -> stringResource(R.string.bk_status_noe2e)
     s.backupStatus?.outcome == "sent" -> stringResource(
-        R.string.bk_status_sent, fmt.md(java.time.Instant.ofEpochMilli(s.backupStatus.at).atZone(java.time.ZoneId.systemDefault()).toLocalDate().toEpochDay().toInt()),
+        R.string.bk_status_sent, fmt.md(java.time.Instant.ofEpochMilli(s.backupStatus.at).atZone(ZoneId.systemDefault()).toLocalDate().toEpochDay().toInt()),
     )
     s.backupStatus?.outcome == "failed" -> stringResource(R.string.bk_status_failed)
     s.backupStatus?.outcome == "skipped-no-e2e" -> stringResource(R.string.bk_status_noe2e)

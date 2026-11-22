@@ -3,11 +3,12 @@ package com.nordinary.cyclus.backup
 import android.app.backup.BackupManager
 import android.content.Context
 import com.nordinary.cyclus.store.CyclusRepository
+import java.io.File
+import java.util.concurrent.Executors
 import kotlinx.coroutines.asCoroutineDispatcher
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
-import java.util.concurrent.Executors
 
 /**
  * Single writer for everything that touches the device backup: snapshot writes, the „Nur auf dem Gerät“ toggle,
@@ -16,7 +17,7 @@ import java.util.concurrent.Executors
  */
 class BackupCoordinator(
     private val context: Context,
-    filesDir: java.io.File = context.filesDir,
+    filesDir: File = context.filesDir,
     val keys: BackupKeyStore = BackupKeyStore(),
 ) {
     val files = BackupFiles(filesDir)

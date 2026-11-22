@@ -1,6 +1,8 @@
 package com.nordinary.cyclus.backup
 
 import java.io.File
+import java.io.FileOutputStream
+import java.io.IOException
 
 /**
  * Files are the only state the backup agent reads (it runs in a restricted process, often while the phone is locked,
@@ -32,8 +34,8 @@ class BackupFiles(filesDir: File) {
     fun writeAtomic(target: File, bytes: ByteArray) {
         target.parentFile?.mkdirs()
         val tmp = File(target.parentFile, target.name + ".tmp")
-        java.io.FileOutputStream(tmp).use { out -> out.write(bytes); out.fd.sync() }
-        if (!tmp.renameTo(target)) { tmp.delete(); throw java.io.IOException("rename failed: ${target.name}") }
+        FileOutputStream(tmp).use { out -> out.write(bytes); out.fd.sync() }
+        if (!tmp.renameTo(target)) { tmp.delete(); throw IOException("rename failed: ${target.name}") }
     }
 
     fun touch(f: File) { if (!f.exists()) writeAtomic(f, ByteArray(0)) }

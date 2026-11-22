@@ -27,6 +27,7 @@ import androidx.compose.material3.SelectableDates
 import androidx.compose.material3.Text
 import androidx.compose.material3.rememberDatePickerState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
@@ -41,9 +42,12 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.health.connect.client.PermissionController
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.nordinary.cyclus.CyclusApplication
 import com.nordinary.cyclus.R
+import com.nordinary.cyclus.backup.SettingKeys
+import com.nordinary.cyclus.health.HealthAvailability
 import com.nordinary.cyclus.i18n.Fmt
 import com.nordinary.cyclus.lock.Authn
 import com.nordinary.cyclus.presenter.LifeStage
@@ -67,18 +71,18 @@ fun OnboardingScreen(vm: AppViewModel, fmt: Fmt) {
     val ctx = LocalContext.current
     val app = ctx.applicationContext as CyclusApplication
     val choices by vm.onboardingChoices.collectAsStateWithLifecycle()
-    val importStage by vm.importStage.collectAsStateWithLifecycle()
+    val importStage by vm.privacy.importStage.collectAsStateWithLifecycle()
     var step by remember { mutableIntStateOf(0) }
     var importing by remember { mutableStateOf(false) }
     var pinSheet by remember { mutableStateOf(false) }
     var askDuration by remember { mutableStateOf(false) }
     val openDoc = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->
-        if (uri != null) { vm.startImport(uri); importing = true }
+        if (uri != null) { vm.privacy.startImport(uri); importing = true }
     }
     // Health Connect import (reinstall recovery happens in the first sync, into this still-empty store)
-    val hcAvailable = remember { vm.health.availability() == com.nordinary.cyclus.health.HealthAvailability.AVAILABLE }
-    val hcLauncher = rememberLauncherForActivityResult(androidx.health.connect.client.PermissionController.createRequestPermissionResultContract()) { granted ->
-        vm.healthConnected(granted)
+    val hcAvailable = remember { vm.health.availability() == HealthAvailability.AVAILABLE }
+    val hcLauncher = rememberLauncherForActivityResult(PermissionController.createRequestPermissionResultContract()) { granted ->
+        vm.health.connected(granted)
         if (granted.isNotEmpty()) step = 4 // cycles come from Health Connect: no need to ask for the last period
     }
 
@@ -106,7 +110,7 @@ fun OnboardingScreen(vm: AppViewModel, fmt: Fmt) {
                 Dots(2)
                 PrimaryButton(fmt.s("importBtn"), { app.lock.suspendForExternalActivity(); openDoc.launch(arrayOf("*/*")) }, Modifier.fillMaxWidth())
                 if (hcAvailable) SecondaryButton(
-                    stringResource(com.nordinary.cyclus.R.string.onb_hc),
+                    stringResource(R.string.onb_hc),
                     { app.lock.suspendForExternalActivity(); hcLauncher.launch(vm.health.readPermissions()) }, Modifier.fillMaxWidth(),
                 )
                 SecondaryButton(fmt.s("skip"), { step = 3 }, Modifier.fillMaxWidth())
@@ -120,7 +124,7 @@ fun OnboardingScreen(vm: AppViewModel, fmt: Fmt) {
                 )
                 DatePicker(picker, title = null, headline = null, showModeToggle = false, colors = DatePickerDefaults.colors(containerColor = c.bg))
                 val picked = picker.selectedDateMillis?.let { (it / 86_400_000L).toInt() }
-                androidx.compose.runtime.LaunchedEffect(picked) {
+                LaunchedEffect(picked) {
                     if (picked != null && picked != vm.onboardingChoices.value.lastPeriodStart) {
                         vm.onboardingChoices.value = vm.onboardingChoices.value.copy(lastPeriodStart = picked, stillBleeding = false, durationDays = null)
                     }
@@ -176,18 +180,18 @@ fun OnboardingScreen(vm: AppViewModel, fmt: Fmt) {
     }
 
     if (importing) ImportSheet(
-        fmt, importStage, onOpen = vm::openImport,
+        fmt, importStage, onOpen = vm.privacy::openImport,
         onApply = { replace ->
-            vm.applyImport(replace) {
+            vm.privacy.applyImport(replace) {
                 importing = false
                 // continue to the life-stage and lock steps; an import never sets up the app lock
                 val m = vm.model.value
-                step = if (m != null && (m.activeEpisode != null || m.settings.containsKey(com.nordinary.cyclus.backup.SettingKeys.MODE))) 5 else 4
+                step = if (m != null && (m.activeEpisode != null || m.settings.containsKey(SettingKeys.MODE))) 5 else 4
             }
         },
-        onDismiss = { vm.cancelImport(); importing = false },
+        onDismiss = { vm.privacy.cancelImport(); importing = false },
     )
-    if (pinSheet) PinSetupSheet(fmt, onSet = { pin -> pinSheet = false; vm.setPin(pin); vm.finishOnboarding(enableLock = true) }, onDismiss = { pinSheet = false })
+    if (pinSheet) PinSetupSheet(fmt, onSet = { pin -> pinSheet = false; vm.privacy.setPin(pin); vm.finishOnboarding(enableLock = true) }, onDismiss = { pinSheet = false })
 }
 
 @Composable

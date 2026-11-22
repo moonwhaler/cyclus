@@ -1,6 +1,7 @@
 package com.nordinary.cyclus.surfaces
 
 import android.annotation.SuppressLint
+import android.app.PendingIntent
 import android.content.Context
 import android.graphics.drawable.Icon
 import android.os.Build
@@ -12,6 +13,7 @@ import androidx.core.graphics.drawable.IconCompat
 import com.nordinary.cyclus.ActionEntry
 import com.nordinary.cyclus.CyclusApplication
 import com.nordinary.cyclus.R
+import com.nordinary.cyclus.backup.BackupCoordinator
 import com.nordinary.cyclus.backup.SettingKeys
 import com.nordinary.cyclus.engine.CycleSnapshot
 import com.nordinary.cyclus.notify.AlarmArmer
@@ -21,7 +23,6 @@ import com.nordinary.cyclus.presenter.NotificationPlanner
 import com.nordinary.cyclus.presenter.NotifyKeys
 import com.nordinary.cyclus.presenter.NotifyPrefs
 import com.nordinary.cyclus.presenter.WidgetSnapshot
-import com.nordinary.cyclus.backup.BackupCoordinator
 import com.nordinary.cyclus.store.CyclusRepository
 import com.nordinary.cyclus.store.StoreHolder
 import com.nordinary.cyclus.store.StoreState
@@ -51,9 +52,9 @@ object SystemSurfaces {
             val prefs = NotifyPrefs.from(settings)
             val plan = NotificationPlanner.plan(snap, prefs, settings[SettingKeys.EXPORT_LAST]?.toIntOrNull())
             NotifyFiles.writePlan(app, plan, System.currentTimeMillis())
-            widgetChanged = NotifyFiles.writeWidget(app, if (settings[NotifyKeys.WIDGET_DETAILS] == "1") WidgetSnapshot.from(snap) else null)
+            widgetChanged = NotifyFiles.writeWidget(app, if (prefs.widgetDetails) WidgetSnapshot.from(snap) else null)
             AlarmArmer.arm(app)
-            Shortcuts.apply(app, settings[NotifyKeys.SHORTCUT] == "1")
+            Shortcuts.apply(app, prefs.shortcut)
         }
         if (widgetChanged) CyclusWidgets.refresh(app)
         return ran
@@ -108,7 +109,7 @@ class LogTileService : TileService() {
         val intent = ActionEntry.intent(this, ActionEntry.LOG)
         if (Build.VERSION.SDK_INT >= 34) {
             startActivityAndCollapse(
-                android.app.PendingIntent.getActivity(this, 2, intent, android.app.PendingIntent.FLAG_IMMUTABLE or android.app.PendingIntent.FLAG_UPDATE_CURRENT),
+                PendingIntent.getActivity(this, 2, intent, PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT),
             )
         } else {
             @Suppress("DEPRECATION")

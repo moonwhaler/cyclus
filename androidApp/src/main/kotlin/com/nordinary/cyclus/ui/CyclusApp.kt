@@ -1,10 +1,20 @@
 package com.nordinary.cyclus.ui
 
+import android.Manifest
+import android.appwidget.AppWidgetManager
+import android.content.ComponentName
+import android.content.pm.PackageManager
+import android.os.Build
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
@@ -36,45 +46,65 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.nestedscroll.nestedScroll
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.platform.LocalResources
+import androidx.compose.ui.platform.LocalWindowInfo
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.core.content.ContextCompat
+import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation3.runtime.NavKey
 import androidx.navigation3.runtime.entryProvider
 import androidx.navigation3.runtime.rememberNavBackStack
 import androidx.navigation3.ui.NavDisplay
+import com.nordinary.cyclus.ActionEntry
+import com.nordinary.cyclus.BuildConfig
+import com.nordinary.cyclus.CyclusApplication
 import com.nordinary.cyclus.R
 import com.nordinary.cyclus.core.DayLog
+import com.nordinary.cyclus.engine.Mode
+import com.nordinary.cyclus.health.DebugHealth
+import com.nordinary.cyclus.health.HealthMerge
 import com.nordinary.cyclus.i18n.Fmt
 import com.nordinary.cyclus.i18n.rememberFmt
+import com.nordinary.cyclus.notify.Notifier
 import com.nordinary.cyclus.presenter.CalendarPresenter
+import com.nordinary.cyclus.presenter.InsightsUiState
 import com.nordinary.cyclus.presenter.LifeStage
+import com.nordinary.cyclus.presenter.NotifyKeys
+import com.nordinary.cyclus.presenter.NotifyPrefs
+import com.nordinary.cyclus.presenter.ReportPresenter
 import com.nordinary.cyclus.presenter.TodayPresenter
 import com.nordinary.cyclus.sample.SampleScenario
 import com.nordinary.cyclus.ui.calendar.CalendarContent
 import com.nordinary.cyclus.ui.calendar.DaySheet
 import com.nordinary.cyclus.ui.common.CyclusIcons
 import com.nordinary.cyclus.ui.insights.InsightsContent
+import com.nordinary.cyclus.ui.insights.PatternsScreen
 import com.nordinary.cyclus.ui.log.LogSheet
+import com.nordinary.cyclus.ui.privacy.NotificationsScreen
+import com.nordinary.cyclus.ui.privacy.PrivacyEntry
+import com.nordinary.cyclus.ui.report.ReportScreen
 import com.nordinary.cyclus.ui.settings.SettingsScreen
 import com.nordinary.cyclus.ui.sheets.MethodSheet
 import com.nordinary.cyclus.ui.sheets.WhySheet
 import com.nordinary.cyclus.ui.theme.Cyclus
 import com.nordinary.cyclus.ui.theme.DarkCyclus
 import com.nordinary.cyclus.ui.today.TodayContent
+import com.nordinary.cyclus.widget.MediumWidgetReceiver
+import com.nordinary.cyclus.widget.SmallWidgetReceiver
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.serialization.Serializable
-import androidx.compose.ui.Alignment
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.widthIn
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Box
 
 @Serializable private data object MainKey : NavKey
 @Serializable private data object SettingsKey : NavKey
@@ -90,7 +120,7 @@ private enum class Sheet { NONE, LOG, DAY, WHY, METHOD }
 @Composable
 fun CyclusApp(vm: AppViewModel) {
     // compile-time constant: R8 removes the demo data, wipe and test tools from release builds
-    val debug = com.nordinary.cyclus.BuildConfig.DEBUG
+    val debug = BuildConfig.DEBUG
     val fmt = rememberFmt()
     val model by vm.model.collectAsStateWithLifecycle()
     val backStack = rememberNavBackStack(MainKey)
@@ -103,7 +133,7 @@ fun CyclusApp(vm: AppViewModel) {
     var sheetDay by rememberSaveable { mutableStateOf<Int?>(null) }
     var logChanged by rememberSaveable { mutableStateOf(false) }
 
-    val res = androidx.compose.ui.platform.LocalResources.current
+    val res = LocalResources.current
     fun text(msg: UiMessage) = msg.res?.let { res.getString(it) } ?: fmt.s(msg.key)
     LaunchedEffect(vm, fmt) {
         vm.messages.collect { msg ->
@@ -121,8 +151,8 @@ fun CyclusApp(vm: AppViewModel) {
     fun openLog(day: Int) { sheetDay = day; logChanged = false; sheet = Sheet.LOG }
 
     // widget / tile / shortcut action (ActionEntry): runs once, here = unlocked, ready, not onboarding
-    val ctx = androidx.compose.ui.platform.LocalContext.current
-    val app = ctx.applicationContext as com.nordinary.cyclus.CyclusApplication
+    val ctx = LocalContext.current
+    val app = ctx.applicationContext as CyclusApplication
     val pending by app.pendingAction.collectAsStateWithLifecycle()
     LaunchedEffect(pending, model != null) {
         val a = pending ?: return@LaunchedEffect
@@ -131,27 +161,27 @@ fun CyclusApp(vm: AppViewModel) {
         while (backStack.size > 1) backStack.removeLastOrNull()
         val today = m.snapshot.today
         when (a) {
-            com.nordinary.cyclus.ActionEntry.PERIOD ->
+            ActionEntry.PERIOD ->
                 if (m.logs[today]?.flow?.isBleed == true) openLog(today) else { sheet = Sheet.NONE; vm.periodStartedToday() }
             else -> openLog(today)
         }
     }
     // notification permission (Android 13+) is asked only right after the user opted in
     val permission = androidx.activity.compose.rememberLauncherForActivityResult(
-        androidx.activity.result.contract.ActivityResultContracts.RequestPermission(),
+        ActivityResultContracts.RequestPermission(),
     ) { }
     fun consent(on: Boolean) {
         vm.setNotifyConsent(on)
-        if (on && android.os.Build.VERSION.SDK_INT >= 33 &&
-            androidx.core.content.ContextCompat.checkSelfPermission(ctx, android.Manifest.permission.POST_NOTIFICATIONS) != android.content.pm.PackageManager.PERMISSION_GRANTED
-        ) permission.launch(android.Manifest.permission.POST_NOTIFICATIONS)
+        if (on && Build.VERSION.SDK_INT >= 33 &&
+            ContextCompat.checkSelfPermission(ctx, Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED
+        ) permission.launch(Manifest.permission.POST_NOTIFICATIONS)
     }
 
     NavDisplay(
         backStack = backStack,
         onBack = {
             // leaving the report builder by gesture resets it like the back arrow (and drops the PDF file)
-            if (backStack.lastOrNull() == ReportKey) vm.closeReport()
+            if (backStack.lastOrNull() == ReportKey) vm.report.close()
             backStack.removeLastOrNull()
         },
         entryProvider = entryProvider {
@@ -172,7 +202,7 @@ fun CyclusApp(vm: AppViewModel) {
                     val m = model
                     SettingsScreen(
                         fmt = fmt, snackbar = snackbar,
-                        mode = m?.mode ?: com.nordinary.cyclus.engine.Mode.TRACK, showFertility = m?.showFertility ?: false,
+                        mode = m?.mode ?: Mode.TRACK, showFertility = m?.showFertility ?: false,
                         lifeStage = LifeStage.of(m?.activeEpisode?.kind),
                         onBack = { backStack.removeLastOrNull() },
                         onMode = vm::setMode, onShowFertility = vm::setShowFertility, onLifeStage = vm::setLifeStage,
@@ -182,38 +212,38 @@ fun CyclusApp(vm: AppViewModel) {
                 }
             }
             entry<PatternsKey> {
-                val ins = model?.insights as? com.nordinary.cyclus.presenter.InsightsUiState.Ready
-                if (ins != null) com.nordinary.cyclus.ui.insights.PatternsScreen(
+                val ins = model?.insights as? InsightsUiState.Ready
+                if (ins != null) PatternsScreen(
                     ins.patterns, fmt, onBack = { backStack.removeLastOrNull() }, onMute = vm::mute, onUnmute = vm::unmuteAll,
                 )
                 else LaunchedEffect(Unit) { backStack.removeLastOrNull() }
             }
             entry<NotifyKey> {
                 val m = model
-                val lifecycle = androidx.lifecycle.compose.LocalLifecycleOwner.current.lifecycle
+                val lifecycle = LocalLifecycleOwner.current.lifecycle
                 // re-read after returning from system settings
                 val resumed by lifecycle.currentStateFlow.collectAsStateWithLifecycle()
-                val allows = remember(resumed) { com.nordinary.cyclus.notify.Notifier.canPost(ctx) }
-                if (m != null) com.nordinary.cyclus.ui.privacy.NotificationsScreen(
-                    fmt = fmt, prefs = com.nordinary.cyclus.presenter.NotifyPrefs.from(m.settings),
-                    conceive = m.mode == com.nordinary.cyclus.engine.Mode.CONCEIVE, systemAllows = allows, debug = debug,
+                val allows = remember(resumed) { Notifier.canPost(ctx) }
+                if (m != null) NotificationsScreen(
+                    fmt = fmt, prefs = NotifyPrefs.from(m.settings),
+                    conceive = m.mode == Mode.CONCEIVE, systemAllows = allows, debug = debug,
                     onBack = { backStack.removeLastOrNull() }, onConsent = ::consent, onKind = vm::setNotifyKind,
-                    onDailyTime = { vm.setSetting(com.nordinary.cyclus.presenter.NotifyKeys.DAILY_TIME, it.toString()) },
+                    onDailyTime = { vm.setSetting(NotifyKeys.DAILY_TIME, it.toString()) },
                     onOpenSystem = {
                         app.lock.suspendForExternalActivity()
-                        ctx.startActivity(com.nordinary.cyclus.notify.Notifier.channelSettingsIntent(ctx))
+                        ctx.startActivity(Notifier.channelSettingsIntent(ctx))
                     },
-                    onTest = { if (com.nordinary.cyclus.BuildConfig.DEBUG) vm.testNotification() },
+                    onTest = { if (BuildConfig.DEBUG) vm.testNotification() },
                 )
             }
             entry<ReportKey> {
                 Centered {
-                    com.nordinary.cyclus.ui.report.ReportScreen(vm, fmt, snackbar, onBack = { backStack.removeLastOrNull() })
+                    ReportScreen(vm, fmt, snackbar, onBack = { backStack.removeLastOrNull() })
                 }
             }
             entry<PrivacyKey> {
                 Centered {
-                    com.nordinary.cyclus.ui.privacy.PrivacyEntry(vm, fmt, snackbar, onBack = { backStack.removeLastOrNull() }, onErased = {
+                    PrivacyEntry(vm, fmt, snackbar, onBack = { backStack.removeLastOrNull() }, onErased = {
                         while (backStack.size > 1) backStack.removeLastOrNull()
                     })
                 }
@@ -245,7 +275,7 @@ fun CyclusApp(vm: AppViewModel) {
             onEdit = { openLog(day) },
             onMarkStart = { sheet = Sheet.NONE; vm.markStart(day) },
             onDismiss = { sheet = Sheet.NONE },
-            external = remember(m, day) { com.nordinary.cyclus.health.HealthMerge.dayDetail(day, m.userLogs[day], m.healthSamples) },
+            external = remember(m, day) { HealthMerge.dayDetail(day, m.userLogs[day], m.healthSamples) },
         )
         Sheet.WHY -> m.why?.let { WhySheet(it, fmt) { sheet = Sheet.NONE } }
         Sheet.METHOD -> MethodSheet(fmt) { sheet = Sheet.NONE }
@@ -276,7 +306,7 @@ private fun MainScreen(
     var tab by rememberSaveable { mutableStateOf(Tab.TODAY) }
     var debugMenu by remember { mutableStateOf(false) }
     // window size: rail from 600 dp (NavigationSuiteScaffold); from 840 dp Today and Calendar side by side
-    val windowWidth = with(androidx.compose.ui.platform.LocalDensity.current) { androidx.compose.ui.platform.LocalWindowInfo.current.containerSize.width.toDp() }
+    val windowWidth = with(LocalDensity.current) { LocalWindowInfo.current.containerSize.width.toDp() }
     val expanded = windowWidth >= 840.dp
     val shownTab = if (expanded && tab == Tab.CALENDAR) Tab.TODAY else tab
 
@@ -309,7 +339,7 @@ private fun MainScreen(
             topBar = {
                 LargeFlexibleTopAppBar(
                     title = {
-                        Text(fmt.s(shownTab.key), Modifier.combinedClickable(onClick = {}, onLongClick = { if (com.nordinary.cyclus.BuildConfig.DEBUG) debugMenu = true }), fontWeight = FontWeight.Bold)
+                        Text(fmt.s(shownTab.key), Modifier.combinedClickable(onClick = {}, onLongClick = { if (BuildConfig.DEBUG) debugMenu = true }), fontWeight = FontWeight.Bold)
                     },
                     subtitle = { Text(fmt.wmd(model?.snapshot?.today ?: java.time.LocalDate.now().toEpochDay().toInt()), color = c.ink2) },
                     actions = {
@@ -336,7 +366,7 @@ private fun MainScreen(
             val today: @Composable () -> Unit = {
                 TodayContent(
                     state = m.today, fmt = fmt, contentPadding = padding,
-                    debugNote = if (com.nordinary.cyclus.BuildConfig.DEBUG) stringResource(R.string.debug_note) else null,
+                    debugNote = if (BuildConfig.DEBUG) stringResource(R.string.debug_note) else null,
                     onOpenLog = { onOpenLog(m.snapshot.today) },
                     onPeriodStarted = vm::periodStartedToday,
                     onQuickFlow = vm::quickFlow,
@@ -344,8 +374,7 @@ private fun MainScreen(
                     onChangeStage = onSettings,
                     onLh = vm::todayLh,
                     onWhy = onWhy,
-                    reminderOffer = m.settings[com.nordinary.cyclus.presenter.NotifyKeys.CONSENT] != "1" &&
-                        m.settings[com.nordinary.cyclus.presenter.NotifyKeys.ASKED] != "1" &&
+                    reminderOffer = NotifyPrefs.from(m.settings).let { !it.consent && !it.asked } &&
                         m.snapshot.prediction != null && !m.snapshot.paused,
                     onReminderOffer = onReminderOffer,
                 )
@@ -360,18 +389,18 @@ private fun MainScreen(
                     InsightsContent(
                         m.insights, fmt, padding, onMethod = onMethod, onMute = vm::mute, onAllPatterns = onPatterns,
                         twoColumns = expanded,
-                        onReport = if (com.nordinary.cyclus.presenter.ReportPresenter.available(m.snapshot)) onReport else null,
+                        onReport = if (ReportPresenter.available(m.snapshot)) onReport else null,
                     )
                 }
             }
         }
     }
-    if (com.nordinary.cyclus.BuildConfig.DEBUG && debugMenu) DebugMenu(onPick = { vm.loadDemo(it); debugMenu = false }, onWipe = { vm.eraseAll(); debugMenu = false }, onClose = { debugMenu = false })
+    if (BuildConfig.DEBUG && debugMenu) DebugMenu(onPick = { vm.loadDemo(it); debugMenu = false }, onWipe = { vm.eraseAll(); debugMenu = false }, onClose = { debugMenu = false })
 }
 
 /** Content no wider than [max], centred (medium/expanded widths: tablets, foldables, landscape). */
 @Composable
-private fun Centered(max: androidx.compose.ui.unit.Dp = 640.dp, content: @Composable () -> Unit) {
+private fun Centered(max: Dp = 640.dp, content: @Composable () -> Unit) {
     Box(Modifier.fillMaxSize(), contentAlignment = Alignment.TopCenter) { Box(Modifier.widthIn(max = max).fillMaxSize()) { content() } }
 }
 
@@ -402,16 +431,16 @@ private fun DebugMenu(onPick: (SampleScenario) -> Unit, onWipe: () -> Unit, onCl
                 Text(stringResource(R.string.debug_body), color = Cyclus.colors.ink2, fontSize = 14.sp)
                 for ((s, id) in labels) TextButton(onClick = { onPick(s) }, Modifier.fillMaxWidth()) { Text(stringResource(id)) }
                 TextButton(onClick = onWipe, Modifier.fillMaxWidth()) { Text(stringResource(R.string.debug_wipe), color = Cyclus.colors.period) }
-                val ctx = androidx.compose.ui.platform.LocalContext.current
+                val ctx = LocalContext.current
                 val scope = rememberCoroutineScope()
                 // records without the cyclus: prefix count as another app's (ownership rule 1): test data for the import path
                 TextButton(onClick = {
-                    scope.launch { runCatching { com.nordinary.cyclus.health.DebugHealth.writeExternal(ctx) } }
+                    scope.launch { runCatching { DebugHealth.writeExternal(ctx) } }
                     onClose()
                 }, Modifier.fillMaxWidth()) { Text("Health Connect: externe Testdaten") }
-                for (r in listOf(com.nordinary.cyclus.widget.SmallWidgetReceiver::class.java, com.nordinary.cyclus.widget.MediumWidgetReceiver::class.java)) {
+                for (r in listOf(SmallWidgetReceiver::class.java, MediumWidgetReceiver::class.java)) {
                     TextButton(onClick = {
-                        android.appwidget.AppWidgetManager.getInstance(ctx).requestPinAppWidget(android.content.ComponentName(ctx, r), null, null)
+                        AppWidgetManager.getInstance(ctx).requestPinAppWidget(ComponentName(ctx, r), null, null)
                         onClose()
                     }, Modifier.fillMaxWidth()) { Text("Widget: ${r.simpleName.removeSuffix("WidgetReceiver")}") }
                 }

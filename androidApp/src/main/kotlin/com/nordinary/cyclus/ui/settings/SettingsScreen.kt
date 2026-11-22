@@ -48,6 +48,7 @@ import androidx.compose.ui.unit.sp
 import com.nordinary.cyclus.engine.Mode
 import com.nordinary.cyclus.i18n.Fmt
 import com.nordinary.cyclus.presenter.LifeStage
+import com.nordinary.cyclus.ui.CyclusSnackbarHost
 import com.nordinary.cyclus.ui.common.CyclusIcons
 import com.nordinary.cyclus.ui.theme.Cyclus
 
@@ -81,7 +82,7 @@ fun SettingsScreen(
                 colors = TopAppBarDefaults.topAppBarColors(containerColor = c.bg, scrolledContainerColor = c.bg),
             )
         },
-        snackbarHost = { com.nordinary.cyclus.ui.CyclusSnackbarHost(snackbar) },
+        snackbarHost = { CyclusSnackbarHost(snackbar) },
     ) { padding ->
         Column(
             Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(padding).padding(horizontal = 16.dp),

@@ -1,6 +1,7 @@
 package com.nordinary.cyclus.ui.privacy
 
 import android.content.Intent
+import android.text.format.DateUtils
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -30,6 +31,7 @@ import com.nordinary.cyclus.health.HealthCategory
 import com.nordinary.cyclus.health.HealthType
 import com.nordinary.cyclus.i18n.Fmt
 import com.nordinary.cyclus.ui.AppViewModel
+import com.nordinary.cyclus.ui.HealthActions
 import com.nordinary.cyclus.ui.theme.Cyclus
 import com.nordinary.cyclus.ui.today.PrimaryButton
 
@@ -53,7 +55,7 @@ fun typeLabel(t: HealthType) = when (t) {
 
 /** Privacy Center › Health Connect (spec §7.10, ANDROID_PLAN §6.1). Every write switch starts off. */
 @Composable
-fun HealthSection(vm: AppViewModel, fmt: Fmt, ui: AppViewModel.HealthUi, onChanged: () -> Unit) {
+fun HealthSection(vm: AppViewModel, fmt: Fmt, ui: HealthActions.HealthUi, onChanged: () -> Unit) {
     val ctx = LocalContext.current
     val app = ctx.applicationContext as CyclusApplication
     val c = Cyclus.colors
@@ -62,10 +64,10 @@ fun HealthSection(vm: AppViewModel, fmt: Fmt, ui: AppViewModel.HealthUi, onChang
     var review by remember { mutableStateOf(false) }
 
     val readLauncher = rememberLauncherForActivityResult(PermissionController.createRequestPermissionResultContract()) { granted ->
-        vm.healthConnected(granted); onChanged()
+        vm.health.connected(granted); onChanged()
     }
     val writeLauncher = rememberLauncherForActivityResult(PermissionController.createRequestPermissionResultContract()) { granted ->
-        pendingCategory?.let { cat -> if (granted.containsAll(vm.health.writePermissions(cat))) vm.setHealthWrite(cat, true) }
+        pendingCategory?.let { cat -> if (granted.containsAll(vm.health.writePermissions(cat))) vm.health.setWrite(cat, true) }
         pendingCategory = null; onChanged()
     }
     fun external(block: () -> Unit) { app.lock.suspendForExternalActivity(); block() }
@@ -91,9 +93,9 @@ fun HealthSection(vm: AppViewModel, fmt: Fmt, ui: AppViewModel.HealthUi, onChang
                     Group {
                         Info(stringResource(R.string.hc_restore_t), stringResource(R.string.hc_restore_b, ui.restoreOffer))
                         Divider()
-                        Link(stringResource(R.string.hc_restore_yes), null, { vm.answerHealthRestore(true); onChanged() })
+                        Link(stringResource(R.string.hc_restore_yes), null, { vm.health.answerRestore(true); onChanged() })
                         Divider()
-                        Link(stringResource(R.string.hc_restore_no), null, { vm.answerHealthRestore(false); onChanged() })
+                        Link(stringResource(R.string.hc_restore_no), null, { vm.health.answerRestore(false); onChanged() })
                     }
                 }
                 Group {
@@ -102,13 +104,13 @@ fun HealthSection(vm: AppViewModel, fmt: Fmt, ui: AppViewModel.HealthUi, onChang
                         ui.lastSync == null -> stringResource(R.string.hc_status_never)
                         else -> stringResource(
                             R.string.hc_status,
-                            android.text.format.DateUtils.getRelativeTimeSpanString(ui.lastSync, System.currentTimeMillis(), android.text.format.DateUtils.MINUTE_IN_MILLIS).toString(),
+                            DateUtils.getRelativeTimeSpanString(ui.lastSync, System.currentTimeMillis(), DateUtils.MINUTE_IN_MILLIS).toString(),
                             ui.imported.toInt(),
                         )
                     }
                     Info(status, if (ui.noHistory) stringResource(R.string.hc_no_history) else null)
                     Divider()
-                    Link(stringResource(R.string.hc_sync_now), null, { vm.healthSyncNow(); onChanged() })
+                    Link(stringResource(R.string.hc_sync_now), null, { vm.health.syncNow(); onChanged() })
                     if (ui.removed.isNotEmpty()) {
                         Divider()
                         Link(stringResource(R.string.hc_removed, ui.removed.size), stringResource(R.string.hc_review), { review = true })
@@ -121,7 +123,7 @@ fun HealthSection(vm: AppViewModel, fmt: Fmt, ui: AppViewModel.HealthUi, onChang
                         val on = cat in ui.enabled && ui.granted.containsAll(vm.health.writePermissions(cat))
                         SwitchRow(stringResource(categoryLabel(cat)), null, on) { want ->
                             if (want) {
-                                if (ui.granted.containsAll(vm.health.writePermissions(cat))) { vm.setHealthWrite(cat, true); onChanged() }
+                                if (ui.granted.containsAll(vm.health.writePermissions(cat))) { vm.health.setWrite(cat, true); onChanged() }
                                 else { pendingCategory = cat; external { writeLauncher.launch(vm.health.writePermissions(cat)) } }
                             } else offDialog = cat
                         }
@@ -134,7 +136,7 @@ fun HealthSection(vm: AppViewModel, fmt: Fmt, ui: AppViewModel.HealthUi, onChang
                         external { runCatching { ctx.startActivity(HealthConnectClient.getHealthConnectManageDataIntent(ctx)) } }
                     })
                     Divider()
-                    Link(stringResource(R.string.hc_disconnect), stringResource(R.string.hc_disconnect_s), { vm.disconnectHealth(); onChanged() }, danger = true)
+                    Link(stringResource(R.string.hc_disconnect), stringResource(R.string.hc_disconnect_s), { vm.health.disconnect(); onChanged() }, danger = true)
                 }
             }
         }
@@ -145,8 +147,8 @@ fun HealthSection(vm: AppViewModel, fmt: Fmt, ui: AppViewModel.HealthUi, onChang
             onDismissRequest = { offDialog = null },
             title = { Text(stringResource(R.string.hc_off_t)) },
             text = { Text(stringResource(R.string.hc_off_b)) },
-            confirmButton = { TextButton({ vm.setHealthWrite(cat, false, deleteThere = true); vm.healthSyncNow(); offDialog = null; onChanged() }) { Text(stringResource(R.string.hc_off_delete)) } },
-            dismissButton = { TextButton({ vm.setHealthWrite(cat, false); offDialog = null; onChanged() }) { Text(stringResource(R.string.hc_off_keep)) } },
+            confirmButton = { TextButton({ vm.health.setWrite(cat, false, deleteThere = true); vm.health.syncNow(); offDialog = null; onChanged() }) { Text(stringResource(R.string.hc_off_delete)) } },
+            dismissButton = { TextButton({ vm.health.setWrite(cat, false); offDialog = null; onChanged() }) { Text(stringResource(R.string.hc_off_keep)) } },
             containerColor = c.surface,
         )
     }
@@ -161,8 +163,8 @@ fun HealthSection(vm: AppViewModel, fmt: Fmt, ui: AppViewModel.HealthUi, onChang
                     if (ui.removed.size > 12) Text("…", color = c.ink2)
                 }
             },
-            confirmButton = { TextButton({ vm.reviewRemoved(ui.removed, keep = true); review = false; onChanged() }) { Text(stringResource(R.string.hc_keep)) } },
-            dismissButton = { TextButton({ vm.reviewRemoved(ui.removed, keep = false); review = false; onChanged() }) { Text(stringResource(R.string.hc_remove)) } },
+            confirmButton = { TextButton({ vm.health.reviewRemoved(ui.removed, keep = true); review = false; onChanged() }) { Text(stringResource(R.string.hc_keep)) } },
+            dismissButton = { TextButton({ vm.health.reviewRemoved(ui.removed, keep = false); review = false; onChanged() }) { Text(stringResource(R.string.hc_remove)) } },
             containerColor = c.surface,
         )
     }

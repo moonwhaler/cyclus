@@ -1,5 +1,6 @@
 package com.nordinary.cyclus.presenter
 
+import com.nordinary.cyclus.core.Catalog
 import com.nordinary.cyclus.core.Day
 import com.nordinary.cyclus.core.DayLog
 import com.nordinary.cyclus.core.Flow
@@ -98,15 +99,15 @@ object CalendarPresenter {
 
     /** Day detail (prototype `renderDaySheet`). */
     /** [userLog]: the person's own entry (values from Health Connect are listed separately with their source). */
-    fun daySheet(snap: CycleSnapshot, day: Day, userLog: com.nordinary.cyclus.core.DayLog? = snap.data.log(day)): DaySheetModel {
+    fun daySheet(snap: CycleSnapshot, day: Day, userLog: DayLog? = snap.data.log(day)): DaySheetModel {
         val l = userLog
         val entries = mutableListOf<DayEntry>()
         if (l != null) {
             l.flow?.let { entries += DayEntry.FlowEntry(it) }
-            if (l.symptoms.isNotEmpty()) entries += DayEntry.Symptoms(ordered(l.symptoms, com.nordinary.cyclus.core.Catalog.SYMPTOMS))
-            val pain = com.nordinary.cyclus.core.Catalog.PAIN_REGIONS.mapNotNull { r -> l.pain[r]?.takeIf { it > 0 }?.let { r to it } }
+            if (l.symptoms.isNotEmpty()) entries += DayEntry.Symptoms(ordered(l.symptoms, Catalog.SYMPTOMS))
+            val pain = Catalog.PAIN_REGIONS.mapNotNull { r -> l.pain[r]?.takeIf { it > 0 }?.let { r to it } }
             if (pain.isNotEmpty()) entries += DayEntry.Pain(pain)
-            if (l.emotions.isNotEmpty()) entries += DayEntry.Feelings(ordered(l.emotions, com.nordinary.cyclus.core.Catalog.EMOTIONS))
+            if (l.emotions.isNotEmpty()) entries += DayEntry.Feelings(ordered(l.emotions, Catalog.EMOTIONS))
             l.libido?.let { entries += DayEntry.Scale("libido", it) }
             l.mood?.let { entries += DayEntry.Scale("mood", it) }
             l.energy?.let { entries += DayEntry.Scale("energy", it) }
@@ -114,7 +115,7 @@ object CalendarPresenter {
             l.mucus?.let { entries += DayEntry.Discharge(it) }
             l.lh?.let { entries += DayEntry.Lh(it) }
             l.bbt?.let { entries += DayEntry.Temperature(it) }
-            if (l.tags.isNotEmpty()) entries += DayEntry.Tags(ordered(l.tags, com.nordinary.cyclus.core.Catalog.TAGS))
+            if (l.tags.isNotEmpty()) entries += DayEntry.Tags(ordered(l.tags, Catalog.TAGS))
             l.note?.takeIf { it.isNotBlank() }?.let { entries += DayEntry.Note(it) }
         }
         val p = snap.prediction

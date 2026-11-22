@@ -4,12 +4,21 @@ import android.content.Context
 import com.nordinary.cyclus.backup.BackupCoordinator
 import com.nordinary.cyclus.backup.CyclusFile
 import com.nordinary.cyclus.backup.ExportFile
+import com.nordinary.cyclus.health.HealthAvailability
+import com.nordinary.cyclus.health.HealthSync
+import com.nordinary.cyclus.health.HealthType
+import com.nordinary.cyclus.surfaces.SystemSurfaces
+import com.nordinary.cyclus.widget.CyclusWidgets
+import java.io.File
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withTimeoutOrNull
 
 sealed interface StoreState {
     data object Opening : StoreState
@@ -28,6 +37,15 @@ class StoreHolder(private val context: Context, val backup: BackupCoordinator, p
     private val _state = MutableStateFlow<StoreState>(StoreState.Opening)
     val state: StateFlow<StoreState> = _state
     @Volatile private var started = false
+    /** Open leases on the current repository (its ViewModel); erase waits until they are released. */
+    private val users = MutableStateFlow(0)
+
+    /** Taken by whoever queries the open repository; the returned function releases it (idempotent). */
+    fun lease(): () -> Unit {
+        users.update { it + 1 }
+        val done = java.util.concurrent.atomic.AtomicBoolean(false)
+        return { if (done.compareAndSet(false, true)) users.update { it - 1 } }
+    }
 
     /** Opens if not open yet; retries after a failure (e.g. the device was locked). */
     fun ensureOpen() {
@@ -93,24 +111,25 @@ class StoreHolder(private val context: Context, val backup: BackupCoordinator, p
         val current = (_state.value as? StoreState.Ready)?.repo
         _state.value = StoreState.Erasing
         scope.launch {
-            kotlinx.coroutines.delay(300) // let collectors of the old repository stop (UI left the screens)
+            // the old repository's users stop on the state change above; wait for them (bounded) before closing it
+            withTimeoutOrNull(3_000) { users.first { it == 0 } }
             backup.exclusive {
                 // spec §7.9: what Cyclus wrote to Health Connect (only our own records), then no connection is left.
                 // A Health Connect failure never blocks the crypto-shred.
                 runCatching {
-                    val hc = com.nordinary.cyclus.health.HealthSync(context)
-                    if (hc.availability() == com.nordinary.cyclus.health.HealthAvailability.AVAILABLE) {
-                        if (deleteHealth) runCatching { hc.deleteOwn(com.nordinary.cyclus.health.HealthType.entries) }
+                    val hc = HealthSync(context)
+                    if (hc.availability() == HealthAvailability.AVAILABLE) {
+                        if (deleteHealth) runCatching { hc.deleteOwn(HealthType.entries) }
                         if (revokeHealth) hc.revokeAll()
                     }
                 }
                 runCatching { current?.close() }
                 AndroidDatabase.destroy(context, dbName)
                 backup.eraseFilesLocked()
-                java.io.File(context.cacheDir, "share").deleteRecursively() // report PDFs
-                com.nordinary.cyclus.surfaces.SystemSurfaces.clearLocked(context) // reminders, widget days, shortcut
+                File(context.cacheDir, "share").deleteRecursively() // report PDFs
+                SystemSurfaces.clearLocked(context) // reminders, widget days, shortcut
             }
-            runCatching { com.nordinary.cyclus.widget.CyclusWidgets.refresh(context) } // back to the neutral state
+            runCatching { CyclusWidgets.refresh(context) } // back to the neutral state
             _state.value = open()
             onDone()
         }

@@ -5,9 +5,14 @@ import com.nordinary.cyclus.core.Day
 import com.nordinary.cyclus.core.DayLog
 import com.nordinary.cyclus.core.EpisodeKind
 import com.nordinary.cyclus.core.Flow
+import com.nordinary.cyclus.core.LhResult
 import com.nordinary.cyclus.engine.CycleSnapshot
 import com.nordinary.cyclus.engine.CycleStatus
+import com.nordinary.cyclus.engine.EvidenceType
+import com.nordinary.cyclus.engine.FertilityChip
+import com.nordinary.cyclus.engine.FertilityResult
 import com.nordinary.cyclus.engine.Mode
+import com.nordinary.cyclus.engine.OvulationStatus
 import com.nordinary.cyclus.engine.Tier
 import com.nordinary.cyclus.insights.Area
 import com.nordinary.cyclus.insights.Forecast
@@ -63,11 +68,11 @@ sealed interface TodayHero {
         /** Tier 0 and the window is behind us. */
         val windowPassed: Boolean,
         val ovulation: OvulationLine,
-        val chip: com.nordinary.cyclus.engine.FertilityChip,
+        val chip: FertilityChip,
     ) : TodayHero
 
     /** Two-week wait: ovulation likely occurred. */
-    data class ConceiveAfter(val daysAfter: Int, val cycleDay: Int, val ovulationDay: Day, val chip: com.nordinary.cyclus.engine.FertilityChip) : TodayHero
+    data class ConceiveAfter(val daysAfter: Int, val cycleDay: Int, val ovulationDay: Day, val chip: FertilityChip) : TodayHero
 }
 
 sealed interface OvulationLine {
@@ -86,7 +91,7 @@ data class ConceiveCards(
     /** One-tap LH card: shown from the planner start until a positive test (or while today's test is positive). */
     val lhToday: Boolean,
     val lhNegativesSoFar: Int,
-    val todaysLh: com.nordinary.cyclus.core.LhResult?,
+    val todaysLh: LhResult?,
     /** Earliest reliable pregnancy test (after ovulation). */
     val earliestTest: Day?,
 )
@@ -155,10 +160,10 @@ object TodayPresenter {
         )
     }
 
-    private fun conceive(snap: CycleSnapshot, f: com.nordinary.cyclus.engine.FertilityResult, cd: Int, todaysLog: DayLog?): Pair<TodayHero, ConceiveCards> {
+    private fun conceive(snap: CycleSnapshot, f: FertilityResult, cd: Int, todaysLog: DayLog?): Pair<TodayHero, ConceiveCards> {
         val p = snap.prediction!!
         val today = snap.today
-        if (f.status == com.nordinary.cyclus.engine.OvulationStatus.OCCURRED) {
+        if (f.status == OvulationStatus.OCCURRED) {
             val test = max(f.dateOf(f.mapD) + 14, p.lo)
             return TodayHero.ConceiveAfter(f.todayCd - f.mapD, cd, f.dateOf(f.mapD), f.chip) to
                 ConceiveCards(emptyList(), null, p.used.size, false, 0, todaysLog?.lh, test)
@@ -171,20 +176,20 @@ object TodayPresenter {
             if (n > 0) opensIn = n else passed = true
         }
         val ov = when {
-            f.status == com.nordinary.cyclus.engine.OvulationStatus.SOON && f.hpd.first <= f.todayCd -> OvulationLine.TodayOrTomorrow
-            f.status == com.nordinary.cyclus.engine.OvulationStatus.SOON -> OvulationLine.Soon(f.dateOf(f.hpd.first), f.dateOf(f.hpd.second))
+            f.status == OvulationStatus.SOON && f.hpd.first <= f.todayCd -> OvulationLine.TodayOrTomorrow
+            f.status == OvulationStatus.SOON -> OvulationLine.Soon(f.dateOf(f.hpd.first), f.dateOf(f.hpd.second))
             else -> OvulationLine.Estimated(f.dateOf(f.hpd.first), f.dateOf(f.hpd.second))
         }
         val best = f.days.filter { it.cd >= f.todayCd && it.pf >= 0.15 }.sortedByDescending { it.c }.take(3).sortedBy { it.cd }.map { f.dateOf(it.cd) }
-        val lhPos = f.ev.any { it.type == com.nordinary.cyclus.engine.EvidenceType.LH_POS }
+        val lhPos = f.ev.any { it.type == EvidenceType.LH_POS }
         val tl = todaysLog?.lh
         val startDate = f.dateOf(f.planStart)
         var plan: Day? = null
         var lhToday = false
-        if (!lhPos || tl == com.nordinary.cyclus.core.LhResult.POSITIVE) {
+        if (!lhPos || tl == LhResult.POSITIVE) {
             if (today < startDate) plan = startDate else lhToday = true
         }
-        val negs = f.ev.count { it.type == com.nordinary.cyclus.engine.EvidenceType.LH_NEG }
+        val negs = f.ev.count { it.type == EvidenceType.LH_NEG }
         return TodayHero.ConceiveFertile(tier, cd, opensIn, passed, ov, f.chip) to
             ConceiveCards(best, plan, p.used.size, lhToday, negs, tl, null)
     }

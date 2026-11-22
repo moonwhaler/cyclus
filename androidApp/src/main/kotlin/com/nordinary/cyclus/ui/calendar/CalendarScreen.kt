@@ -47,6 +47,7 @@ import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.customActions
 import androidx.compose.ui.semantics.onClick
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.nordinary.cyclus.engine.CycleSnapshot
@@ -86,11 +87,11 @@ fun CalendarContent(
     ) {
         Row(Modifier.fillMaxWidth().padding(top = 6.dp, bottom = 8.dp), verticalAlignment = Alignment.CenterVertically) {
             NavArrow("‹", fmt.s("prevMonth")) { ym-- }
-            Text(fmt.monthYear(year, month), Modifier.weight(1f), fontSize = 20.sp, fontWeight = FontWeight.Bold, color = c.ink, textAlign = androidx.compose.ui.text.style.TextAlign.Center)
+            Text(fmt.monthYear(year, month), Modifier.weight(1f), fontSize = 20.sp, fontWeight = FontWeight.Bold, color = c.ink, textAlign = TextAlign.Center)
             NavArrow("›", fmt.s("nextMonth")) { ym++ }
         }
         Row(Modifier.fillMaxWidth().padding(bottom = 4.dp)) {
-            for (w in fmt.array("wk")) Text(w, Modifier.weight(1f), fontSize = 12.sp, fontWeight = FontWeight.SemiBold, color = c.ink2, textAlign = androidx.compose.ui.text.style.TextAlign.Center)
+            for (w in fmt.array("wk")) Text(w, Modifier.weight(1f), fontSize = 12.sp, fontWeight = FontWeight.SemiBold, color = c.ink2, textAlign = TextAlign.Center)
         }
         Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
             for (week in model.cells.chunked(7)) Row(Modifier.fillMaxWidth()) {

@@ -5,31 +5,36 @@ import androidx.lifecycle.DefaultLifecycleObserver
 import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.ProcessLifecycleOwner
 import com.nordinary.cyclus.backup.BackupCoordinator
+import com.nordinary.cyclus.lock.AppLock
+import com.nordinary.cyclus.lock.Authn
+import com.nordinary.cyclus.report.ReportFiles
 import com.nordinary.cyclus.store.StoreHolder
 import com.nordinary.cyclus.store.StoreState
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.launch
 
 class CyclusApplication : Application() {
     val backup: BackupCoordinator by lazy { BackupCoordinator(this) }
     val store: StoreHolder by lazy { StoreHolder(this, backup) }
-    val lock = com.nordinary.cyclus.lock.AppLock()
+    val lock = AppLock()
     /** Widget/tile/shortcut action waiting for the unlocked, ready app ([ActionEntry]); consumed once. */
-    val pendingAction = kotlinx.coroutines.flow.MutableStateFlow<String?>(null)
+    val pendingAction = MutableStateFlow<String?>(null)
     /** Health Connect sync requests (true = re-read everything): app start/resume and „Jetzt synchronisieren“. */
-    val healthKick = kotlinx.coroutines.flow.MutableSharedFlow<Boolean>(extraBufferCapacity = 4)
+    val healthKick = MutableSharedFlow<Boolean>(extraBufferCapacity = 4)
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
 
     override fun onCreate() {
         super.onCreate()
         // Runs before any backup agent work in a cold process: never leave a plaintext backup key behind.
         backup.startupSweep()
-        com.nordinary.cyclus.report.ReportFiles.clear(this) // shared report PDFs never outlive the session
+        ReportFiles.clear(this) // shared report PDFs never outlive the session
         ProcessLifecycleOwner.get().lifecycle.addObserver(object : DefaultLifecycleObserver {
             override fun onStart(owner: LifecycleOwner) {
-                lock.onAppStart(com.nordinary.cyclus.lock.Authn.available(this@CyclusApplication))
+                lock.onAppStart(Authn.available(this@CyclusApplication))
                 healthKick.tryEmit(false) // Health Connect syncs only while the app is open
             }
 

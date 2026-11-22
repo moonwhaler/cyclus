@@ -55,6 +55,12 @@ data class NotifyPrefs(
     val dailyMinute: Int = NotifyKind.DAILY_LOG.defaultMinute,
     val discreet: Boolean = true,
     val backupSince: Day? = null,
+    /** The Today offer was answered (yes or no): never shown again. */
+    val asked: Boolean = false,
+    /** „Details im Widget“: the widget may show days (otherwise neutral). */
+    val widgetDetails: Boolean = false,
+    /** Opt-in launcher shortcut „Eintragen“. */
+    val shortcut: Boolean = false,
 ) {
     companion object {
         fun from(settings: Map<String, String>) = NotifyPrefs(
@@ -63,6 +69,9 @@ data class NotifyPrefs(
             dailyMinute = settings[NotifyKeys.DAILY_TIME]?.toIntOrNull()?.takeIf { it in 0 until 24 * 60 } ?: NotifyKind.DAILY_LOG.defaultMinute,
             discreet = settings[NotifyKeys.DISCREET] != "0",
             backupSince = settings[NotifyKeys.BACKUP_SINCE]?.toIntOrNull(),
+            asked = settings[NotifyKeys.ASKED] == "1",
+            widgetDetails = settings[NotifyKeys.WIDGET_DETAILS] == "1",
+            shortcut = settings[NotifyKeys.SHORTCUT] == "1",
         )
     }
 }

@@ -24,6 +24,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -36,6 +37,7 @@ import androidx.compose.material3.SliderDefaults
 import androidx.compose.material3.Text
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
@@ -46,6 +48,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
@@ -53,13 +56,14 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.compositeOver
 import androidx.compose.ui.graphics.drawscope.DrawScope
+import androidx.compose.ui.graphics.drawscope.Fill
 import androidx.compose.ui.graphics.drawscope.Stroke
-import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.selected
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.semantics.stateDescription
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
@@ -79,10 +83,10 @@ import com.nordinary.cyclus.ui.common.CyclusChip
 import com.nordinary.cyclus.ui.common.ScaleRow
 import com.nordinary.cyclus.ui.common.SectionLabel
 import com.nordinary.cyclus.ui.common.dashedBorder
-import com.nordinary.cyclus.ui.today.DropTile
-import com.nordinary.cyclus.ui.today.PrimaryButton
 import com.nordinary.cyclus.ui.theme.Cyclus
 import com.nordinary.cyclus.ui.theme.Nunito
+import com.nordinary.cyclus.ui.today.DropTile
+import com.nordinary.cyclus.ui.today.PrimaryButton
 import kotlinx.coroutines.delay
 
 /** Log sheet (prototype `renderLogSheet`): every tap saves immediately; stable section order. */
@@ -219,7 +223,7 @@ private fun BbtGroup(label: String, hint: String, log: DayLog, fmt: Fmt, onUpdat
     }
     // typed but not confirmed: saved when the field loses focus, the sheet closes or the day changes
     val pending = androidx.compose.runtime.rememberUpdatedState { if (dirty) commit(text) }
-    androidx.compose.runtime.DisposableEffect(Unit) { onDispose { pending.value() } }
+    DisposableEffect(Unit) { onDispose { pending.value() } }
     fun step(d: Double) = onUpdate { val base = it.bbt ?: 36.40; it.copy(bbt = Js.round((base + d) * 100) / 100) }
     Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
         StepButton("−", fmt.s("lower")) { step(-0.05) }
@@ -228,9 +232,9 @@ private fun BbtGroup(label: String, hint: String, log: DayLog, fmt: Fmt, onUpdat
             modifier = Modifier.width(110.dp).semantics { contentDescription = fmt.s("bbtAria") }
                 .onFocusChanged { if (!it.isFocused) pending.value() },
             singleLine = true, placeholder = { Text(fmt.temp(36.4), fontFamily = Nunito, color = c.ink2) },
-            textStyle = androidx.compose.ui.text.TextStyle(fontFamily = Nunito, fontWeight = FontWeight.SemiBold, fontSize = 17.sp, textAlign = TextAlign.Center, color = c.ink),
+            textStyle = TextStyle(fontFamily = Nunito, fontWeight = FontWeight.SemiBold, fontSize = 17.sp, textAlign = TextAlign.Center, color = c.ink),
             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal, imeAction = ImeAction.Done),
-            keyboardActions = androidx.compose.foundation.text.KeyboardActions(onDone = { commit(text) }),
+            keyboardActions = KeyboardActions(onDone = { commit(text) }),
             shape = RoundedCornerShape(10.dp),
             colors = OutlinedTextFieldDefaults.colors(unfocusedBorderColor = c.line, focusedBorderColor = c.period, unfocusedContainerColor = c.surface, focusedContainerColor = c.surface),
         )
@@ -263,7 +267,7 @@ private fun NoteGroup(day: Day, log: DayLog, fmt: Fmt, onUpdate: ((DayLog) -> Da
         delay(600)
         pending.value()
     }
-    androidx.compose.runtime.DisposableEffect(Unit) { onDispose { pending.value() } }
+    DisposableEffect(Unit) { onDispose { pending.value() } }
     OutlinedTextField(
         value = text, onValueChange = { text = it }, modifier = Modifier.fillMaxWidth(), minLines = 2,
         placeholder = { Text(fmt.s("notePh"), color = c.ink2) },
@@ -354,7 +358,7 @@ private fun PainGroup(log: DayLog, fmt: Fmt, onUpdate: ((DayLog) -> DayLog) -> U
 }
 
 private fun DrawScope.drawRegion(r: Region, s: Float, color: Color, stroke: Stroke?) {
-    val style = stroke ?: androidx.compose.ui.graphics.drawscope.Fill
+    val style = stroke ?: Fill
     when (r) {
         Region.HEAD -> drawOval(color, Offset(45f * s, 4f * s), Size(30f * s, 36f * s), style = style)
         Region.PELVIS -> {

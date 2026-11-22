@@ -1,6 +1,8 @@
 package com.nordinary.cyclus.notify
 
 import android.Manifest
+import android.annotation.SuppressLint
+import android.app.Notification
 import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.app.PendingIntent
@@ -8,6 +10,7 @@ import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.os.Build
+import android.provider.Settings
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
 import androidx.core.content.ContextCompat
@@ -30,7 +33,7 @@ object Notifier {
         val nm = ctx.getSystemService(NotificationManager::class.java)
         for (c in NotifyChannel.entries) {
             val ch = NotificationChannel(channelId(c), ctx.getString(channelName(c)), NotificationManager.IMPORTANCE_DEFAULT).apply {
-                lockscreenVisibility = android.app.Notification.VISIBILITY_PRIVATE
+                lockscreenVisibility = Notification.VISIBILITY_PRIVATE
                 setShowBadge(false)
             }
             nm.createNotificationChannel(ch)
@@ -38,7 +41,7 @@ object Notifier {
     }
 
     fun channelSettingsIntent(ctx: Context): Intent =
-        Intent(android.provider.Settings.ACTION_APP_NOTIFICATION_SETTINGS).putExtra(android.provider.Settings.EXTRA_APP_PACKAGE, ctx.packageName)
+        Intent(Settings.ACTION_APP_NOTIFICATION_SETTINGS).putExtra(Settings.EXTRA_APP_PACKAGE, ctx.packageName)
 
     fun canPost(ctx: Context): Boolean =
         NotificationManagerCompat.from(ctx).areNotificationsEnabled() &&
@@ -60,7 +63,7 @@ object Notifier {
         NotifyKind.BBT_MORNING -> R.string.nd_bbt
     }
 
-    fun build(ctx: Context, k: NotifyKind, discreet: Boolean): android.app.Notification {
+    fun build(ctx: Context, k: NotifyKind, discreet: Boolean): Notification {
         val open = PendingIntent.getActivity(
             ctx, 0, Intent(ctx, MainActivity::class.java).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP),
             PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT,
@@ -84,7 +87,7 @@ object Notifier {
             .build()
     }
 
-    @android.annotation.SuppressLint("MissingPermission") // checked by canPost
+    @SuppressLint("MissingPermission") // checked by canPost
     fun post(ctx: Context, k: NotifyKind, discreet: Boolean) {
         if (!canPost(ctx)) return
         ensureChannels(ctx)

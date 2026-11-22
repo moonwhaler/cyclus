@@ -8,6 +8,7 @@ import android.graphics.Paint
 import android.graphics.RectF
 import android.graphics.Typeface
 import android.graphics.pdf.PdfDocument
+import android.icu.text.DateFormat
 import android.text.Layout
 import android.text.StaticLayout
 import android.text.TextPaint
@@ -16,10 +17,15 @@ import com.nordinary.cyclus.R
 import com.nordinary.cyclus.core.Day
 import com.nordinary.cyclus.core.Flow
 import com.nordinary.cyclus.i18n.Fmt
+import com.nordinary.cyclus.presenter.HeatMap
 import com.nordinary.cyclus.presenter.MonthGrid
 import com.nordinary.cyclus.presenter.ReportModel
 import com.nordinary.cyclus.presenter.ReportSection
+import com.nordinary.cyclus.presenter.WindowMeans
 import java.io.ByteArrayOutputStream
+import java.time.DayOfWeek
+import java.time.format.TextStyle
+import java.util.Date
 import java.util.Locale
 
 /**
@@ -70,8 +76,8 @@ object ReportPdf {
         private fun paint(size: Float, tf: Typeface = regular, color: Int = INK) =
             TextPaint(Paint.ANTI_ALIAS_FLAG).apply { textSize = size; typeface = tf; this.color = color }
         private fun s(id: Int, vararg args: Any) = ctx.getString(id, *args)
-        private fun date(d: Day) = android.icu.text.DateFormat.getInstanceForSkeleton("dMMMy", fmt.locale)
-            .apply { timeZone = android.icu.util.TimeZone.GMT_ZONE }.format(java.util.Date(d.toLong() * 86_400_000L))
+        private fun date(d: Day) = DateFormat.getInstanceForSkeleton("dMMMy", fmt.locale)
+            .apply { timeZone = android.icu.util.TimeZone.GMT_ZONE }.format(Date(d.toLong() * 86_400_000L))
 
         fun draw(r: ReportModel) {
             newPage()
@@ -92,7 +98,7 @@ object ReportPdf {
             )
             if (r.topSymptoms.isNotEmpty()) row(s(R.string.rep_top), r.topSymptoms.joinToString(", ") { (k, n) -> "${fmt.item(k)} ($n)" })
             r.painMedian?.let { row(s(R.string.rep_pain), "$it / 10") }
-            fun win(w: com.nordinary.cyclus.presenter.WindowMeans) =
+            fun win(w: WindowMeans) =
                 s(R.string.rep_win, w.period?.let { fmt.num(it, 1) } ?: "–", w.pre?.let { fmt.num(it, 1) } ?: "–", w.rest?.let { fmt.num(it, 1) } ?: "–")
             r.mood?.let { row(s(R.string.rep_mood), win(it)) }
             r.energy?.let { row(s(R.string.rep_energy), win(it)) }
@@ -189,7 +195,7 @@ object ReportPdf {
             val k = size / 48f // icon viewport 48
             val ring = Paint(Paint.ANTI_ALIAS_FLAG).apply { style = Paint.Style.STROKE; strokeWidth = 5f * k; color = ACCENT; strokeCap = Paint.Cap.ROUND }
             // open ring: arc over the top from (13,37) to (35,37), centre (24,24), r 15; dot at (24,9)
-            c.drawArc(android.graphics.RectF(x0 + 9f * k, top + 9f * k, x0 + 39f * k, top + 39f * k), 130.2f, 279.6f, false, ring)
+            c.drawArc(RectF(x0 + 9f * k, top + 9f * k, x0 + 39f * k, top + 39f * k), 130.2f, 279.6f, false, ring)
             c.drawCircle(x0 + 24f * k, top + 9f * k, 3f * k, Paint(Paint.ANTI_ALIAS_FLAG).apply { color = ACCENT })
             val tx = x0 + size + 6f
             c.drawText(name, tx, top + 9.5f, brand)
@@ -277,13 +283,13 @@ object ReportPdf {
                 ensure(monthH)
                 row.forEachIndexed { i, mg ->
                     val x0 = m + i * monthW
-                    val title = android.icu.text.DateFormat.getInstanceForSkeleton("MMMMy", fmt.locale)
-                        .apply { timeZone = android.icu.util.TimeZone.GMT_ZONE }.format(java.util.Date(mg.firstDay.toLong() * 86_400_000L))
+                    val title = DateFormat.getInstanceForSkeleton("MMMMy", fmt.locale)
+                        .apply { timeZone = android.icu.util.TimeZone.GMT_ZONE }.format(Date(mg.firstDay.toLong() * 86_400_000L))
                     c.drawText(title, x0, y + 10, paint(9f, bold))
                     // weekday initials, Monday first, in the PDF language
                     val wdp = paint(6.5f, color = INK2)
                     for (k in 0 until 7) {
-                        val name = java.time.DayOfWeek.of(k + 1).getDisplayName(java.time.format.TextStyle.NARROW, fmt.locale)
+                        val name = DayOfWeek.of(k + 1).getDisplayName(TextStyle.NARROW, fmt.locale)
                         c.drawText(name, x0 + k * (cell + 2) + 4, y + 22, wdp)
                     }
                     val wd = (java.time.LocalDate.ofEpochDay(mg.firstDay.toLong()).dayOfWeek.value + 6) % 7
@@ -298,7 +304,7 @@ object ReportPdf {
             }
         }
 
-        private fun heatmap(h: com.nordinary.cyclus.presenter.HeatMap) {
+        private fun heatmap(h: HeatMap) {
             val labelW = 110f
             val cw = (contentW - labelW) / h.rel.size
             ensure(14f)

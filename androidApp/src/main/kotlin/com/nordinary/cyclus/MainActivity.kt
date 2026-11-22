@@ -1,5 +1,6 @@
 package com.nordinary.cyclus
 
+import android.content.Intent
 import android.os.Build
 import android.os.Bundle
 import android.view.WindowManager
@@ -39,6 +40,7 @@ import com.nordinary.cyclus.store.DbKeyException
 import com.nordinary.cyclus.store.StoreState
 import com.nordinary.cyclus.ui.AppViewModel
 import com.nordinary.cyclus.ui.CyclusApp
+import com.nordinary.cyclus.ui.onboarding.OnboardingScreen
 import com.nordinary.cyclus.ui.theme.Cyclus
 import com.nordinary.cyclus.ui.theme.CyclusTheme
 import com.nordinary.cyclus.ui.today.PrimaryButton
@@ -71,13 +73,13 @@ class MainActivity : FragmentActivity() {
         }
     }
 
-    override fun onNewIntent(intent: android.content.Intent) {
+    override fun onNewIntent(intent: Intent) {
         super.onNewIntent(intent)
         takeAction(intent)
     }
 
     /** Moves a widget/tile/shortcut action (only via the non-exported alias) to the app and strips it from the intent. */
-    private fun takeAction(i: android.content.Intent?) {
+    private fun takeAction(i: Intent?) {
         ActionEntry.actionOf(i)?.let { app.pendingAction.value = it }
         i?.removeExtra(ActionEntry.EXTRA)
         if (i != null) setIntent(i)
@@ -111,7 +113,7 @@ class MainActivity : FragmentActivity() {
             true -> config?.let { cfg ->
                 LockScreen(
                     fmt, cfg, biometricAvailable = Authn.available(this), lockoutUntil = app.lock.lockoutUntil,
-                    onBiometric = ::authenticate, onPin = { vm.checkPin(it, cfg).also { ok -> if (ok) app.lock.unlock() } },
+                    onBiometric = ::authenticate, onPin = { vm.privacy.checkPin(it, cfg).also { ok -> if (ok) app.lock.unlock() } },
                 )
             }
             false -> {
@@ -126,7 +128,7 @@ class MainActivity : FragmentActivity() {
                         // tablets / landscape: a readable column, not full width
                         androidx.compose.foundation.layout.Box(Modifier.fillMaxSize(), contentAlignment = Alignment.TopCenter) {
                             androidx.compose.foundation.layout.Box(Modifier.widthIn(max = 640.dp).fillMaxSize()) {
-                                com.nordinary.cyclus.ui.onboarding.OnboardingScreen(vm, fmt)
+                                OnboardingScreen(vm, fmt)
                             }
                         }
                     }

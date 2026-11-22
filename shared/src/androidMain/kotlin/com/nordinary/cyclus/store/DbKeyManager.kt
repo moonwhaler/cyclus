@@ -2,12 +2,17 @@ package com.nordinary.cyclus.store
 
 import android.content.Context
 import android.os.Build
+import android.security.KeyStoreException
 import android.security.keystore.KeyGenParameterSpec
+import android.security.keystore.KeyPermanentlyInvalidatedException
 import android.security.keystore.KeyProperties
 import android.security.keystore.StrongBoxUnavailableException
+import android.security.keystore.UserNotAuthenticatedException
 import java.io.File
+import java.io.FileOutputStream
 import java.security.KeyStore
 import java.security.SecureRandom
+import java.security.UnrecoverableKeyException
 import javax.crypto.Cipher
 import javax.crypto.KeyGenerator
 import javax.crypto.SecretKey
@@ -45,7 +50,7 @@ internal class DbKeyManager(private val context: Context, dbName: String = Andro
         val wrapped = wrap(dbKey)
         val tmp = File(keyFile.parentFile, keyFile.name + ".tmp")
         // fsync before the rename: a crash right after creation must never leave an empty key file behind
-        java.io.FileOutputStream(tmp).use { out -> out.write(wrapped); out.fd.sync() }
+        FileOutputStream(tmp).use { out -> out.write(wrapped); out.fd.sync() }
         if (!tmp.renameTo(keyFile)) throw DbKeyException(DbKeyException.Reason.CRYPTO_FAILURE)
         return dbKey
     }
@@ -101,15 +106,15 @@ internal class DbKeyManager(private val context: Context, dbName: String = Andro
         block()
     } catch (e: DbKeyException) {
         throw e
-    } catch (e: android.security.keystore.KeyPermanentlyInvalidatedException) {
+    } catch (e: KeyPermanentlyInvalidatedException) {
         throw DbKeyException(DbKeyException.Reason.KEY_INVALIDATED, e)
-    } catch (e: android.security.keystore.UserNotAuthenticatedException) {
+    } catch (e: UserNotAuthenticatedException) {
         throw DbKeyException(DbKeyException.Reason.DEVICE_LOCKED, e)
-    } catch (e: java.security.UnrecoverableKeyException) {
+    } catch (e: UnrecoverableKeyException) {
         throw DbKeyException(DbKeyException.Reason.KEY_INVALIDATED, e)
     } catch (e: Exception) {
         val locked = Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU &&
-            e is android.security.KeyStoreException && e.numericErrorCode == android.security.KeyStoreException.ERROR_USER_AUTHENTICATION_REQUIRED
+            e is KeyStoreException && e.numericErrorCode == KeyStoreException.ERROR_USER_AUTHENTICATION_REQUIRED
         throw DbKeyException(if (locked) DbKeyException.Reason.DEVICE_LOCKED else DbKeyException.Reason.CRYPTO_FAILURE, e)
     }
 

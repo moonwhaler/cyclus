@@ -7,6 +7,10 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalResources
+import androidx.compose.ui.text.AnnotatedString
+import androidx.compose.ui.text.SpanStyle
+import androidx.compose.ui.text.font.FontWeight
+import com.nordinary.cyclus.R
 import com.nordinary.cyclus.core.Day
 import com.nordinary.cyclus.insights.Num
 import com.nordinary.cyclus.insights.Txt
@@ -63,13 +67,13 @@ class Fmt(private val res: Resources, val locale: Locale) {
 
     /** Label of an engine item key (symptom, feeling, tag, flow, mucus, pain region). */
     fun item(key: String): String {
-        if (key == com.nordinary.cyclus.core.Flow.UNSPECIFIED.key) return res.getString(com.nordinary.cyclus.R.string.flow_unspecified)
+        if (key == com.nordinary.cyclus.core.Flow.UNSPECIFIED.key) return res.getString(R.string.flow_unspecified)
         val id = TxRes.sym[key] ?: TxRes.emo[key] ?: TxRes.tag[key] ?: TxRes.flow[key] ?: TxRes.mucus[key] ?: TxRes.region[key]
         return id?.let { res.getString(it) } ?: key
     }
 
     /** String with {b}…{/b} markers (from the prototype's inline <b>) as bold spans. */
-    fun rich(key: String, vararg args: Any): androidx.compose.ui.text.AnnotatedString {
+    fun rich(key: String, vararg args: Any): AnnotatedString {
         val raw = s(key, *args)
         return androidx.compose.ui.text.buildAnnotatedString {
             var rest = raw
@@ -78,7 +82,7 @@ class Fmt(private val res: Resources, val locale: Locale) {
                 val b = if (a >= 0) rest.indexOf("{/b}", a) else -1
                 if (a < 0 || b < 0) { append(rest); break }
                 append(rest.substring(0, a))
-                pushStyle(androidx.compose.ui.text.SpanStyle(fontWeight = androidx.compose.ui.text.font.FontWeight.SemiBold))
+                pushStyle(SpanStyle(fontWeight = FontWeight.SemiBold))
                 append(rest.substring(a + 3, b)); pop()
                 rest = rest.substring(b + 4)
             }
@@ -86,8 +90,8 @@ class Fmt(private val res: Resources, val locale: Locale) {
     }
 
     fun array(key: String): List<String> = when (key) {
-        "wk" -> res.getStringArray(com.nordinary.cyclus.R.array.tx_wk).toList()
-        "method" -> res.getStringArray(com.nordinary.cyclus.R.array.tx_method).toList()
+        "wk" -> res.getStringArray(R.array.tx_wk).toList()
+        "method" -> res.getStringArray(R.array.tx_method).toList()
         else -> emptyList()
     }
 
