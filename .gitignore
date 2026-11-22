@@ -12,3 +12,16 @@ xcuserdata/
 *.p12
 *.mobileprovision
 .playwright-mcp/
+# Gradle / Android
+.gradle/
+.kotlin/
+local.properties
+.idea/
+*.iml
+captures/
+.externalNativeBuild/
+.cxx/
+*.apk
+*.aab
+.deploy.local
+node_modules/

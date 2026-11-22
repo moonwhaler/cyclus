@@ -21,7 +21,7 @@ Defaults are marked ✅. The rest of this spec is written against them. Changing
 | **D6** | Money | ✅ Strictly free. **No tip jar in v1** (it would make the developer a DSA trader, whose address is published). | Tip jar via IAP after the entity exists |
 | **D7** | Platform baseline | ✅ **Deployment target iOS 26.0, built with the iOS 27 SDK.** Use iOS 27 APIs behind `if #available`. | iOS 27 minimum (smaller audience, simpler code) |
 | **D9** | Patterns & outlook | ✅ **In v1 (owner decision 2026-11-22).** „Deine Muster“ (§11.12) watches body, mood & feelings, lifestyle, fertility and cycle health. „Ausblick“ (§11.13) turns patterns into a 7-day outlook. Fertility and cycle-health watchers follow the same regulatory gate as fertility (§1.4). | — (decided) |
-| **D10** | Platforms & code sharing | ⏳ **Proposed 2026-11-22 (owner to confirm):** Android with 100% feature parity. **Kotlin Multiplatform shared core** (model, store schema, all engines, patterns, outlook, report model, backup, strings) + native UI (SwiftUI / Compose M3 Expressive). Changes §11.1–11.3 and §12.1 as listed in `ANDROID_PLAN.md` §2.5. | Fully native twice, or Compose Multiplatform UI (see ANDROID_PLAN §0) |
+| **D10** | Platforms & code sharing | ✅ **Confirmed 2026-11-22, Android first (ANDROID_PLAN D11):** Android with 100% feature parity. **Kotlin Multiplatform shared core** (model, store schema, all engines, patterns, outlook, report model, backup, strings) + native UI (SwiftUI / Compose M3 Expressive). Changes §11.1–11.3 and §12.1 as listed in `ANDROID_PLAN.md` §2.5. | Fully native twice, or Compose Multiplatform UI (see ANDROID_PLAN §0) |
 | **D8** | Markets & languages | ✅ **German first** (owner decision 2026-11-22): DACH is the primary market, all copy is authored in German (source language), App Store primary locale `de-DE`, German screenshots first, in-app language selector (Deutsch / English). English second. EU + US. | — (decided) |
 
 ### 0.2 What changed vs. PLAN.md (summary)
@@ -677,6 +677,7 @@ struct LocalDate: Codable, Hashable, Comparable, Sendable { // civil date, no ti
     var energy: Int?                 // 1...5
     var sleepQuality: Int?           // 1...5
     var discharge: Discharge?        // superset of HK cervical mucus
+    var ovulationTest: LhResult?     // negative, positive, surge (high/estrogen). Added 2026-11-22: used by the fertility engine and the prototype
     var sex: SexEntry?               // protected: Bool?
     var bbt: Measurement<UnitTemperature>?
     var tagIDs: [UUID]

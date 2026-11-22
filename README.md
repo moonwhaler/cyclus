@@ -9,6 +9,7 @@ Private, local-first cycle tracker. **German first**, iOS first, Android with fu
 | [`docs/DESIGN_SPEC.md`](docs/DESIGN_SPEC.md) | **Main spec** (product, UX/UI, threat model, engines, delivery). Start with §0 (decisions D1–D10) |
 | [`docs/ANDROID_PLAN.md`](docs/ANDROID_PLAN.md) | Android design & plan: parity rules, KMP architecture, Material 3 Expressive mapping, Health Connect, Play |
 | [`docs/REVIEW.md`](docs/REVIEW.md) | Sceptic review of the first plan (12 MAJOR / 24 MINOR), all resolved in the spec (§0.3) |
+| [`docs/PARITY.md`](docs/PARITY.md) | Parity matrix: one row per feature, Android and iOS status |
 | [`docs/PLAN.md`](docs/PLAN.md) | First plan, superseded, kept for history |
 | [`prototype/`](prototype/) | Clickable HTML prototype (DE/EN) with live period, fertility, pattern and outlook engines. **Visual and behavioural reference for both apps** |
 
@@ -24,9 +25,18 @@ Published (private) link: see `prototype/README.md`.
   - German first;
   - no Apple Watch on hand;
   - „Deine Muster“ + „Ausblick“ in v1.
-- Android plan drafted. D10 (Kotlin Multiplatform shared core) awaits confirmation.
+- **Android first** (ANDROID_PLAN D11 revised), Kotlin Multiplatform shared core confirmed (D10). iOS follows on the same `shared/` module.
+- Trust rules: no `INTERNET` permission, no third-party services, all intelligence on-device, encrypted at rest (ANDROID_PLAN §0.1).
+- In progress: slice 1 (A0 + A1): engines ported with golden vectors, encrypted store, Today + Log sheet. See `docs/PARITY.md`.
 - Open owner decisions:
   - legal entity + organization developer accounts (Apple, Google);
   - regulatory specialist;
   - clinician reviewer.
-- Next engineering step: port the prototype's JS engines to Kotlin (`shared/`) with golden test vectors (ANDROID_PLAN §11).
+
+## Build & run (Android)
+```sh
+./gradlew :shared:jvmTest        # engine golden tests (JVM)
+./gradlew check                  # lint, no-INTERNET check, tests
+tools/deploy.sh                  # build, install and launch on the paired phone (wireless adb)
+```
+Debug builds (`com.nordinary.cyclus.debug`) hold **throwaway test data** until export/backup lands.

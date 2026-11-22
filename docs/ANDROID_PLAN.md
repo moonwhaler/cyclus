@@ -1,6 +1,6 @@
 # Cyclus for Android — Design & Delivery Plan
 
-> Date: 2026-11-22 · Status: **Draft for owner sign-off** · Companion to `DESIGN_SPEC.md` (iOS-first spec, v1.0 + amendments).
+> Date: 2026-11-22 · Status: **Signed off 2026-11-22 (Android first, KMP confirmed)** · Companion to `DESIGN_SPEC.md` (iOS-first spec, v1.0 + amendments).
 > Goal (owner): **100% feature parity with iOS**, built to **current Google standards (Material 3 Expressive)**, elegant, and visually "more or less 100% the same" as the HTML prototype (`prototype/index.html`).
 
 ---
@@ -9,14 +9,23 @@
 
 | # | Decision | Recommendation | Why |
 |---|---|---|---|
-| **D10** | Code-sharing strategy | ✅ **Kotlin Multiplatform (KMP) shared core + native UI on each platform.** The shared Kotlin module holds the domain model, storage schema, cycle/fertility engines, „Deine Muster“, „Ausblick“, report model, backup format/crypto and all strings. **SwiftUI** on iOS, **Jetpack Compose + Material 3 Expressive** on Android. | One algorithm = one validation, and one medical-device software item instead of two diverging copies (regulatory, §8). Native UI keeps the Apple feel on iOS and Google standards on Android. No iOS code exists yet, so switching costs nothing now. |
+| **D10** | Code-sharing strategy | ✅ **Confirmed 2026-11-22.** **Kotlin Multiplatform (KMP) shared core + native UI on each platform.** The shared Kotlin module holds the domain model, storage schema, cycle/fertility engines, „Deine Muster“, „Ausblick“, report model, backup format/crypto and all strings. **SwiftUI** on iOS, **Jetpack Compose + Material 3 Expressive** on Android. | One algorithm = one validation, and one medical-device software item instead of two diverging copies (regulatory, §8). Native UI keeps the Apple feel on iOS and Google standards on Android. No iOS code exists yet, so switching costs nothing now. |
 | D10-alt A | Two fully native code bases (Swift + Kotlin) | ✗ | Engine written and validated twice; parity drifts; double regulatory evidence. |
 | D10-alt B | Compose Multiplatform UI on both | ✗ | One UI, but iOS loses the native feel (Liquid Glass, SwiftUI behaviours). It conflicts with the iOS principle "feels like Apple built it". |
 | D10-alt C | Flutter / React Native | ✗ | Rewrite of everything; neither platform's standard look; more third-party runtime code (SOUP). |
-| **D11** | Android timing | ✅ Shared core from day 1. **iOS ships first**; Android UI work starts after iOS internal TestFlight. Android launches when the parity matrix is complete on both platforms (§10). | Solo developer; parity is guaranteed by the shared core and the parity matrix, not by simultaneous launch. |
+| **D11** | Platform order | ✅ **Revised 2026-11-22: Android first.** Shared core from day 1; Android UI is built first, iOS (SwiftUI on the same `shared/` module) follows. Launch rule unchanged: a release ships when the parity matrix is complete on both platforms, or a feature is flagged off on both (§10). | Owner has the Android toolchain and a Pixel 9 Pro for daily testing. Parity is guaranteed by the shared core and the parity matrix, not by build order. |
 | **D12** | Android baseline | ✅ `minSdk 29` (Android 10), `targetSdk 36` (Android 16, **required by Play since 31 Aug 2026**), compile with the latest SDK. Re-check API 37 requirements before launch. | Covers the vast majority of DACH devices; Health Connect is available from Android 9 via Play and built into 14+. |
 | **D13** | Material You dynamic colour | ✅ **Off by default** (brand colours = prototype). Optional „Farben deines Hintergrunds verwenden“ tints **only neutrals and surfaces**. Period, pre-period, fertile and status colours never change, because they carry meaning. | Parity with prototype and iOS, while still offering a Google-standard personalisation. |
 | **D14** | Play account | ✅ **Organization account** (same legal entity as D3, D-U-N-S). | Required anyway for health apps (credibility, liability). New *personal* accounts (after 13 Nov 2023) must run a 12-tester, 14-day closed test before production. Organization accounts are widely reported as exempt (verify in Play Console). |
+
+### 0.1 Trust rules (hard, owner 2026-11-22)
+Local first, data security and trust beat every feature.
+1. **No network:** the manifest never contains `INTERNET` or `ACCESS_NETWORK_STATE`. A build check (`verifyNoInternet`) fails the build otherwise.
+2. **No third-party runtime services:** no Google Play services, Firebase, analytics, ads or crash SDKs.
+3. **Intelligence is on-device:** prediction, fertility, „Deine Muster“ and „Ausblick“ are deterministic local statistics. The language model (v1.5) runs on-device only (Gemini Nano / Foundation Models), templates otherwise. Any cloud AI would be a separate owner decision with explicit opt-in, and it would break rule 1, so it is not planned.
+4. **Encrypted at rest from the first build:** SQLCipher with a Keystore-wrapped key (§2.4).
+5. **Never lose data silently:** key or DB errors show a blocking error; the app never deletes or recreates an existing database on its own.
+6. **No backup or device transfer** of the database until §6.4 is decided (`allowBackup=false` + `dataExtractionRules` excluding everything).
 
 **Impact on `DESIGN_SPEC.md`:** §11.1/§11.2/§11.3 change from "Swift packages + SwiftData" to "KMP shared module + SQLDelight + native shells". Everything user-visible stays the same. See §2.5.
 
@@ -96,7 +105,7 @@ cyclus/
 Pin exact versions at project start and record them in the SOUP list.
 - Kotlin 2.x (K2), Coroutines, kotlinx-datetime, kotlinx-serialization.
 - **SQLDelight** (KMP) with **SQLCipher** Android driver (encryption at rest).
-- **Compose Material 3 1.4** (stable, Expressive components) and `material3-adaptive` (navigation suite, list-detail).
+- **Compose Material 3 1.5** (stable; Expressive APIs such as `ButtonGroup`, `MotionScheme.expressive()` and `MaterialExpressiveTheme` are public from 1.5, not 1.4) and `material3-adaptive` (navigation suite, list-detail).
 - Navigation Compose (type-safe) **or** Navigation 3. Decide at project start; both support predictive back.
 - **Glance** (widgets), **WorkManager**, **Biometric** (`BiometricPrompt`), **Health Connect client** (`androidx.health.connect`).
 - Testing: JUnit 5 (JVM shared tests), Compose UI test, **Roborazzi** or Compose Preview Screenshot Testing, Accessibility Test Framework.
@@ -330,7 +339,7 @@ Compose for Wear OS + Wear M3 (Expressive): log period/symptom, glance at cycle 
 Phases with exit criteria, no effort or time estimates (same rule as DESIGN_SPEC §13).
 
 ### 10.1 Android work packages
-1. **KMP setup** (done during iOS phase 2–3): shared module, SQLDelight, SKIE bridge, CI for both platforms, golden-vector pipeline from the prototype.
+1. **KMP setup** (first): shared module, SQLDelight, golden-vector pipeline from the prototype. SKIE bridge and iOS CI when iOS work starts.
 2. **Android foundations:** scaffold, Gradle conventions, lint (banned terms, no `INTERNET`), CI.
 3. **Design system:** theme, tokens, type, shapes, ring, droplets, body map, charts, heat grids.
 4. **Core screens:** Today (Track, Conceive, Period, Paused, Empty; Ausblick card), Log sheet, Calendar + Day sheet.
@@ -351,16 +360,17 @@ Phases with exit criteria, no effort or time estimates (same rule as DESIGN_SPEC
    - device matrix and OEM quirks.
 10. **Beta & release:** closed testing ≥ 2 cycles, fixes, staged rollout.
 
-### 10.2 Phases (relative to the iOS plan)
+### 10.2 Phases (Android first, D11 revised)
 | Phase | Content | Exit criteria |
 |---|---|---|
-| A0 (during iOS phases 2–3) | KMP shared module; engines/insights in Kotlin (port from `prototype/index.html` JS reference) | Golden vectors green on JVM + iOS |
-| A1 (after iOS internal TestFlight) | Scaffold, design-system spike, Keystore/SQLCipher/backup spike; create `docs/PARITY.md` | §6.4 decided; component gallery matches prototype |
-| A2 | Today, Log sheet, Calendar | Screenshot pairs with prototype approved |
-| A3 | Insights, Deine Muster, Ausblick, Arztbericht, Privacy, Settings, Onboarding | Parity rows done |
+| A0 | KMP shared module; engines/insights ported from `prototype/index.html`; golden vectors from the prototype harness | Golden vectors green on JVM **and** on device |
+| A1 (slice 1) | Scaffold, theme/tokens, encrypted store (SQLCipher + Keystore), Today + Log sheet, deploy script; create `docs/PARITY.md` | Runs on the owner's Pixel; `verifyNoInternet` green |
+| A2 | Calendar + Day sheet, Insights, Deine Muster, Ausblick detail, Why/Method sheets, Conceive UI | Screenshot pairs with prototype approved |
+| A3 | Arztbericht, Privacy Center, Settings, Onboarding, app lock, backup/export (§6.4 decided) | Parity rows done |
 | A4 | Health Connect, widgets, QS tile, notifications, adaptive layouts | Device checklist passes |
 | A5 | Accessibility, localisation, device matrix | **Internal testing** track |
-| A6 | Closed testing (≥ 2 cycles of beta, like iOS), fixes, Play declarations | All parity rows done on both platforms |
+| I1–I3 | iOS: add `iosArm64` targets + SKIE, SwiftUI shell, HealthKit, WidgetKit, against the same parity rows | Parity rows done on iOS |
+| A6 | Closed testing (≥ 2 cycles of beta on both platforms), fixes, Play declarations | All parity rows done on both platforms |
 | A7 | Staged production rollout (10% → 50% → 100%) | Crash-free ≥ 99.5% at each stage |
 
 ### 10.3 Risks
