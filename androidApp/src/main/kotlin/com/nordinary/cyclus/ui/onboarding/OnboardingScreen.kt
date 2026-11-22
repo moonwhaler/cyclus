@@ -75,6 +75,12 @@ fun OnboardingScreen(vm: AppViewModel, fmt: Fmt) {
     val openDoc = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->
         if (uri != null) { vm.startImport(uri); importing = true }
     }
+    // Health Connect import (reinstall recovery happens in the first sync, into this still-empty store)
+    val hcAvailable = remember { vm.health.availability() == com.nordinary.cyclus.health.HealthAvailability.AVAILABLE }
+    val hcLauncher = rememberLauncherForActivityResult(androidx.health.connect.client.PermissionController.createRequestPermissionResultContract()) { granted ->
+        vm.healthConnected(granted)
+        if (granted.isNotEmpty()) step = 4 // cycles come from Health Connect: no need to ask for the last period
+    }
 
     Column(
         Modifier.fillMaxSize().background(c.bg).systemBarsPadding().padding(24.dp).verticalScroll(rememberScrollState()),
@@ -99,6 +105,10 @@ fun OnboardingScreen(vm: AppViewModel, fmt: Fmt) {
                 Title(fmt.s("onb2T")); Body(fmt.s("onb2B"))
                 Dots(2)
                 PrimaryButton(fmt.s("importBtn"), { app.lock.suspendForExternalActivity(); openDoc.launch(arrayOf("*/*")) }, Modifier.fillMaxWidth())
+                if (hcAvailable) SecondaryButton(
+                    stringResource(com.nordinary.cyclus.R.string.onb_hc),
+                    { app.lock.suspendForExternalActivity(); hcLauncher.launch(vm.health.readPermissions()) }, Modifier.fillMaxWidth(),
+                )
                 SecondaryButton(fmt.s("skip"), { step = 3 }, Modifier.fillMaxWidth())
             }
             3 -> {

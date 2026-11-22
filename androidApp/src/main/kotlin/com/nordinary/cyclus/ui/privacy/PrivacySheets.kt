@@ -154,12 +154,17 @@ private fun iso(s: String) = java.time.LocalDate.parse(s).toEpochDay().toInt()
 
 /** Erase everything (prototype `renderEraseSheet`, Android copy): type the erase word to confirm. */
 @Composable
-fun EraseSheet(fmt: Fmt, onErase: () -> Unit, onDismiss: () -> Unit) = Sheet(fmt.s("eraseT"), fmt, onDismiss) {
+fun EraseSheet(fmt: Fmt, healthWritten: Boolean, onErase: (deleteHealth: Boolean) -> Unit, onDismiss: () -> Unit) = Sheet(fmt.s("eraseT"), fmt, onDismiss) {
     val c = Cyclus.colors
     var text by remember { mutableStateOf("") }
+    var deleteHealth by remember { mutableStateOf(true) } // spec §7.9: on by default
     val word = fmt.s("eraseWord")
     Column(Modifier.fillMaxWidth().clip(RoundedCornerShape(14.dp)).background(c.surface)) {
         Column(Modifier.padding(14.dp)) { Text(fmt.s("er1"), fontWeight = FontWeight.Medium, color = c.ink); Text(stringResource(R.string.erase_lock_note), fontSize = 13.sp, color = c.ink2) }
+        if (healthWritten) {
+            HorizontalDivider(color = c.line)
+            SwitchRow(stringResource(R.string.hc_erase_line), null, deleteHealth) { deleteHealth = it }
+        }
         HorizontalDivider(color = c.line)
         Column(Modifier.padding(14.dp)) { Text(fmt.s("er3"), fontWeight = FontWeight.Medium, color = c.ink); Text(fmt.s("er3s"), fontSize = 13.sp, color = c.ink2) }
     }
@@ -170,7 +175,7 @@ fun EraseSheet(fmt: Fmt, onErase: () -> Unit, onDismiss: () -> Unit) = Sheet(fmt
         colors = OutlinedTextFieldDefaults.colors(unfocusedBorderColor = c.line, focusedBorderColor = c.period, unfocusedContainerColor = c.surface, focusedContainerColor = c.surface),
     )
     val ok = text.trim().uppercase() == word.uppercase()
-    PrimaryButton(fmt.s("eraseT"), { if (ok) onErase() }, Modifier.fillMaxWidth(), enabled = ok)
+    PrimaryButton(fmt.s("eraseT"), { if (ok) onErase(healthWritten && deleteHealth) }, Modifier.fillMaxWidth(), enabled = ok)
 }
 
 /** Set a 6-digit Cyclus PIN (enter twice). */

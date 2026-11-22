@@ -724,6 +724,8 @@ struct LocalDate: Codable, Hashable, Comparable, Sendable { // civil date, no ti
    - Read denial is undetectable, so the UX shows help text only.
 9. **Import.** All history, batched by year with progress; `HKAnchoredObjectQuery` anchors persisted per type; `HKObserverQuery` + `enableBackgroundDelivery(.immediate)` for flow and symptoms, deferred until unlocked.
 
+**Android notes (2026-11-22):** values from health stores fill only fields the person left empty and are listed separately with their source in the day sheet; Cyclus writes only the person's own entries; reconstruction from own records (rule 7) only into an empty store; sync only while the app is open. These apply to the iOS implementation as well.
+
 #### 11.4.2 Field mapping
 **Owner decision 2026-11-22 (both platforms): every mirror (write) category starts off; the user switches each on in the Privacy Center. The defaults below are the earlier plan and apply only as the suggested order of the switches.**
 

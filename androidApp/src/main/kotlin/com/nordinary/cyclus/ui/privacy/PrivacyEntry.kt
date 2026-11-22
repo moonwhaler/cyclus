@@ -36,6 +36,15 @@ fun PrivacyEntry(vm: AppViewModel, fmt: Fmt, snackbar: SnackbarHostState, onBack
     val lock = LockConfig.from(m.settings)
     val canAuth = Authn.available(ctx)
 
+    // Health Connect state: reloaded when settings change, when coming back from Health Connect, and after an action
+    var healthRefresh by remember { androidx.compose.runtime.mutableIntStateOf(0) }
+    val res = androidx.compose.ui.platform.LocalResources.current
+    val lifecycle = androidx.lifecycle.compose.LocalLifecycleOwner.current.lifecycle
+    val resumed by lifecycle.currentStateFlow.collectAsStateWithLifecycle()
+    val healthUi by androidx.compose.runtime.produceState<AppViewModel.HealthUi?>(null, m.settings, healthRefresh, resumed) {
+        value = vm.healthUi(m.settings)
+    }
+
     // App-initiated pickers don't count as leaving the app (no relock on return). Results after process death are dropped.
     val createDoc = rememberLauncherForActivityResult(ActivityResultContracts.CreateDocument("application/octet-stream")) { uri ->
         val pass = pendingPass
@@ -78,6 +87,10 @@ fun PrivacyEntry(vm: AppViewModel, fmt: Fmt, snackbar: SnackbarHostState, onBack
         onErase = { sheet = PrivacySheet.ERASE },
         onDiscreet = { vm.setSetting(com.nordinary.cyclus.presenter.NotifyKeys.DISCREET, if (it) null else "0") },
         onWidgetDetails = { vm.setSetting(com.nordinary.cyclus.presenter.NotifyKeys.WIDGET_DETAILS, if (it) "1" else null) },
+        healthContent = { healthUi?.let { HealthSection(vm, fmt, it) { healthRefresh++ } } },
+        healthLine = healthUi?.takeIf { it.availability == com.nordinary.cyclus.health.HealthAvailability.AVAILABLE }?.let { h ->
+            h.enabled.takeIf { it.isNotEmpty() }?.joinToString(", ") { res.getString(categoryLabel(it)) } ?: fmt.s("nothingW")
+        },
         onShortcut = { vm.setSetting(com.nordinary.cyclus.presenter.NotifyKeys.SHORTCUT, if (it) "1" else null) },
     )
 
@@ -97,7 +110,11 @@ fun PrivacyEntry(vm: AppViewModel, fmt: Fmt, snackbar: SnackbarHostState, onBack
             onApply = { replace -> vm.applyImport(replace) { sheet = PrivacySheet.NONE } },
             onDismiss = { vm.cancelImport(); sheet = PrivacySheet.NONE },
         )
-        PrivacySheet.ERASE -> EraseSheet(fmt, onErase = { sheet = PrivacySheet.NONE; onErased(); vm.eraseEverything() }, onDismiss = { sheet = PrivacySheet.NONE })
+        PrivacySheet.ERASE -> EraseSheet(
+            fmt, healthWritten = m.settings[com.nordinary.cyclus.health.HealthKeys.WROTE] == "1",
+            onErase = { deleteHealth -> sheet = PrivacySheet.NONE; onErased(); vm.eraseEverything(deleteHealth) },
+            onDismiss = { sheet = PrivacySheet.NONE },
+        )
         PrivacySheet.NONE -> {}
     }
 }

@@ -18,6 +18,8 @@ class CyclusApplication : Application() {
     val lock = com.nordinary.cyclus.lock.AppLock()
     /** Widget/tile/shortcut action waiting for the unlocked, ready app ([ActionEntry]); consumed once. */
     val pendingAction = kotlinx.coroutines.flow.MutableStateFlow<String?>(null)
+    /** Health Connect sync requests (true = re-read everything): app start/resume and „Jetzt synchronisieren“. */
+    val healthKick = kotlinx.coroutines.flow.MutableSharedFlow<Boolean>(extraBufferCapacity = 4)
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
 
     override fun onCreate() {
@@ -26,7 +28,10 @@ class CyclusApplication : Application() {
         backup.startupSweep()
         com.nordinary.cyclus.report.ReportFiles.clear(this) // shared report PDFs never outlive the session
         ProcessLifecycleOwner.get().lifecycle.addObserver(object : DefaultLifecycleObserver {
-            override fun onStart(owner: LifecycleOwner) { lock.onAppStart(com.nordinary.cyclus.lock.Authn.available(this@CyclusApplication)) }
+            override fun onStart(owner: LifecycleOwner) {
+                lock.onAppStart(com.nordinary.cyclus.lock.Authn.available(this@CyclusApplication))
+                healthKick.tryEmit(false) // Health Connect syncs only while the app is open
+            }
 
             override fun onStop(owner: LifecycleOwner) {
                 lock.onAppStop()

@@ -16,6 +16,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -34,7 +35,11 @@ import com.nordinary.cyclus.ui.today.SecondaryButton
 /** Day detail (prototype `renderDaySheet`). */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun DaySheet(model: DaySheetModel, fmt: Fmt, onEdit: () -> Unit, onMarkStart: () -> Unit, onDismiss: () -> Unit) {
+fun DaySheet(
+    model: DaySheetModel, fmt: Fmt, onEdit: () -> Unit, onMarkStart: () -> Unit, onDismiss: () -> Unit,
+    /** Values from other apps via Health Connect, with source; not counted when the person logged the field. */
+    external: List<com.nordinary.cyclus.health.ExternalValue> = emptyList(),
+) {
     val c = Cyclus.colors
     ModalBottomSheet(onDismissRequest = onDismiss, sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true), containerColor = c.bg) {
         Row(Modifier.fillMaxWidth().padding(start = 16.dp, end = 8.dp, bottom = 10.dp), verticalAlignment = Alignment.CenterVertically) {
@@ -60,6 +65,27 @@ fun DaySheet(model: DaySheetModel, fmt: Fmt, onEdit: () -> Unit, onMarkStart: ()
                     }
                 }
             }
+            if (external.isNotEmpty()) {
+                val pm = androidx.compose.ui.platform.LocalContext.current.packageManager
+                Column(Modifier.fillMaxWidth().clip(RoundedCornerShape(14.dp)).background(c.surface)) {
+                    external.forEachIndexed { i, x ->
+                        if (i > 0) HorizontalDivider(color = c.line)
+                        val app = remember(x.origin) {
+                            runCatching { pm.getApplicationLabel(pm.getApplicationInfo(x.origin, 0)).toString() }.getOrDefault(x.origin)
+                        }
+                        Column(Modifier.fillMaxWidth().padding(horizontal = 14.dp, vertical = 12.dp)) {
+                            Text(
+                                androidx.compose.ui.res.stringResource(com.nordinary.cyclus.ui.privacy.typeLabel(x.type)),
+                                fontSize = 13.sp, color = c.ink2,
+                            )
+                            externalValue(x, fmt)?.let { Text(it, fontSize = 15.sp, fontWeight = FontWeight.Medium, color = if (x.used) c.ink else c.ink2) }
+                            val src = androidx.compose.ui.res.stringResource(com.nordinary.cyclus.R.string.hc_source, app)
+                            val nc = androidx.compose.ui.res.stringResource(com.nordinary.cyclus.R.string.hc_not_counted)
+                            Text(if (x.used) src else "$src · $nc", fontSize = 12.sp, color = c.ink2)
+                        }
+                    }
+                }
+            }
             if (model.showSource) Text(fmt.s("dsSource"), fontSize = 12.sp, color = c.ink2)
             if (model.canEdit) Row(horizontalArrangement = Arrangement.spacedBy(10.dp), verticalAlignment = Alignment.CenterVertically) {
                 PrimaryButton(if (model.entries.isEmpty()) fmt.s("logThisDay") else fmt.s("edit"), onEdit, Modifier.weight(1f))
@@ -67,6 +93,14 @@ fun DaySheet(model: DaySheetModel, fmt: Fmt, onEdit: () -> Unit, onMarkStart: ()
             }
         }
     }
+}
+
+private fun externalValue(x: com.nordinary.cyclus.health.ExternalValue, fmt: Fmt): String? = when (x.type) {
+    com.nordinary.cyclus.health.HealthType.FLOW -> fmt.item(x.value).replace("\u00AD", "")
+    com.nordinary.cyclus.health.HealthType.BBT -> x.value.toDoubleOrNull()?.let { "${fmt.temp(it)} °C" }
+    com.nordinary.cyclus.health.HealthType.MUCUS -> fmt.item(x.value)
+    com.nordinary.cyclus.health.HealthType.LH -> fmt.s("lh_${x.value}")
+    else -> null
 }
 
 private fun row(e: DayEntry, fmt: Fmt): Pair<String, String> = when (e) {

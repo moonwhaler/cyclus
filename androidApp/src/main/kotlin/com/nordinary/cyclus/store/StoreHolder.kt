@@ -89,12 +89,21 @@ class StoreHolder(private val context: Context, val backup: BackupCoordinator, p
      * Erase everything (crypto-shred): database files + their key, snapshot + backup key, settings. Keeps only the
      * „Nur auf dem Gerät“ choice. Then opens a fresh, empty store.
      */
-    fun erase(onDone: () -> Unit = {}) {
+    fun erase(deleteHealth: Boolean = false, revokeHealth: Boolean = true, onDone: () -> Unit = {}) {
         val current = (_state.value as? StoreState.Ready)?.repo
         _state.value = StoreState.Erasing
         scope.launch {
             kotlinx.coroutines.delay(300) // let collectors of the old repository stop (UI left the screens)
             backup.exclusive {
+                // spec §7.9: what Cyclus wrote to Health Connect (only our own records), then no connection is left.
+                // A Health Connect failure never blocks the crypto-shred.
+                runCatching {
+                    val hc = com.nordinary.cyclus.health.HealthSync(context)
+                    if (hc.availability() == com.nordinary.cyclus.health.HealthAvailability.AVAILABLE) {
+                        if (deleteHealth) runCatching { hc.deleteOwn(com.nordinary.cyclus.health.HealthType.entries) }
+                        if (revokeHealth) hc.revokeAll()
+                    }
+                }
                 runCatching { current?.close() }
                 AndroidDatabase.destroy(context, dbName)
                 backup.eraseFilesLocked()

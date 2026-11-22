@@ -24,14 +24,14 @@ Status values: `—` not started · `wip` · `done` · `off` (feature-flagged of
 | F-009 | „Deine Muster“ cards | 11.12 | Einblicke | done | — | | Muted patterns are persisted (prototype: session only) |
 | F-010 | Why this window? / Method sheets | 7.14 | Sheets | done | — | | Method copy: Android override (no iPhone, no outlier-question claim) |
 | F-011 | Conceive mode UI | 7.14 | Heute (Kinderwunsch) | done | — | | Regulatory feature flag per region still to add before release |
-| F-012 | Onboarding | 7.1 | Onboarding | done | — | | Import step = `.cyclus` backup (Health Connect with A4). Last period logs only stated days as unspecified flow (no invented levels). Birth year not collected until the engine uses age-band priors |
-| F-013 | Privacy Center | 7.8 | Datenschutz | done | — | | „Sichtbarkeit“: discreet notifications, widget details (off), shortcut (off), note on plaintext side files. Health Connect rows with A4b |
+| F-012 | Onboarding | 7.1 | Onboarding | done | — | | Import step: `.cyclus` backup or Health Connect (then the last-period question is skipped). Last period logs only stated days as unspecified flow (no invented levels). Birth year not collected until the engine uses age-band priors |
+| F-013 | Privacy Center | 7.8 | Datenschutz | done | — | | „Sichtbarkeit“: discreet notifications, widget details (off), shortcut (off), note on plaintext side files. Health Connect: status, sync now, write toggles (all off), removed review, disconnect, „In Health Connect“ row |
 | F-014 | Settings + in-app language | 4 | Einstellungen | done | — | | Language (Android 13+), goal, show fertile window, life stage, Mitteilungen screen |
 | F-015 | App lock (biometric + PIN) | 7.12 | Sperre | done | — | | Lock paused (with notice) when nothing could open it |
-| F-016 | Erase everything | 7.9 | Sheet | done | — | | Crypto-shred (DB + keys); Health Connect deletion with A4 |
+| F-016 | Erase everything | 7.9 | Sheet | done | — | | Crypto-shred (DB + keys). „Von Cyclus in Health Connect geschriebene Einträge“ (on by default, only if anything was written): deleted by time range (own records only), then access revoked; a Health Connect error never blocks the shred |
 | F-017 | Doctor Visit Pack (PDF) | 7.7 | Arztbericht | done | — | | Preview = the real PDF. Confidentiality footer on every page serves as the m11 watermark. Only Skia /Producer metadata |
 | F-018 | Episodes (pill, pregnancy, …) | 2.2 | Einstellungen | wip | — | | Pill / pregnant / postpartum pause predictions (undoable). Conditions (peri, PCOS, endo, T) hidden until the engine widens ranges for them |
-| P-001 | Health store sync | 11.4 | — | — | — | n/a | Health Connect vs HealthKit. Every write category off by default (decision 2026-11-22) |
+| P-001 | Health store sync | 11.4 | Health Connect | done | — | n/a | Import + opt-in write, only while the app is open. Every write category off by default (decision 2026-11-22). External values fill only empty fields; precedence user > Samsung Health/Google Fit/Fitbit > other apps. Reconstruction from own records only into an empty store |
 | P-002 | Widgets | 8.1 | Startbildschirm | done | — | | Glance small + medium. Details off by default (neutral „Cyclus“). Buttons open the app via a non-exported alias; no widget-side writes, so no pending queue |
 | P-003 | Quick action (QS tile / Control) | 8.2 | Schnelleinstellungen | done | — | n/a | Tile „Cyclus · Eintragen“ + opt-in launcher shortcut. iOS Control v1.1 |
 | P-004 | Notifications | 8.3 | Mitteilungen | done | — | | Opt-in on all API levels (decision 2026-11-22, applies to iOS too). Planned in-app, one DB-free inexact alarm re-arms from a side file |

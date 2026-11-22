@@ -83,6 +83,9 @@ fun PrivacyScreen(
     onDiscreet: (Boolean) -> Unit = {},
     onWidgetDetails: (Boolean) -> Unit = {},
     onShortcut: (Boolean) -> Unit = {},
+    /** „In Health Connect“ row (written categories), null where Health Connect isn't available. */
+    healthLine: String? = null,
+    healthContent: @Composable () -> Unit = {},
 ) {
     val c = Cyclus.colors
     val scroll = TopAppBarDefaults.exitUntilCollapsedScrollBehavior()
@@ -107,6 +110,7 @@ fun PrivacyScreen(
                 Group {
                     Info(fmt.s("onPhone"), fmt.s("onPhoneS"))
                     Divider()
+                    if (healthLine != null) { Info(stringResource(R.string.hc_in_health), healthLine); Divider() }
                     Info(fmt.s("inBackups"), backupLine(fmt, state))
                     Divider()
                     Info(
@@ -162,6 +166,7 @@ fun PrivacyScreen(
                 }
                 Note(stringResource(R.string.vis_files_note))
             }
+            healthContent()
             Section(fmt.s("backups")) {
                 Group {
                     SwitchRow(fmt.s("devOnlyT"), fmt.s("devOnlyS"), state.deviceOnly, onDeviceOnly)

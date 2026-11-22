@@ -37,6 +37,7 @@ import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.flow.filterNotNull
@@ -59,6 +60,10 @@ data class AppModel(
     val episodes: List<Episode>,
     /** Truly empty store and onboarding not done (fresh install / after erase). */
     val showOnboarding: Boolean,
+    /** The person's own entries: what the Log sheet edits and exports contain (no Health Connect values). */
+    val userLogs: Map<Day, DayLog> = snapshot.data.logs,
+    /** Records from other apps via Health Connect (day sheet source badges). */
+    val healthSamples: List<com.nordinary.cyclus.health.HealthSample> = emptyList(),
 ) {
     val logs: Map<Day, DayLog> get() = snapshot.data.logs
 }
@@ -92,13 +97,16 @@ class AppViewModel(
     }.distinctUntilChanged()
 
     val model: StateFlow<AppModel?> = combine(
-        repo.observeLogs(), repo.observeOverrides(), repo.observeEpisodes(), repo.observeSettings(), todayFlow,
-    ) { logs, overrides, episodes, settings, today ->
+        combine(repo.observeLogs(), repo.observeHealthSamples()) { l, h -> l to h },
+        repo.observeOverrides(), repo.observeEpisodes(), repo.observeSettings(), todayFlow,
+    ) { (logs, samples), overrides, episodes, settings, today ->
         val mode = if (settings[KEY_MODE] == "conceive") Mode.CONCEIVE else Mode.TRACK
         val showFert = settings[KEY_SHOW_FERT] == "1"
         val muted = settings[KEY_MUTED]?.split(',')?.filter { it.isNotBlank() }?.toSet() ?: emptySet()
         val episode = episodes.lastOrNull { it.isActiveOn(today) }
-        val snap = CycleSnapshot.compute(CycleData(logs, overrides, today), mode, showFertilityInTrack = showFert, paused = episode != null)
+        // Health Connect values fill fields the person left empty (spec §11.4 rule 4); the engine is unchanged
+        val effective = com.nordinary.cyclus.health.HealthMerge.effectiveLogs(logs, samples)
+        val snap = CycleSnapshot.compute(CycleData(effective, overrides, today), mode, showFertilityInTrack = showFert, paused = episode != null)
         AppModel(
             snapshot = snap,
             today = TodayPresenter.present(snap, episode?.kind, muted),
@@ -107,8 +115,27 @@ class AppViewModel(
             mode = mode, showFertility = showFert, muted = muted, activeEpisode = episode, settings = settings,
             episodes = episodes,
             showOnboarding = com.nordinary.cyclus.presenter.Onboarding.shouldShow(logs, overrides, episodes, settings),
+            userLogs = logs, healthSamples = samples,
         )
     }.flowOn(Dispatchers.Default).stateIn(viewModelScope, SharingStarted.WhileSubscribed(0), null)
+
+    val health = com.nordinary.cyclus.health.HealthSync(app)
+
+    init {
+        // Health Connect: triggered by the person's own data and the HC toggles only (its own writes never retrigger it)
+        @OptIn(kotlinx.coroutines.FlowPreview::class)
+        viewModelScope.launch {
+            val userData = combine(
+                repo.observeLogs(), repo.observeOverrides(),
+                repo.observeSettings().map { st ->
+                    st.filterKeys { it.startsWith("hc.w.") || it == com.nordinary.cyclus.health.HealthKeys.CONNECTED }
+                }.distinctUntilChanged(),
+            ) { a, b, c -> Triple(a, b, c) }.distinctUntilChanged()
+            kotlinx.coroutines.flow.merge(userData.debounce(3_000).map { false }, app.healthKick).collect { full ->
+                runCatching { health.sync(app.backup, app.store, repo, full) }
+            }
+        }
+    }
 
     init {
         // reminders, widget and shortcut follow the data and settings (planning only here, with the DB open)
@@ -416,9 +443,102 @@ class AppViewModel(
     }
 
     /** Erase everything (crypto-shred); the store reopens empty. */
-    fun eraseEverything() {
+    fun eraseEverything(deleteHealth: Boolean = false) {
         app.lock.forget()
-        app.store.erase()
+        app.store.erase(deleteHealth = deleteHealth)
+    }
+
+    // ---- Health Connect (Privacy Center)
+
+    data class HealthUi(
+        val availability: com.nordinary.cyclus.health.HealthAvailability,
+        val connected: Boolean,
+        val granted: Set<String>,
+        val enabled: Set<com.nordinary.cyclus.health.HealthCategory>,
+        val lastSync: Long?,
+        val error: Boolean,
+        val noHistory: Boolean,
+        val imported: Long,
+        val removed: List<com.nordinary.cyclus.health.HealthLink>,
+        val wrote: Boolean,
+    )
+
+    suspend fun healthUi(settings: Map<String, String>): HealthUi {
+        val av = health.availability()
+        val ok = av == com.nordinary.cyclus.health.HealthAvailability.AVAILABLE
+        return HealthUi(
+            availability = av,
+            connected = settings[com.nordinary.cyclus.health.HealthKeys.CONNECTED] == "1",
+            granted = if (ok) health.granted() else emptySet(),
+            enabled = com.nordinary.cyclus.health.HealthKeys.enabled(settings),
+            lastSync = settings[com.nordinary.cyclus.health.HealthKeys.LAST_SYNC]?.toLongOrNull(),
+            error = settings[com.nordinary.cyclus.health.HealthKeys.ERROR] != null,
+            noHistory = settings[com.nordinary.cyclus.health.HealthKeys.NO_HISTORY] == "1",
+            imported = repo.healthSampleCount(),
+            removed = repo.healthLinks().values.filter { it.state == com.nordinary.cyclus.health.LinkState.REMOVED },
+            wrote = settings[com.nordinary.cyclus.health.HealthKeys.WROTE] == "1",
+        )
+    }
+
+    /** After the read-permission screen: connected once anything readable was granted; first sync reads everything. */
+    fun healthConnected(granted: Set<String>) {
+        val reads = com.nordinary.cyclus.health.HealthType.entries.map {
+            androidx.health.connect.client.permission.HealthPermission.getReadPermission(com.nordinary.cyclus.health.HealthSync.recordClass(it))
+        }
+        if (granted.none { it in reads }) return
+        viewModelScope.launch {
+            repo.setSetting(com.nordinary.cyclus.health.HealthKeys.CONNECTED, "1")
+            val history = androidx.health.connect.client.permission.HealthPermission.PERMISSION_READ_HEALTH_DATA_HISTORY
+            repo.setSetting(com.nordinary.cyclus.health.HealthKeys.NO_HISTORY, if (history in granted) null else "1")
+            app.healthKick.emit(true)
+        }
+    }
+
+    fun healthSyncNow() { app.healthKick.tryEmit(false) }
+
+    /** Switch writing of [c]. Off: [deleteThere] deletes what Cyclus wrote, else the records stay and are forgotten. */
+    fun setHealthWrite(c: com.nordinary.cyclus.health.HealthCategory, on: Boolean, deleteThere: Boolean = false) {
+        viewModelScope.launch {
+            if (!on && !deleteThere) app.backup.exclusive { c.types.forEach { repo.deleteHealthLinksOfType(it) } }
+            repo.setSetting(com.nordinary.cyclus.health.HealthKeys.write(c), if (on) "1" else null)
+        }
+    }
+
+    /** Rule 6 review: keep only in Cyclus (never written again) or remove the values from Cyclus too. */
+    fun reviewRemoved(links: List<com.nordinary.cyclus.health.HealthLink>, keep: Boolean) {
+        viewModelScope.launch {
+            app.backup.exclusive {
+                for (l in links) {
+                    if (keep) { repo.upsertHealthLink(l.copy(state = com.nordinary.cyclus.health.LinkState.KEPT)); continue }
+                    val days = if (l.type == com.nordinary.cyclus.health.HealthType.PERIOD) {
+                        val end = model.value?.userLogs?.keys?.filter { it >= l.day && it <= l.day + 14 } ?: emptyList()
+                        (listOf(l.day) + end).distinct()
+                    } else listOf(l.day)
+                    for (d in days) {
+                        val before = repo.log(d) ?: continue
+                        val after = when (l.type) {
+                            com.nordinary.cyclus.health.HealthType.FLOW, com.nordinary.cyclus.health.HealthType.SPOTTING ->
+                                before.copy(flow = null)
+                            com.nordinary.cyclus.health.HealthType.PERIOD -> if (before.isBleed) before.copy(flow = null) else before
+                            com.nordinary.cyclus.health.HealthType.BBT -> before.copy(bbt = null)
+                            com.nordinary.cyclus.health.HealthType.MUCUS -> before.copy(mucus = null)
+                            com.nordinary.cyclus.health.HealthType.LH -> before.copy(lh = null)
+                            com.nordinary.cyclus.health.HealthType.SEX -> before.copy(sex = false, sexProtected = null)
+                        }
+                        repo.saveLog(d, after)
+                    }
+                    repo.deleteHealthLink(l.syncId)
+                }
+            }
+        }
+    }
+
+    /** Revokes access and drops imported samples, links and tokens; Cyclus' own entries and what it wrote stay. */
+    fun disconnectHealth() {
+        viewModelScope.launch {
+            health.revokeAll()
+            app.backup.exclusive { repo.clearHealth() }
+        }
     }
 
     fun saved() { viewModelScope.launch { _messages.emit(UiMessage("tSaved")) } }

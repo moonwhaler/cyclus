@@ -31,7 +31,8 @@ Published (private) link: see `prototype/README.md`.
 - Slice 2 (A2) done: Kalender + Tagesansicht, Einblicke + Deine Muster, Kinderwunsch-Modus, Warum-/Methoden-Sheets, Einstellungen (Sprache, Ziel, Lebensphase). Next (A3): Arztbericht, Datenschutz-Center, Onboarding, App-Sperre, Export. See `docs/PARITY.md`.
 - Slice 3 (A3a, trust core) done: encrypted `.cyclus` export/import, end-to-end-only device backup with restore, Datenschutz-Center, crypto-shred erase, app lock (biometrics + Cyclus PIN). 
 - Slice 4 (A3b) done: Arztbericht (PDF, DE/EN, A4/Letter, real preview, share) and onboarding.
-- Slice 5 (A4a) done: notifications (opt-in, discreet), Glance widgets, Quick Settings tile, opt-in shortcut, tablet/foldable layouts. Next (A4b): Health Connect (every write category off by default).
+- Slice 5 (A4a) done: notifications (opt-in, discreet), Glance widgets, Quick Settings tile, opt-in shortcut, tablet/foldable layouts.
+- Slice 6 (A4b) done: Health Connect import + opt-in write (all off by default), only while the app is open; schema v2 migration. Release task: Play Health apps declaration.
 - Open owner decisions:
   - legal entity + organization developer accounts (Apple, Google);
   - regulatory specialist;

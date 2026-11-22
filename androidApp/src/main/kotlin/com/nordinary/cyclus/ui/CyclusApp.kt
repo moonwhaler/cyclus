@@ -214,7 +214,7 @@ fun CyclusApp(vm: AppViewModel, debug: Boolean) {
     val day = sheetDay
     when (sheet) {
         Sheet.LOG -> if (day != null) LogSheet(
-            day = day, today = m.snapshot.today, log = m.logs[day] ?: DayLog.EMPTY, mode = m.mode,
+            day = day, today = m.snapshot.today, log = m.userLogs[day] ?: DayLog.EMPTY, mode = m.mode,
             suggestions = remember(m, day) { TodayPresenter.suggestions(m.snapshot, day) }, fmt = fmt,
             onDayChange = { sheetDay = it },
             onUpdate = { t -> logChanged = true; vm.updateLog(day, t) },
@@ -222,10 +222,11 @@ fun CyclusApp(vm: AppViewModel, debug: Boolean) {
             onDismiss = { sheet = Sheet.NONE; if (logChanged) vm.saved(); logChanged = false },
         )
         Sheet.DAY -> if (day != null) DaySheet(
-            model = remember(m, day) { CalendarPresenter.daySheet(m.snapshot, day) }, fmt = fmt,
+            model = remember(m, day) { CalendarPresenter.daySheet(m.snapshot, day, m.userLogs[day]) }, fmt = fmt,
             onEdit = { openLog(day) },
             onMarkStart = { sheet = Sheet.NONE; vm.markStart(day) },
             onDismiss = { sheet = Sheet.NONE },
+            external = remember(m, day) { com.nordinary.cyclus.health.HealthMerge.dayDetail(day, m.userLogs[day], m.healthSamples) },
         )
         Sheet.WHY -> m.why?.let { WhySheet(it, fmt) { sheet = Sheet.NONE } }
         Sheet.METHOD -> MethodSheet(fmt) { sheet = Sheet.NONE }
@@ -382,6 +383,12 @@ private fun DebugMenu(onPick: (SampleScenario) -> Unit, onWipe: () -> Unit, onCl
                 for ((s, id) in labels) TextButton(onClick = { onPick(s) }, Modifier.fillMaxWidth()) { Text(stringResource(id)) }
                 TextButton(onClick = onWipe, Modifier.fillMaxWidth()) { Text(stringResource(R.string.debug_wipe), color = Cyclus.colors.period) }
                 val ctx = androidx.compose.ui.platform.LocalContext.current
+                val scope = rememberCoroutineScope()
+                // records without the cyclus: prefix count as another app's (ownership rule 1): test data for the import path
+                TextButton(onClick = {
+                    scope.launch { runCatching { com.nordinary.cyclus.health.DebugHealth.writeExternal(ctx) } }
+                    onClose()
+                }, Modifier.fillMaxWidth()) { Text("Health Connect: externe Testdaten") }
                 for (r in listOf(com.nordinary.cyclus.widget.SmallWidgetReceiver::class.java, com.nordinary.cyclus.widget.MediumWidgetReceiver::class.java)) {
                     TextButton(onClick = {
                         android.appwidget.AppWidgetManager.getInstance(ctx).requestPinAppWidget(android.content.ComponentName(ctx, r), null, null)

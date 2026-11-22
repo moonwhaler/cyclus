@@ -253,6 +253,15 @@ Pin exact versions at project start and record them in the SOUP list.
 | Pregnancy / lactation / contraceptive | HK types | No equivalent (verify) | Android: Cyclus only |
 | Sleep, resting HR, HRV (v1.5) | read | `SleepSessionRecord`, `RestingHeartRateRecord`, `HeartRateVariabilityRmssdRecord` | read |
 
+**Implemented 2026-11-22 (slice 6).** Owner decisions: import + opt-in write; sync **only while the app is open** (app start/resume, 3 s after the person's own entries or the Health Connect toggles change, „Jetzt synchronisieren“); no background permission, no WorkManager jobs. Notes from the implementation:
+- Health Connect values are merged **before** `CycleData` (`HealthMerge`), so the engine and its golden vectors are unchanged; they fill only fields the person left empty. A user `flow = none` hides an external flow; other external values can't be hidden yet.
+- External `MenstruationPeriodRecord` days become bleeding without a level, so the engine finds the start itself (no external START overrides).
+- Writes come from the person's own entries only; `clientRecordVersion = max(previous + 1, now)` so imports with older timestamps still update. Local deletes keep a `deleting` tombstone until Health Connect confirms.
+- Reinstall recovery (rule 7) only into an empty store, so deleted or deliberately unmirrored entries never come back.
+- Reads run outside the erase lock; each page is stored together with its changes token in one transaction; writes run inside the lock for the current store only.
+- Imported samples, links and tokens are device data: not in `.cyclus` exports or device snapshots; gone with erase and „Trennen“.
+- Release task: Play **Health apps declaration** with the per-type justification (read: import; write: opt-in mirror).
+
 **Sync rules** are the same shared state machine (spec §11.4). Health Connect equivalents:
 - `Metadata.clientRecordId` = sync identifier (`cyclus:<key>`);
 - `clientRecordVersion` = sync version (an upsert replaces lower versions);
@@ -304,7 +313,8 @@ Compose for Wear OS + Wear M3 (Expressive): log period/symptom, glance at cycle 
 | A2/A3 person with device PIN | Can open apps | Cyclus PIN / "PIN only"; recommend **Private Space** (Android 15+) |
 | A4 seizure | FBE credential-encrypted storage + SQLCipher key bound to unlocked device | `setUnlockedDeviceRequired(true)` |
 | A5 cloud | Google backup is E2E with the screen lock | Toggle „Nur auf dem Gerät“; honest copy |
-| Other apps with Health Connect access | The user may have granted other apps cycle read access | Privacy Center explains it; categories off by default as on iOS |
+| Other apps with Health Connect access | The user may have granted other apps cycle read access | Every write category off by default (both platforms); Privacy Center says Health Connect has no own lock and that other apps with access can read what Cyclus writes |
+| Health Connect permission rationale | Must be reachable by the system and reviewers | Static `HealthRationaleActivity` with text only (no data, no app lock); the `VIEW_PERMISSION_USAGE` alias requires `START_VIEW_PERMISSION_USAGE` |
 | Screenshots / screen sharing | Possible | Optional `FLAG_SECURE`; recents thumbnail hidden by default |
 | OEM cloud features (e.g. Samsung) | OEM backup/sync of app data varies | Same `dataExtractionRules`; document tested OEMs |
 | Rooted devices | Keystore can be weaker | No blocking (accessibility/fairness); disclosure in FAQ |
