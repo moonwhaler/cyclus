@@ -75,7 +75,7 @@ fun InsightsContent(
     onMethod: () -> Unit,
     onMute: (String) -> Unit,
     onUnmute: () -> Unit,
-    onReport: () -> Unit,
+    onReport: (() -> Unit)?,
 ) {
     val c = Cyclus.colors
     Column(
@@ -125,8 +125,8 @@ fun InsightsContent(
                     Heat(state.heat, fmt)
                 }
                 CyclusCard(onClick = onReport) {
-                    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) { Title(fmt.s("reportT")); Text("›", color = c.ink2, fontSize = 18.sp) }
-                    Body(fmt.s("reportB"))
+                    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) { Title(fmt.s("reportT")); if (onReport != null) Text("›", color = c.ink2, fontSize = 18.sp) }
+                    Body(if (onReport != null) fmt.s("reportB") else androidx.compose.ui.res.stringResource(com.nordinary.cyclus.R.string.rep_unavailable))
                 }
                 SectionLabel(fmt.s("history"))
                 Column(Modifier.fillMaxWidth().clip(RoundedCornerShape(14.dp)).background(c.surface)) {
@@ -227,7 +227,7 @@ private fun PatternCard(p: Pattern, fmt: Fmt, onMute: (String) -> Unit) {
         }
         Text(fmt.txt(p.title), fontSize = 16.sp, fontWeight = FontWeight.SemiBold, color = c.ink)
         Text(fmt.txt(p.body), fontSize = 14.sp, color = c.ink2)
-        // „Im Arztbericht enthalten“ is shown once the Doctor Visit Pack exists (trust: no claims ahead of features).
+        if (p.report == true) Text(fmt.s("inReport"), fontSize = 12.sp, color = c.ink)
         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.Top) {
             if (p.why != null) Column(Modifier.weight(1f)) {
                 Text(

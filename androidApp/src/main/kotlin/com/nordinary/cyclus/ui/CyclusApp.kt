@@ -74,6 +74,7 @@ import kotlinx.serialization.Serializable
 @Serializable private data object MainKey : NavKey
 @Serializable private data object SettingsKey : NavKey
 @Serializable private data object PrivacyKey : NavKey
+@Serializable private data object ReportKey : NavKey
 
 private enum class Tab(val key: String) { TODAY("tabToday"), CALENDAR("tabCal"), INSIGHTS("tabIns") }
 private enum class Sheet { NONE, LOG, DAY, WHY, METHOD }
@@ -118,6 +119,7 @@ fun CyclusApp(vm: AppViewModel, debug: Boolean) {
                 MainScreen(
                     vm = vm, fmt = fmt, snackbar = snackbar, debug = debug,
                     onSettings = { backStack.add(SettingsKey) }, onPrivacy = { backStack.add(PrivacyKey) }, onComingSoon = comingSoon,
+                    onReport = { backStack.add(ReportKey) },
                     onOpenLog = ::openLog,
                     onDay = { sheetDay = it; sheet = Sheet.DAY },
                     onWhy = { sheet = Sheet.WHY }, onMethod = { sheet = Sheet.METHOD },
@@ -133,6 +135,9 @@ fun CyclusApp(vm: AppViewModel, debug: Boolean) {
                     onMode = vm::setMode, onShowFertility = vm::setShowFertility, onLifeStage = vm::setLifeStage,
                     onComingSoon = comingSoon, onPrivacy = { backStack.add(PrivacyKey) },
                 )
+            }
+            entry<ReportKey> {
+                com.nordinary.cyclus.ui.report.ReportScreen(vm, fmt, snackbar, onBack = { backStack.removeLastOrNull() })
             }
             entry<PrivacyKey> {
                 com.nordinary.cyclus.ui.privacy.PrivacyEntry(vm, fmt, snackbar, onBack = { backStack.removeLastOrNull() }, onErased = {
@@ -175,6 +180,7 @@ private fun MainScreen(
     onSettings: () -> Unit,
     onPrivacy: () -> Unit,
     onComingSoon: () -> Unit,
+    onReport: () -> Unit,
     onOpenLog: (Int) -> Unit,
     onDay: (Int) -> Unit,
     onWhy: () -> Unit,
@@ -252,7 +258,8 @@ private fun MainScreen(
                 )
                 Tab.CALENDAR -> CalendarContent(m.snapshot, fmt, padding, onDay = onDay, onMarkStart = vm::markStart)
                 Tab.INSIGHTS -> InsightsContent(
-                    m.insights, fmt, padding, onMethod = onMethod, onMute = vm::mute, onUnmute = vm::unmuteAll, onReport = onComingSoon,
+                    m.insights, fmt, padding, onMethod = onMethod, onMute = vm::mute, onUnmute = vm::unmuteAll,
+                    onReport = if (com.nordinary.cyclus.presenter.ReportPresenter.available(m.snapshot)) onReport else null,
                 )
             }
         }

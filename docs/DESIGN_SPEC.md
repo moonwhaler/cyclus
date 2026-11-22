@@ -359,6 +359,7 @@ SF Symbols (hierarchical rendering). Custom symbols (SF Symbols template format)
 | 7 | App lock | "Lock Cyclus with Face ID?" | **Turn on** / Not now |
 | 8 | Done | Today screen with first-run coach mark on the Log button | — |
 
+- **Android (2026-11-22):** step 3 imports a `.cyclus` backup (Health Connect import arrives with A4); step 4 asks „Blutest du noch?“ / „Wie viele Tage ungefähr?“ and logs only the stated days as bleeding without a level (no invented flow levels); birth year is not asked until the engine uses age-band priors.
 - Write permissions for Apple Health are **not** requested here. They are requested in context when the user turns on mirroring for a category (Settings › Apple Health), avoiding a 35-toggle sheet.
 - Notification permission is requested when the first prediction exists ("Want a heads-up 2 days before your period?").
 - With no history: Today shows "Log your next period to start predictions". If a last-period date is given, it shows a **Rough estimate** range from the prior (wide, labelled).

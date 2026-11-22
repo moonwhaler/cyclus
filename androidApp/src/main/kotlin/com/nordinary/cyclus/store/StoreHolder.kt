@@ -98,6 +98,7 @@ class StoreHolder(private val context: Context, val backup: BackupCoordinator, p
                 runCatching { current?.close() }
                 AndroidDatabase.destroy(context, dbName)
                 backup.eraseFilesLocked()
+                java.io.File(context.cacheDir, "share").deleteRecursively() // report PDFs
             }
             _state.value = open()
             onDone()

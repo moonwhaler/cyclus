@@ -63,6 +63,7 @@ class Fmt(private val res: Resources, val locale: Locale) {
 
     /** Label of an engine item key (symptom, feeling, tag, flow, mucus, pain region). */
     fun item(key: String): String {
+        if (key == com.nordinary.cyclus.core.Flow.UNSPECIFIED.key) return res.getString(com.nordinary.cyclus.R.string.flow_unspecified)
         val id = TxRes.sym[key] ?: TxRes.emo[key] ?: TxRes.tag[key] ?: TxRes.flow[key] ?: TxRes.mucus[key] ?: TxRes.region[key]
         return id?.let { res.getString(it) } ?: key
     }

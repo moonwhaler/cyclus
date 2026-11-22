@@ -226,7 +226,7 @@ Pin exact versions at project start and record them in the SOUP list.
 | Calendar + Day sheet | §7.4 | Long-press → context menu "Als Periodenbeginn markieren" |
 | Insights („Deine Muster“, charts, Arztbericht, history) | §7.5, §11.12 | On ≥ 600 dp: list-detail (history list ↔ cycle detail) |
 | Why this window? | §7.14 | — |
-| Doctor Visit Pack | §7.7 | `PdfDocument` + `Canvas`, A4 / Letter by locale. Shared via `FileProvider` URI from `cacheDir/share/`, deleted after the share result or at the next app start. Strip metadata (spec m11) |
+| Doctor Visit Pack | §7.7 | `PdfDocument` + `Canvas`, A4 / Letter by locale. Shared via `FileProvider` URI from `cacheDir/share/` (the same file is previewed), deleted at the next build, at app start and on erase — not on the share result, because the target app may read it later. Metadata: only Skia's /Producer (spec m11) |
 | Privacy Center | §7.8 | Extra rows: „Bildschirmfotos verhindern“ (FLAG_SECURE), „In Private Space verschieben“ (explainer, Android 15+), Health Connect categories (§6.1), backup (§6.4) |
 | Settings | spec §4 | Language via per-app locale (`LocaleManager` / AppCompat). Follow system theme. Dynamic colour toggle (D13) |
 | App lock | §7.12 | `BiometricPrompt` + PIN pad |

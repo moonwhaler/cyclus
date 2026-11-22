@@ -57,14 +57,15 @@ private val DROP = PathParser().parsePathString("M12 2C12 2 3 13 3 19a9 9 0 0 0 
 /** Flow droplet (prototype `drop`): fill level per flow, dotted outline for spotting, slash for none. 24×30 viewBox. */
 @Composable
 fun Droplet(flow: Flow, color: Color, modifier: Modifier = Modifier) {
-    val fill = when (flow) { Flow.LIGHT -> .33f; Flow.MEDIUM -> .62f; Flow.HEAVY, Flow.UNSPECIFIED -> 1f; else -> 0f }
+    // unspecified = bleeding without a level: outline only, never drawn like a heavy day
+    val fill = when (flow) { Flow.LIGHT -> .33f; Flow.MEDIUM -> .62f; Flow.HEAVY -> 1f; else -> 0f }
     Canvas(modifier.size(28.dp)) {
         val s = minOf(size.width / 24f, size.height / 30f)
         val dx = (size.width - 24f * s) / 2
         translate(left = dx) {
             scale(s, s, pivot = Offset.Zero) {
                 if (fill > 0f) clipPath(DROP) { drawRect(color, topLeft = Offset(0f, 28f - 22f * fill), size = Size(24f, 30f)) }
-                drawPath(DROP, color, style = Stroke(width = 2f, pathEffect = if (flow == Flow.SPOTTING) PathEffect.dashPathEffect(floatArrayOf(2.5f, 2.5f)) else null))
+                drawPath(DROP, color, style = Stroke(width = if (flow == Flow.UNSPECIFIED) 3.2f else 2f, pathEffect = if (flow == Flow.SPOTTING) PathEffect.dashPathEffect(floatArrayOf(2.5f, 2.5f)) else null))
                 if (flow == Flow.NONE) drawLine(color, Offset(6f, 24f), Offset(18f, 12f), strokeWidth = 2f)
             }
         }

@@ -53,6 +53,9 @@ data class AppModel(
     val muted: Set<String>,
     val activeEpisode: Episode?,
     val settings: Map<String, String>,
+    val episodes: List<Episode>,
+    /** Truly empty store and onboarding not done (fresh install / after erase). */
+    val showOnboarding: Boolean,
 ) {
     val logs: Map<Day, DayLog> get() = snapshot.data.logs
 }
@@ -99,6 +102,8 @@ class AppViewModel(
             insights = InsightsPresenter.present(snap, muted),
             why = WhyPresenter.present(snap),
             mode = mode, showFertility = showFert, muted = muted, activeEpisode = episode, settings = settings,
+            episodes = episodes,
+            showOnboarding = com.nordinary.cyclus.presenter.Onboarding.shouldShow(logs, overrides, episodes, settings),
         )
     }.flowOn(Dispatchers.Default).stateIn(viewModelScope, SharingStarted.WhileSubscribed(0), null)
 
@@ -305,6 +310,66 @@ class AppViewModel(
     }
 
     fun cancelImport() { pendingImport = null; importUri = null; importStage.value = com.nordinary.cyclus.ui.privacy.ImportStage.Passphrase }
+
+    // ---------------- Doctor Visit Pack (slice 4) ----------------
+
+    /** Builder state lives here only (not saved state): the questions text never leaves memory. */
+    val reportOptions = kotlinx.coroutines.flow.MutableStateFlow<com.nordinary.cyclus.presenter.ReportOptions?>(null)
+    val reportFile = kotlinx.coroutines.flow.MutableStateFlow<java.io.File?>(null)
+    val reportWorking = kotlinx.coroutines.flow.MutableStateFlow(false)
+    var reportLocale: java.util.Locale = java.util.Locale.GERMAN
+
+    fun initReport(defaultQuestions: String, uiLocale: java.util.Locale) {
+        if (reportOptions.value == null) {
+            reportOptions.value = com.nordinary.cyclus.presenter.ReportOptions(questions = defaultQuestions)
+            reportLocale = if (uiLocale.language == "en") java.util.Locale.ENGLISH else java.util.Locale.GERMAN
+        }
+    }
+
+    fun updateReport(change: (com.nordinary.cyclus.presenter.ReportOptions) -> com.nordinary.cyclus.presenter.ReportOptions) {
+        reportOptions.value = reportOptions.value?.let(change)
+    }
+
+    /** Builds the PDF (same file is previewed and shared). */
+    fun buildReport(regionLocale: java.util.Locale) {
+        val m = model.value ?: return
+        val opts = reportOptions.value ?: return
+        reportWorking.value = true
+        viewModelScope.launch {
+            try {
+                val file = kotlinx.coroutines.withContext(Dispatchers.Default) {
+                    val r = com.nordinary.cyclus.presenter.ReportPresenter.build(m.snapshot, opts, m.muted, m.episodes) ?: return@withContext null
+                    val bytes = com.nordinary.cyclus.report.ReportPdf.render(app, r, reportLocale, com.nordinary.cyclus.report.ReportPdf.paperFor(regionLocale))
+                    val name = (if (reportLocale.language == "de") "Zyklusbericht-" else "Cycle-summary-") + LocalDate.now() + ".pdf"
+                    com.nordinary.cyclus.report.ReportFiles.write(app, name, bytes)
+                }
+                reportFile.value = file
+            } catch (e: Exception) {
+                msg(com.nordinary.cyclus.R.string.export_failed)
+            } finally {
+                reportWorking.value = false
+            }
+        }
+    }
+
+    fun closeReport() { reportFile.value = null; reportOptions.value = null; com.nordinary.cyclus.report.ReportFiles.clear(app) }
+
+    // ---------------- onboarding (slice 4) ----------------
+
+    /** Stays true from the first onboarding screen until it is finished, even if an import fills the store meanwhile. */
+    val onboardingActive = kotlinx.coroutines.flow.MutableStateFlow(false)
+    val onboardingChoices = kotlinx.coroutines.flow.MutableStateFlow(com.nordinary.cyclus.presenter.OnboardingChoices())
+
+    fun finishOnboarding(enableLock: Boolean) {
+        val today = LocalDate.now().toEpochDay().toInt()
+        val choices = onboardingChoices.value
+        viewModelScope.launch {
+            com.nordinary.cyclus.presenter.Onboarding.apply(repo, choices, today) { Uuid.random().toString() }
+            if (enableLock) repo.setSetting(SettingKeys.LOCK_ENABLED, "1")
+            onboardingActive.value = false
+            onboardingChoices.value = com.nordinary.cyclus.presenter.OnboardingChoices()
+        }
+    }
 
     /** Erase everything (crypto-shred); the store reopens empty. */
     fun eraseEverything() {

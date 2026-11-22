@@ -29,7 +29,8 @@ Published (private) link: see `prototype/README.md`.
 - Trust rules: no `INTERNET` permission, no third-party services, all intelligence on-device, encrypted at rest (ANDROID_PLAN §0.1).
 - Slice 1 (A0 + A1) done: engines ported and verified against the prototype (138 golden cases, JVM + Android), encrypted store (SQLCipher + Keystore), Today + Log sheet, deploy script.
 - Slice 2 (A2) done: Kalender + Tagesansicht, Einblicke + Deine Muster, Kinderwunsch-Modus, Warum-/Methoden-Sheets, Einstellungen (Sprache, Ziel, Lebensphase). Next (A3): Arztbericht, Datenschutz-Center, Onboarding, App-Sperre, Export. See `docs/PARITY.md`.
-- Slice 3 (A3a, trust core) done: encrypted `.cyclus` export/import, end-to-end-only device backup with restore, Datenschutz-Center, crypto-shred erase, app lock (biometrics + Cyclus PIN). Next (A3b): Arztbericht, onboarding.
+- Slice 3 (A3a, trust core) done: encrypted `.cyclus` export/import, end-to-end-only device backup with restore, Datenschutz-Center, crypto-shred erase, app lock (biometrics + Cyclus PIN). 
+- Slice 4 (A3b) done: Arztbericht (PDF, DE/EN, A4/Letter, real preview, share) and onboarding. Next (A4): Health Connect, notifications, widgets, adaptive layouts.
 - Open owner decisions:
   - legal entity + organization developer accounts (Apple, Google);
   - regulatory specialist;

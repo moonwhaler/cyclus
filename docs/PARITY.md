@@ -21,15 +21,15 @@ Status values: `—` not started · `wip` · `done` · `off` (feature-flagged of
 | F-006 | Pain body map | 7.3 | Eintragen | done | — | | |
 | F-007 | Calendar + Day sheet | 7.4 | Kalender | done | — | | Long-press menu + TalkBack custom action „Periodenbeginn“ (past/today only) |
 | F-008 | Insights (stats, charts, heatmap, history) | 7.5 | Einblicke | done | — | | History rows not tappable until Cycle detail (7.6) exists |
-| F-009 | „Deine Muster“ cards | 11.12 | Einblicke | done | — | | Muted patterns are persisted (prototype: session only). „Im Arztbericht enthalten“ hidden until F-017 |
+| F-009 | „Deine Muster“ cards | 11.12 | Einblicke | done | — | | Muted patterns are persisted (prototype: session only) |
 | F-010 | Why this window? / Method sheets | 7.14 | Sheets | done | — | | Method copy: Android override (no iPhone, no outlier-question claim) |
 | F-011 | Conceive mode UI | 7.14 | Heute (Kinderwunsch) | done | — | | Regulatory feature flag per region still to add before release |
-| F-012 | Onboarding | 7.1 | Onboarding | — | — | | |
+| F-012 | Onboarding | 7.1 | Onboarding | done | — | | Import step = `.cyclus` backup (Health Connect with A4). Last period logs only stated days as unspecified flow (no invented levels). Birth year not collected until the engine uses age-band priors |
 | F-013 | Privacy Center | 7.8 | Datenschutz | done | — | | Health Connect rows with A4; notification/widget visibility with A4 |
 | F-014 | Settings + in-app language | 4 | Einstellungen | wip | — | | Language (Android 13+), goal, show fertile window, life stage done; notifications row → A4 |
 | F-015 | App lock (biometric + PIN) | 7.12 | Sperre | done | — | | Lock paused (with notice) when nothing could open it |
 | F-016 | Erase everything | 7.9 | Sheet | done | — | | Crypto-shred (DB + keys); Health Connect deletion with A4 |
-| F-017 | Doctor Visit Pack (PDF) | 7.7 | Arztbericht | — | — | | |
+| F-017 | Doctor Visit Pack (PDF) | 7.7 | Arztbericht | done | — | | Preview = the real PDF. Confidentiality footer on every page serves as the m11 watermark. Only Skia /Producer metadata |
 | F-018 | Episodes (pill, pregnancy, …) | 2.2 | Einstellungen | wip | — | | Pill / pregnant / postpartum pause predictions (undoable). Conditions (peri, PCOS, endo, T) hidden until the engine widens ranges for them |
 | P-001 | Health store sync | 11.4 | — | — | — | n/a | Health Connect vs HealthKit |
 | P-002 | Widgets | 8.1 | — | — | — | | Glance vs WidgetKit |

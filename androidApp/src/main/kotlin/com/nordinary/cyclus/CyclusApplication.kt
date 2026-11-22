@@ -22,6 +22,7 @@ class CyclusApplication : Application() {
         super.onCreate()
         // Runs before any backup agent work in a cold process: never leave a plaintext backup key behind.
         backup.startupSweep()
+        com.nordinary.cyclus.report.ReportFiles.clear(this) // shared report PDFs never outlive the session
         ProcessLifecycleOwner.get().lifecycle.addObserver(object : DefaultLifecycleObserver {
             override fun onStart(owner: LifecycleOwner) { lock.onAppStart(com.nordinary.cyclus.lock.Authn.available(this@CyclusApplication)) }
 

@@ -100,7 +100,20 @@ class MainActivity : FragmentActivity() {
                     onBiometric = ::authenticate, onPin = { vm.checkPin(it, cfg).also { ok -> if (ok) app.lock.unlock() } },
                 )
             }
-            false -> CyclusApp(vm, debug = BuildConfig.DEBUG)
+            false -> {
+                // onboarding for a truly empty store; nothing is shown until the model is known (no flash)
+                val model by vm.model.collectAsStateWithLifecycle()
+                val active by vm.onboardingActive.collectAsStateWithLifecycle()
+                val m = model
+                when {
+                    m == null -> {}
+                    m.showOnboarding || active -> {
+                        LaunchedEffect(Unit) { vm.onboardingActive.value = true }
+                        com.nordinary.cyclus.ui.onboarding.OnboardingScreen(vm, fmt)
+                    }
+                    else -> CyclusApp(vm, debug = BuildConfig.DEBUG)
+                }
+            }
         }
     }
 

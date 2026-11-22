@@ -55,6 +55,23 @@ const ANDROID_OVERRIDES = {
     en: 'Older Google backups until the next backup runs, exports and PDFs you shared',
   },
   unlockBtn: { de: 'Entsperren', en: 'Unlock' },
+  // Onboarding (slice 4): no iPhone / Apple Health / Face ID on Android; import step is a .cyclus backup (Health Connect: A4)
+  onb0B: { de: 'Ein privates Zyklus- und Symptomtagebuch.', en: 'A private cycle and symptom diary.' },
+  pr1s: { de: 'Deine Daten bleiben auf deinem Gerät.', en: 'Your data stays on your device.' },
+  pr3: { de: 'Du bestimmst, was du teilst.', en: 'You decide what you share.' },
+  pr3s: { de: 'Exporte und Arztberichte entstehen nur, wenn du sie erstellst.', en: 'Exports and doctor reports exist only when you create them.' },
+  onb1N: {
+    de: 'In Google-Backups landet Cyclus nur Ende-zu-Ende-verschlüsselt. Das kannst du unter Datenschutz ändern.',
+    en: 'Cyclus goes into Google backups only end-to-end encrypted. You can change that in Privacy.',
+  },
+  onb2T: { de: 'Hast du eine Cyclus-Sicherung?', en: 'Do you have a Cyclus backup?' },
+  onb2B: { de: 'Importiere eine .cyclus-Datei von einem anderen Gerät, damit Prognosen ab dem ersten Tag funktionieren.', en: 'Import a .cyclus file from another device so predictions work from day one.' },
+  importBtn: { de: 'Sicherung importieren', en: 'Import backup' },
+  onb5T: { de: 'Cyclus sperren?', en: 'Lock Cyclus?' },
+  onb5B: {
+    de: 'Wer dein Gerät benutzt, braucht dann deinen Fingerabdruck, dein Gesicht, deine Displaysperre oder eine Cyclus-PIN.',
+    en: 'Anyone using your phone would need your fingerprint, face, screen lock or a Cyclus PIN to open it.',
+  },
   method: {
     de: [
       TX.method.de[0],

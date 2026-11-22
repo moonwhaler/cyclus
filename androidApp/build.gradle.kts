@@ -40,6 +40,11 @@ android {
         generateLocaleConfig = true
     }
 
+    // In-app language and the PDF language need every language on the device, so Play must not split by language.
+    bundle {
+        language { enableSplit = false }
+    }
+
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_21
         targetCompatibility = JavaVersion.VERSION_21
