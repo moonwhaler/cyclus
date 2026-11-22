@@ -1,6 +1,8 @@
 package com.nordinary.cyclus
 
 import app.cash.sqldelight.driver.jdbc.sqlite.JdbcSqliteDriver
+import com.nordinary.cyclus.backup.ExportFile
+import com.nordinary.cyclus.backup.SettingKeys
 import com.nordinary.cyclus.core.CycleOverride
 import com.nordinary.cyclus.core.DayLog
 import com.nordinary.cyclus.core.Episode
@@ -22,10 +24,73 @@ import kotlin.test.assertNull
 import kotlin.test.assertTrue
 
 class RepositoryTest {
-    private fun repo(): CyclusRepository {
+    private fun repo(now: Long = 1_000L): CyclusRepository {
         val driver = JdbcSqliteDriver(JdbcSqliteDriver.IN_MEMORY)
         CyclusDatabase.Schema.create(driver)
-        return CyclusRepository(CyclusDatabase(driver), Dispatchers.Unconfined) { 1_000L }
+        return CyclusRepository(CyclusDatabase(driver), Dispatchers.Unconfined) { now }
+    }
+
+    @Test fun exportNeverCarriesSecuritySettings(): Unit = runBlocking {
+        val r = repo()
+        r.saveLog(20_000, full)
+        r.setSetting(SettingKeys.MODE, "conceive")
+        r.setSetting(SettingKeys.LOCK_PIN_HASH, "secret-hash")
+        r.setSetting(SettingKeys.LOCK_ENABLED, "1")
+        r.setSetting(SettingKeys.EXPORT_COUNT, "3")
+        val user = r.exportAll("t", "test", includeSecurity = false)
+        assertEquals(mapOf(SettingKeys.MODE to "conceive"), user.prefs)
+        assertNull(user.security)
+        val bytes = user.encode().decodeToString()
+        assertTrue("secret-hash" !in bytes && "export.count" !in bytes)
+        val snapshot = r.exportAll("t", "test", includeSecurity = true)
+        assertEquals(mapOf(SettingKeys.LOCK_PIN_HASH to "secret-hash", SettingKeys.LOCK_ENABLED to "1"), snapshot.security)
+    }
+
+    @Test fun exportImportRoundTripsEverything(): Unit = runBlocking {
+        val a = repo()
+        a.saveLog(20_000, full)
+        a.saveLog(20_001, DayLog(flow = Flow.SPOTTING))
+        a.setOverride(20_000, CycleOverride(OverrideKind.START))
+        a.saveEpisode(Episode("e1", EpisodeKind.PREGNANCY, 19_000, 19_100))
+        a.setSetting(SettingKeys.MUTED, "it-Cramps")
+        val file = ExportFile.decode(a.exportAll("t", "test", false).encode())
+        val b = repo()
+        b.importReplace(file)
+        assertEquals(a.observeLogs().first(), b.observeLogs().first())
+        assertEquals(a.observeOverrides().first(), b.observeOverrides().first())
+        assertEquals(a.observeEpisodes().first(), b.observeEpisodes().first())
+        assertEquals(mapOf(SettingKeys.MUTED to "it-Cramps"), b.observeSettings().first())
+    }
+
+    @Test fun replaceKeepsLocalSecurityAndDeviceSettings(): Unit = runBlocking {
+        val b = repo()
+        b.saveLog(19_000, full)
+        b.setSetting(SettingKeys.LOCK_PIN_HASH, "mine")
+        b.setSetting(SettingKeys.EXPORT_COUNT, "2")
+        b.setSetting(SettingKeys.MODE, "conceive")
+        b.importReplace(com.nordinary.cyclus.backup.ExportFile(exportedAt = "t", app = "x", prefs = mapOf(SettingKeys.SHOW_FERT to "1")))
+        assertTrue(b.observeLogs().first().isEmpty())
+        val s = b.observeSettings().first()
+        assertEquals("mine", s[SettingKeys.LOCK_PIN_HASH]); assertEquals("2", s[SettingKeys.EXPORT_COUNT])
+        assertEquals("1", s[SettingKeys.SHOW_FERT]); assertNull(s[SettingKeys.MODE])
+    }
+
+    @Test fun mergeKeepsNewerDayAndLocalPrefs(): Unit = runBlocking {
+        val old = repo(now = 100)
+        old.saveLog(20_000, DayLog(mood = 1)); old.saveLog(20_001, DayLog(mood = 1))
+        val newer = repo(now = 200)
+        newer.saveLog(20_000, DayLog(mood = 5)); newer.saveLog(20_002, DayLog(mood = 3))
+        newer.setSetting(SettingKeys.MODE, "conceive")
+        old.setSetting(SettingKeys.MODE, "track")
+        old.importMerge(newer.exportAll("t", "x", false))
+        val logs = old.observeLogs().first()
+        assertEquals(5, logs[20_000]?.mood) // newer wins
+        assertEquals(1, logs[20_001]?.mood) // untouched
+        assertEquals(3, logs[20_002]?.mood) // added
+        assertEquals("track", old.observeSettings().first()[SettingKeys.MODE]) // local pref kept
+        // merging the older data back changes nothing
+        newer.importMerge(old.exportAll("t", "x", false))
+        assertEquals(5, newer.observeLogs().first()[20_000]?.mood)
     }
 
     private val full = DayLog(

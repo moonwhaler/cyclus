@@ -836,7 +836,7 @@ struct Insight: Sendable, Codable {
 - **AUP compliance note** (Apple FM acceptable-use, medical domain): the model never generates medical claims; it paraphrases pre-approved, data-grounded text. Documented in App Review notes.
 
 ### 11.9 Backup, export, end-of-life
-- **`.cyclus` format v1:** `magic "CYCLUS1" | salt(16) | iterations(u32) | nonce(12) | AES-GCM-256(ciphertext + tag)`. Key = PBKDF2-HMAC-SHA256 (CommonCrypto `CCKeyDerivationPBKDF`), ≥ 600,000 iterations. Plaintext = zlib(JSON per public schema `cyclus-export.schema.json` v1).
+- **`.cyclus` format v1** (normative: `docs/export/FORMAT.md`, revised 2026-11-22): `magic "CYCLUS1" | mode(1) | salt(16) | iterations(u32 BE) | nonce(12) | AES-256-GCM(raw DEFLATE(JSON)) + tag(16)`, **AAD = the 40 header bytes**. Mode 1 = passphrase, key = PBKDF2-HMAC-SHA256 (CommonCrypto `CCKeyDerivationPBKDF`), 600,000 iterations; mode 2 = raw 256-bit key (device backups). Compression is raw DEFLATE (Apple `COMPRESSION_ZLIB`). JSON per `docs/export/cyclus-export.schema.json` v1; user exports never contain app-lock settings. Test vectors in `shared/golden/export/`; reference decoder `tools/export/cyclus_decode.py`.
 - **CSV:** one row per day, documented columns.
 - **The export schema is published** on the support site under CC-BY. End-of-life pledge: if Cyclus is discontinued, a final update keeps export working, and the schema + a reference decoder stay public.
 - **Backup inclusion:** per D5. The "Device only" toggle sets `URLResourceValues.isExcludedFromBackup` on the store files.

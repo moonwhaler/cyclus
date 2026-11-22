@@ -1,0 +1,235 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://cyclus.app/schema/cyclus-export-1.json",
+  "title": "Cyclus export, schema 1",
+  "type": "object",
+  "required": [
+    "schema",
+    "exportedAt",
+    "app"
+  ],
+  "additionalProperties": true,
+  "properties": {
+    "schema": {
+      "const": 1
+    },
+    "exportedAt": {
+      "type": "string"
+    },
+    "app": {
+      "type": "string"
+    },
+    "logs": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "day"
+        ],
+        "additionalProperties": true,
+        "properties": {
+          "day": {
+            "type": "string",
+            "format": "date"
+          },
+          "flow": {
+            "enum": [
+              "none",
+              "spotting",
+              "light",
+              "medium",
+              "heavy",
+              "unspecified"
+            ]
+          },
+          "symptoms": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "symptomSeverity": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 3
+            }
+          },
+          "pain": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 10
+            }
+          },
+          "emotions": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "tags": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "mood": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 5
+          },
+          "energy": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 5
+          },
+          "sleep": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 5
+          },
+          "libido": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 5
+          },
+          "mucus": {
+            "enum": [
+              "dry",
+              "sticky",
+              "creamy",
+              "watery",
+              "eggwhite",
+              "unusual"
+            ]
+          },
+          "lh": {
+            "enum": [
+              "neg",
+              "pos",
+              "surge"
+            ]
+          },
+          "bbt": {
+            "type": "number"
+          },
+          "sex": {
+            "type": "boolean"
+          },
+          "sexProtected": {
+            "type": "boolean"
+          },
+          "note": {
+            "type": "string"
+          },
+          "nothingElse": {
+            "type": "boolean"
+          },
+          "updatedAt": {
+            "type": "integer"
+          }
+        }
+      }
+    },
+    "overrides": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "day",
+          "kind"
+        ],
+        "properties": {
+          "day": {
+            "type": "string",
+            "format": "date"
+          },
+          "kind": {
+            "enum": [
+              "start",
+              "not",
+              "exclude"
+            ]
+          },
+          "reason": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "episodes": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "id",
+          "kind",
+          "start"
+        ],
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "kind": {
+            "enum": [
+              "hbc",
+              "pregnancy",
+              "postpartum",
+              "breastfeeding",
+              "perimenopause",
+              "gah",
+              "other"
+            ]
+          },
+          "start": {
+            "type": "string",
+            "format": "date"
+          },
+          "end": {
+            "type": "string",
+            "format": "date"
+          }
+        }
+      }
+    },
+    "tags": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "id"
+        ],
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "symbol": {
+            "type": "string"
+          },
+          "archived": {
+            "type": "boolean"
+          }
+        }
+      }
+    },
+    "prefs": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "string"
+      }
+    },
+    "security": {
+      "type": "object",
+      "description": "Device backups (mode 2) only. Never in user exports.",
+      "additionalProperties": {
+        "type": "string"
+      }
+    }
+  }
+}

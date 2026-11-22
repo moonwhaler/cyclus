@@ -184,3 +184,6 @@ DELETE FROM tag WHERE builtin = 0;
 
 deleteAllSettings:
 DELETE FROM setting;
+
+upsertTag:
+INSERT OR REPLACE INTO tag (id, name, symbol, archived, builtin) VALUES (?, ?, ?, ?, 0);

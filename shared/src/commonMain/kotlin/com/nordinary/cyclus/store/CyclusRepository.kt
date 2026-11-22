@@ -11,6 +11,12 @@ import com.nordinary.cyclus.core.Flow as LogFlow
 import com.nordinary.cyclus.core.LhResult
 import com.nordinary.cyclus.core.Mucus
 import com.nordinary.cyclus.core.OverrideKind
+import com.nordinary.cyclus.backup.ExportEpisode
+import com.nordinary.cyclus.backup.ExportFile
+import com.nordinary.cyclus.backup.ExportLog
+import com.nordinary.cyclus.backup.ExportOverride
+import com.nordinary.cyclus.backup.ExportTag
+import com.nordinary.cyclus.backup.SettingKeys
 import com.nordinary.cyclus.store.db.CyclusDatabase
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.flow.Flow
@@ -49,22 +55,28 @@ class CyclusRepository(
 
     suspend fun saveLog(day: Day, log: DayLog) = withContext(io) {
         db.transaction { writeLog(day, log) }
+        changes++
     }
 
     suspend fun setOverride(day: Day, override: CycleOverride?) = withContext(io) {
         if (override == null) q.deleteOverride(day.toLong())
         else q.upsertOverride(day.toLong(), override.kind.key, override.reason)
+        changes++
     }
 
     suspend fun saveEpisode(episode: Episode) = withContext(io) {
         q.upsertEpisode(episode.id, episode.kind.key, episode.start.toLong(), episode.end?.toLong())
+        changes++
     }
 
-    suspend fun deleteEpisode(id: String) = withContext(io) { q.deleteEpisode(id) }
+    suspend fun deleteEpisode(id: String) = withContext(io) { q.deleteEpisode(id); changes++ }
 
     suspend fun setSetting(key: String, value: String?) = withContext(io) {
         if (value == null) q.deleteSetting(key) else q.upsertSetting(key, value)
+        if (key in SettingKeys.USER_PREFS || key in SettingKeys.SECURITY) changes++
     }
+
+    suspend fun setting(key: String): String? = withContext(io) { q.selectSetting(key).executeAsOneOrNull() }
 
     /** Erase all personal data (logs, overrides, episodes, user tags, settings). */
     suspend fun eraseAll() = withContext(io) { db.transaction { eraseAllInTransaction() } }
@@ -80,12 +92,73 @@ class CyclusRepository(
             }
         }
 
+    // ---------------- export / import (.cyclus) ----------------
+
+    /** Everything personal as an [ExportFile]. Security settings only for the device snapshot. */
+    suspend fun exportAll(exportedAt: String, app: String, includeSecurity: Boolean): ExportFile = withContext(io) {
+        val settings = q.selectAllSettings().executeAsList().associate { it.key to it.value_ }
+        val logs = readAllLogs()
+        val updated = q.selectAllLogs().executeAsList().associate { it.day.toInt() to it.updated_at }
+        ExportFile(
+            exportedAt = exportedAt, app = app,
+            logs = logs.entries.sortedBy { it.key }.map { (d, l) -> l.toExport(d, updated[d] ?: 0) },
+            overrides = q.selectAllOverrides().executeAsList().map { ExportOverride(iso(it.day.toInt()), it.kind, it.reason) },
+            episodes = q.selectAllEpisodes().executeAsList().map { ExportEpisode(it.id, it.kind, iso(it.start_day.toInt()), it.end_day?.let { e -> iso(e.toInt()) }) },
+            tags = q.selectAllTags().executeAsList().filter { it.builtin == 0L }.map { ExportTag(it.id, it.name, it.symbol, it.archived != 0L) },
+            prefs = settings.filterKeys { it in SettingKeys.USER_PREFS },
+            security = if (includeSecurity) settings.filterKeys { it in SettingKeys.SECURITY } else null,
+        )
+    }
+
+    /** Replace all personal data with [file]; security and device settings stay unless the file carries them (device restore). */
+    suspend fun importReplace(file: ExportFile) = withContext(io) {
+        db.transaction {
+            q.deleteAllLogs(); q.deleteAllSymptoms(); q.deleteAllEmotions(); q.deleteAllPains(); q.deleteAllDayTags()
+            q.deleteAllOverrides(); q.deleteAllEpisodes(); q.deleteUserTags()
+            SettingKeys.USER_PREFS.forEach { q.deleteSetting(it) }
+            insertAll(file, onlyIfNewer = false)
+            file.prefs.filterKeys { it in SettingKeys.USER_PREFS }.forEach { (k, v) -> q.upsertSetting(k, v) }
+            file.security?.filterKeys { it in SettingKeys.SECURITY }?.forEach { (k, v) -> q.upsertSetting(k, v) }
+        }
+        changes++
+    }
+
+    /** Merge [file] into the store: per day the newer `updatedAt` wins; overrides/episodes/tags by key; prefs only if absent. */
+    suspend fun importMerge(file: ExportFile) = withContext(io) {
+        db.transaction {
+            insertAll(file, onlyIfNewer = true)
+            val existing = q.selectAllSettings().executeAsList().map { it.key }.toSet()
+            file.prefs.filterKeys { it in SettingKeys.USER_PREFS && it !in existing }.forEach { (k, v) -> q.upsertSetting(k, v) }
+        }
+        changes++
+    }
+
+    /** Incremented on every write (device snapshot trigger). */
+    @kotlin.concurrent.Volatile var changes: Long = 0
+        private set
+
+    private fun insertAll(file: ExportFile, onlyIfNewer: Boolean) {
+        val current = if (onlyIfNewer) q.selectAllLogs().executeAsList().associate { it.day.toInt() to it.updated_at } else emptyMap()
+        for (e in file.logs) {
+            val d = epoch(e.day)
+            val mine = current[d]
+            if (mine != null && mine >= e.updatedAt) continue
+            writeLog(d, e.toDayLog(), e.updatedAt)
+        }
+        for (o in file.overrides) q.upsertOverride(epoch(o.day).toLong(), OverrideKind.of(o.kind).key, o.reason)
+        for (ep in file.episodes) q.upsertEpisode(ep.id, EpisodeKind.of(ep.kind).key, epoch(ep.start).toLong(), ep.end?.let { epoch(it).toLong() })
+        for (t in file.tags) q.upsertTag(t.id, t.name, t.symbol, if (t.archived) 1 else 0)
+    }
+
+    private fun iso(day: Day) = kotlinx.datetime.LocalDate.fromEpochDays(day).toString()
+    private fun epoch(iso: String): Day = kotlinx.datetime.LocalDate.parse(iso).toEpochDays().toInt()
+
     private fun eraseAllInTransaction() {
         q.deleteAllLogs(); q.deleteAllSymptoms(); q.deleteAllEmotions(); q.deleteAllPains(); q.deleteAllDayTags()
         q.deleteAllOverrides(); q.deleteAllEpisodes(); q.deleteUserTags(); q.deleteAllSettings()
     }
 
-    private fun writeLog(day: Day, log: DayLog) {
+    private fun writeLog(day: Day, log: DayLog, updatedAt: Long = nowMillis()) {
         val d = day.toLong()
         q.deleteSymptoms(d); q.deleteEmotions(d); q.deletePains(d); q.deleteDayTags(d)
         if (log.isEmpty) { q.deleteLog(d); return }
@@ -94,7 +167,7 @@ class CyclusRepository(
             mood = log.mood?.toLong(), energy = log.energy?.toLong(), sleep = log.sleep?.toLong(), libido = log.libido?.toLong(),
             mucus = log.mucus?.key, lh = log.lh?.key, bbt = log.bbt,
             sex = if (log.sex) 1 else 0, sex_protected = log.sexProtected?.let { if (it) 1L else 0L },
-            note = log.note, nothing_else = if (log.nothingElse) 1 else 0, updated_at = nowMillis(),
+            note = log.note, nothing_else = if (log.nothingElse) 1 else 0, updated_at = updatedAt,
         )
         for (s in log.symptoms) q.insertSymptom(d, s, log.symptomSeverity[s]?.toLong())
         for (e in log.emotions) q.insertEmotion(d, e)
@@ -125,3 +198,17 @@ class CyclusRepository(
         }
     }
 }
+
+internal fun DayLog.toExport(day: Day, updatedAt: Long) = ExportLog(
+    day = kotlinx.datetime.LocalDate.fromEpochDays(day).toString(), flow = flow?.key,
+    symptoms = symptoms.toList(), symptomSeverity = symptomSeverity, pain = pain, emotions = emotions.toList(), tags = tags.toList(),
+    mood = mood, energy = energy, sleep = sleep, libido = libido, mucus = mucus?.key, lh = lh?.key, bbt = bbt,
+    sex = sex, sexProtected = sexProtected, note = note, nothingElse = nothingElse, updatedAt = updatedAt,
+)
+
+internal fun ExportLog.toDayLog() = DayLog(
+    flow = flow?.let { LogFlow.of(it) }, symptoms = symptoms.toSet(), symptomSeverity = symptomSeverity, pain = pain,
+    emotions = emotions.toSet(), tags = tags.toSet(), mood = mood, energy = energy, sleep = sleep, libido = libido,
+    mucus = mucus?.let { Mucus.of(it) }, lh = lh?.let { LhResult.of(it) }, bbt = bbt, sex = sex, sexProtected = sexProtected,
+    note = note, nothingElse = nothingElse,
+)

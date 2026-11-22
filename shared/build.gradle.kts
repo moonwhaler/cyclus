@@ -29,6 +29,7 @@ kotlin {
             api(libs.kotlinx.datetime)
             implementation(libs.sqldelight.runtime)
             implementation(libs.sqldelight.coroutines)
+            implementation(libs.kotlinx.serialization.json)
         }
         commonTest.dependencies {
             implementation(kotlin("test"))
@@ -42,6 +43,9 @@ kotlin {
             implementation(libs.sqlcipher.android)
             implementation(libs.androidx.sqlite)
         }
+        // javax.crypto / java.util.zip actuals shared by both JVM-based targets
+        jvmMain { kotlin.srcDir("src/jvmCommon/kotlin") }
+        androidMain { kotlin.srcDir("src/jvmCommon/kotlin") }
         jvmTest { resources.srcDir("golden") }
         getByName("androidDeviceTest") { resources.srcDir("golden") }
         getByName("androidDeviceTest").dependencies {
