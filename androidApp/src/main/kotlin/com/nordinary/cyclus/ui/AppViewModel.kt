@@ -393,6 +393,10 @@ class AppViewModel(
         if (reportOptions.value == null) {
             reportOptions.value = com.nordinary.cyclus.presenter.ReportOptions(questions = defaultQuestions)
             reportLocale.value = if (uiLocale.language == "en") java.util.Locale.ENGLISH else java.util.Locale.GERMAN
+            // the name is remembered on this device only (encrypted DB, never exported)
+            viewModelScope.launch {
+                repo.setting(KEY_REPORT_NAME)?.let { n -> updateReport { if (it.name.isEmpty()) it.copy(name = n) else it } }
+            }
         }
     }
 
@@ -402,6 +406,7 @@ class AppViewModel(
 
     /** Builds the PDF (same file is previewed and shared). */
     fun buildReport(regionLocale: java.util.Locale) {
+        reportOptions.value?.name?.trim()?.let { n -> viewModelScope.launch { repo.setSetting(KEY_REPORT_NAME, n.ifEmpty { null }) } }
         val m = model.value ?: return
         val opts = reportOptions.value ?: return
         val locale = reportLocale.value
@@ -566,6 +571,8 @@ class AppViewModel(
         const val KEY_MODE = "mode"
         const val KEY_SHOW_FERT = "showFertTrack"
         const val KEY_MUTED = "mutedPatterns"
+        /** Device setting: name for the Arztbericht (not in exports). */
+        const val KEY_REPORT_NAME = "report.name"
     }
 }
 

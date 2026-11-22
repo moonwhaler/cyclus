@@ -44,6 +44,7 @@ Published (private) link: see `prototype/README.md`.
 ./gradlew check                  # lint, no-INTERNET check, tests
 tools/deploy.sh                  # build, install, launch on the local emulator (AVD cyclus-pixel9pro)
 tools/deploy.sh --phone          # same, on the paired phone (wireless adb)
+tools/deploy.sh --phone --optimized   # release code (R8, not debuggable) over the debug app, keeps its data
 ```
 Debug builds (`com.nordinary.cyclus.debug`) hold **throwaway test data** until export/backup lands.
 

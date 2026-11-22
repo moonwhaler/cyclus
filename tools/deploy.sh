@@ -4,6 +4,7 @@
 #   tools/deploy.sh            -> local emulator (AVD "cyclus-pixel9pro"), started if not running   [default]
 #   tools/deploy.sh --phone    -> physical phone over wireless adb
 #   ADB_TARGET=<serial> tools/deploy.sh   -> exactly that device
+#   --optimized                -> release code (R8, not debuggable) installed over the debug app, keeping its data
 #
 # Phone selection: $ADB_TARGET, then .deploy.local (one line, gitignored), then the single connected
 # physical device, then mDNS discovery (_adb-tls-connect) + adb connect.
@@ -23,7 +24,13 @@ connected() { adb devices | awk 'NR>1 && $2=="device" {print $1}'; }
 
 AVD="${CYCLUS_AVD:-cyclus-pixel9pro}"
 mode="emulator"
-[[ "${1:-}" == "--phone" ]] && mode="phone"
+for arg in "$@"; do
+  case "$arg" in
+    --phone) mode="phone" ;;
+    --optimized) VARIANT_TASK=":androidApp:installOptimized" ;;
+    *) die "unknown option $arg" ;;
+  esac
+done
 
 emulators() { connected | grep '^emulator-' || true; }
 physical() { connected | grep -v '^emulator-' || true; }

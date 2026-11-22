@@ -268,4 +268,8 @@
     <plurals name="pat_all"><item quantity="one">%1$d Muster ansehen</item><item quantity="other">Alle %1$d Muster ansehen</item></plurals>
     <plurals name="pat_none_watch"><item quantity="one">Noch keine Muster. %1$d wird beobachtet.</item><item quantity="other">Noch keine Muster. %1$d werden beobachtet.</item></plurals>
     <string name="pat_open">Details öffnen</string>
+    <string name="rep_name_field">Name auf dem Bericht</string>
+    <string name="rep_name_hint">Optional, z. B. Vor- und Nachname</string>
+    <string name="rep_name_note">Steht nur auf dem PDF, damit die Praxis den Bericht zuordnen kann. Leer lassen für eine Linie zum Ausfüllen. Wird nur auf diesem Gerät gemerkt.</string>
+    <string name="rep_made_with">Erstellt mit Cyclus · ein privates Zyklustagebuch, deine Daten bleiben auf deinem Handy</string>
 </resources>

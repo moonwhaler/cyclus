@@ -25,6 +25,8 @@ data class ReportOptions(
     val cycles: Int = 6,
     val include: Set<ReportSection> = ReportSection.entries.filter { it.defaultOn }.toSet(),
     val questions: String = "",
+    /** Optional, printed on the summary page instead of the blank „Name: ____“ line. */
+    val name: String = "",
 )
 
 data class Spread(val count: Int, val median: Int, val min: Int, val max: Int)
@@ -62,6 +64,7 @@ data class ReportModel(
     val contraception: List<Episode>,
     val sexDays: List<CycleCount>,
     val questions: String,
+    val name: String = "",
 )
 
 object ReportPresenter {
@@ -140,7 +143,7 @@ object ReportPresenter {
             heaviness = heaviness, months = months, topSymptoms = top, heat = heat,
             painPerCycle = pain, painMedian = pain.map { it.maxPain }.sorted().let { if (it.isEmpty()) null else it[it.size / 2] },
             mood = mood, energy = energy, patterns = patterns, tempCycles = tempCycles, tempShifts = tempShifts,
-            notes = notes, contraception = contra, sexDays = sex, questions = options.questions.trim(),
+            notes = notes, contraception = contra, sexDays = sex, questions = options.questions.trim(), name = options.name.trim().take(80),
         )
     }
 

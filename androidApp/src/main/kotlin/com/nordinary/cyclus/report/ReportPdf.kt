@@ -79,7 +79,8 @@ object ReportPdf {
             text(s(R.string.rep_title), paint(20f, bold))
             text("${date(r.from)} – ${date(r.to)}", paint(10f, color = INK2))
             y += 6
-            text("${s(R.string.rep_name)}: ________________________________", paint(11f))
+            if (r.name.isNotBlank()) text("${s(R.string.rep_name)}: ${r.name}", paint(11f, bold))
+            else text("${s(R.string.rep_name)}: ________________________________", paint(11f))
             if (r.cyclesUsed < r.cyclesRequested) text(s(R.string.rep_fewer, r.cyclesUsed, r.cyclesRequested), paint(9f, color = INK2))
             y += 6
             r.cycleLengths?.let { row(s(R.string.rep_cycles), "${it.count}"); row(s(R.string.rep_len), s(R.string.rep_spread, it.median, it.min, it.max)) }
@@ -166,8 +167,18 @@ object ReportPdf {
             val foot = paint(8f, color = INK2)
             val label = "${s(R.string.rep_foot)} · $pageCount/${if (total > 0) total else pageCount}"
             c.drawText(label, m, paper.h - 28f, foot)
+            if (total > 0 && pageCount == total) madeWith()
             doc.finishPage(p)
             page = null
+        }
+
+        /** Last page only, small and grey: the app's ring and one line about it (no links, no tracking). */
+        private fun madeWith() {
+            val y0 = paper.h - 44f
+            val ring = Paint(Paint.ANTI_ALIAS_FLAG).apply { style = Paint.Style.STROKE; strokeWidth = 1.4f; color = ACCENT; strokeCap = Paint.Cap.ROUND }
+            c.drawArc(android.graphics.RectF(m, y0 - 8f, m + 9f, y0 + 1f), 135f, 270f, false, ring)
+            c.drawCircle(m + 4.5f, y0 - 8f, 1.1f, Paint(Paint.ANTI_ALIAS_FLAG).apply { color = ACCENT })
+            c.drawText(s(R.string.rep_made_with), m + 14f, y0, paint(8f, color = INK2))
         }
 
         private fun layout(t: String, p: TextPaint, w: Float) =
@@ -304,5 +315,6 @@ object ReportPdf {
 
     private const val INK = 0xFF1D1A1C.toInt()
     private const val INK2 = 0xFF5F575B.toInt()
+    private const val ACCENT = 0xFFB3264E.toInt()
     private const val LINE = 0xFFBDB5B0.toInt()
 }

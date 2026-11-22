@@ -147,6 +147,17 @@ fun ReportScreen(vm: AppViewModel, fmt: Fmt, snackbar: SnackbarHostState, onBack
                 }
             } }
             item { Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                Label(androidx.compose.ui.res.stringResource(com.nordinary.cyclus.R.string.rep_name_field))
+                OutlinedTextField(
+                    o.name, { n -> vm.updateReport { it.copy(name = n.take(80)) } }, Modifier.fillMaxWidth(), singleLine = true,
+                    placeholder = { Text(androidx.compose.ui.res.stringResource(com.nordinary.cyclus.R.string.rep_name_hint)) },
+                    keyboardOptions = androidx.compose.foundation.text.KeyboardOptions(capitalization = androidx.compose.ui.text.input.KeyboardCapitalization.Words),
+                    shape = RoundedCornerShape(12.dp),
+                    colors = OutlinedTextFieldDefaults.colors(unfocusedBorderColor = c.line, focusedBorderColor = c.period, unfocusedContainerColor = c.surface, focusedContainerColor = c.surface),
+                )
+                Text(androidx.compose.ui.res.stringResource(com.nordinary.cyclus.R.string.rep_name_note), fontSize = 12.sp, color = c.ink2)
+            } }
+            item { Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                 Label(fmt.s("questions"))
                 OutlinedTextField(
                     o.questions, { q -> vm.updateReport { it.copy(questions = q) } }, Modifier.fillMaxWidth(), minLines = 2,
