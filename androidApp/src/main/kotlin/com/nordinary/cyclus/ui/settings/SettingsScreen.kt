@@ -66,6 +66,7 @@ fun SettingsScreen(
     onLifeStage: (LifeStage?) -> Unit,
     onComingSoon: () -> Unit,
     onPrivacy: () -> Unit = onComingSoon,
+    onNotifications: () -> Unit = onComingSoon,
 ) {
     val c = Cyclus.colors
     val scroll = TopAppBarDefaults.exitUntilCollapsedScrollBehavior()
@@ -125,7 +126,7 @@ fun SettingsScreen(
             }
             Section(fmt.s("more")) {
                 Group {
-                    LinkItem(fmt.s("notifT"), fmt.s("notifS"), onComingSoon)
+                    LinkItem(fmt.s("notifT"), fmt.s("notifS"), onNotifications)
                     HorizontalDivider(color = c.line)
                     LinkItem(fmt.s("privT"), null, onPrivacy)
                 }

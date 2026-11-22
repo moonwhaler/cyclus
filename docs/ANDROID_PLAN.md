@@ -115,8 +115,9 @@ Pin exact versions at project start and record them in the SOUP list.
 ### 2.4 Process & storage (Android counterpart of spec §11.2 / §3.3)
 - **Single writer:** the app process. Widgets and QS tile intents run in the app process, behind an unlock requirement.
 - **Encryption at rest:** the SQLDelight DB uses SQLCipher. The 256-bit DB key is random, stored **wrapped by an Android Keystore AES key** created with `setUnlockedDeviceRequired(true)` (and StrongBox if available). While the device is locked the key cannot be unwrapped, which is the Android equivalent of iOS `.complete`.
-- **Widget snapshot:** minimal JSON (cycle day, status, range, tier, redaction flag) in app-private storage, readable without the DB key. Same content as iOS.
-- **Pending-event queue:** the QS tile/widget actions use `unlockAndRun` / an activity trampoline. If the DB is unavailable they queue the event, and it is drained on next app start (same as iOS).
+- **Widget snapshot:** `files/widget/snapshot.json` with days only (last start, range, last bleeding day, paused), written **only while „Details im Widget“ is on**; the widget computes the cycle day from today, so it stays right after midnight. Readable without the DB key.
+- **Reminder plan:** `files/notify/plan.json` (reminder kinds, days, local times, discreet flag). Planning happens only in the app with the DB open; one DB-free inexact alarm re-arms from this file (boot, update, clock and time-zone change, midnight). Receivers never open the DB.
+- **No pending-event queue on Android (implemented 2026-11-22):** widget, tile and shortcut actions open the app through the non-exported alias `.ActionEntry` and run there after the app lock, exactly once (stripped from the intent, dropped during onboarding). Nothing writes outside the app UI, so there is nothing to queue. The exported launcher entry ignores action extras.
 - **App lock:** `BiometricPrompt` (Class 3, device credential fallback) **plus** optional Cyclus PIN and "PIN only" (same as iOS).
 - **Recents:** `setRecentsScreenshotEnabled(false)` (API 33+; `FLAG_SECURE` fallback on older versions) by default. Optional full `FLAG_SECURE`.
 
@@ -237,7 +238,9 @@ Pin exact versions at project start and record them in the SOUP list.
 ## 6. Platform services
 
 ### 6.1 HealthKit → Health Connect mapping
-| Cyclus field | iOS HealthKit | Android Health Connect | Mirror default (both) |
+**Mirror default (decided 2026-11-22, both platforms): every write category is off until the user switches it on.** The last column shows the planned v1 defaults before that decision; reading (import) is offered separately.
+
+| Cyclus field | iOS HealthKit | Android Health Connect | Mirror default before 2026-11-22 (now: off) |
 |---|---|---|---|
 | Flow light/medium/heavy | `menstrualFlow` (+ cycle start flag) | `MenstruationFlowRecord` (LIGHT/MEDIUM/HEAVY/UNKNOWN) **+ `MenstruationPeriodRecord`** (start–end of the period) | On |
 | Spotting | `intermenstrualBleeding` | `IntermenstrualBleedingRecord` | On |
@@ -262,16 +265,18 @@ Pin exact versions at project start and record them in the SOUP list.
 - `READ_HEALTH_DATA_IN_BACKGROUND` is only needed if background sync is wanted (default: sync on app open + WorkManager when unlocked).
 - Play requires the **Health apps declaration** plus a justification for each Health Connect type.
 
-### 6.2 Widgets, tiles, shortcuts
-- **Glance widgets:** small (ring + Tag N + range) and medium (+ "Periode eintragen" / "Symptom eintragen"). Content and redaction rules are the same as iOS §8.1. The "Details ausblenden" default applies on shared devices and in screenshots.
-- **Quick Settings tile** „Periode eintragen“ → `unlockAndRun` → logs + Snackbar-style confirmation notification. Equivalent of the iOS Control Center control (v1.1 on both).
-- **App shortcuts** (long-press icon): **none by default**. The opt-in setting adds "Eintragen" (parity with iOS no-auto-App-Shortcuts). App Functions / Gemini integration is a v2 consideration for both platforms.
+### 6.2 Widgets, tiles, shortcuts (implemented 2026-11-22, slice 5)
+- **Glance widgets:** small (2×2: ring, „Tag N“, range) and medium (4×2: plus „Periode eintragen“ / „Eintragen“). **„Details im Widget“ is off by default** (Privacy Center › Sichtbarkeit): the widget then shows only the app glyph and „Cyclus“, and no widget file exists. Buttons open the app (app lock applies); „Periode eintragen“ logs the period start with Undo, or opens the log sheet if today already has bleeding.
+- **Quick Settings tile** „Cyclus · Eintragen“ → `startActivityAndCollapse` (the system asks for the device unlock on the lock screen) → log sheet behind the app lock. Note: wrapping it in `unlockAndRun` made SystemUI drop the start after unlocking (API 36).
+- **App shortcut** „Eintragen“ (long-press icon): **off by default**, opt-in in Privacy Center › Sichtbarkeit (parity with iOS no-auto-App-Shortcuts). App Functions / Gemini integration is a v2 consideration for both platforms.
+- Glance brings WorkManager; its `ACCESS_NETWORK_STATE` and `FOREGROUND_SERVICE` permissions are removed in the manifest (`verifyNoInternet` checks the merged manifest).
 
-### 6.3 Notifications
-- Channels: „Periode“, „Fruchtbarkeit“, „Erinnerungen“, „Sicherung“. User-controllable in system settings.
-- Discreet default: `VISIBILITY_PRIVATE` with a **public version** „Cyclus · Erinnerung“. In detailed mode the full text is still hidden on the lock screen unless the user allows it.
-- Scheduling: shared schedule → `AlarmManager.setAndAllowWhileIdle` (inexact) + WorkManager re-scheduling after boot/time-zone change. **No exact-alarm permission.**
-- "Later than usual" stays **off by default** (spec m9).
+### 6.3 Notifications (implemented 2026-11-22, slice 5)
+- **Opt-in on every API level:** nothing is planned until the user says yes (Today card „Vor deiner Periode erinnern?“ or Einstellungen › Mitteilungen). Android 13+ then asks for `POST_NOTIFICATIONS`. A restore or new phone starts without reminders (the `notify.*` settings are device settings, not in exports or snapshots).
+- **Defaults after opt-in:** „Periode bald“ (2 days before the earliest expected start, 09:00) on; „Später als sonst“ off (spec m9); daily reminder, backup reminder off; Conceive: fertile window and LH test on, temperature off.
+- **Discreet by default:** title „Cyclus · Check-in“ / „Cyclus · Erinnerung“ / „Cyclus · Sicherung“, text „Tippe, um Cyclus zu öffnen.“ Detailed mode shows a fixed sentence, never dates, numbers or symptoms. `VISIBILITY_PRIVATE` with a public version that shows only the neutral title.
+- Channels „Periode“, „Fruchtbarkeit“, „Erinnerungen“, „Sicherung“.
+- **Scheduling:** one `setAndAllowWhileIdle` (inexact, up to about an hour late) for the next item of the plan file; **no exact-alarm permission**, no WorkManager jobs. Missed reminders older than 12 h are dropped instead of shown late.
 
 ### 6.4 Backup & transfer (decided 2026-11-22, implemented in slice 3)
 - **Decision (owner):** spec D5 parity. An encrypted snapshot goes into Android backup **only** when the transport is end-to-end encrypted (client-side encryption with the screen lock) or a device-to-device transfer. Toggle „Nur auf dem Gerät“ turns it off. Plus passphrase-encrypted `.cyclus` export/import (`docs/export/FORMAT.md`).
@@ -305,6 +310,8 @@ Compose for Wear OS + Wear M3 (Expressive): log period/symptom, glance at cycle 
 | Rooted devices | Keystore can be weaker | No blocking (accessibility/fairness); disclosure in FAQ |
 | Network | **No `INTERNET` permission** | OS-enforced "no data leaves via the app" (privacy label claim is verifiable) |
 | Device backup snapshot | The snapshot key is hardware-wrapped and not usable from a disk image, but **code running as Cyclus on a locked phone after first unlock can decrypt the snapshot** (the DB key needs an unlocked device) | Accepted for automatic backups; only sent over E2E/D2D; „Nur auf dem Gerät“ removes snapshot and key |
+| Reminder plan / widget file | `files/notify/plan.json` (reminder kinds and days, which hint at the predicted period) and, only with „Details im Widget“, `files/widget/snapshot.json` are outside the encrypted DB so alarms and widgets work while the phone is locked; readable by code running as Cyclus after first unlock (the DB is not) | Credential-encrypted storage, never in backups (include-only rules), deleted on erase; honest note in Privacy Center › Sichtbarkeit; AlarmManager holds the same times anyway |
+| Widget / tile / shortcut actions | Other apps could try to send actions to the exported launcher activity | Actions are honoured only through the non-exported `.ActionEntry` alias; they run after the app lock, once |
 | Cyclus PIN | UI gate only: its hash lives inside the encrypted DB | Back-off after 5 wrong tries (elapsedRealtime); not presented as data encryption |
 
 ---

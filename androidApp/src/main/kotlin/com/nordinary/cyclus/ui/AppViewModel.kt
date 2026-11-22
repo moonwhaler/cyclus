@@ -37,6 +37,9 @@ import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.debounce
+import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.launch
 import java.time.LocalDate
 import kotlin.uuid.ExperimentalUuidApi
@@ -107,6 +110,16 @@ class AppViewModel(
         )
     }.flowOn(Dispatchers.Default).stateIn(viewModelScope, SharingStarted.WhileSubscribed(0), null)
 
+    init {
+        // reminders, widget and shortcut follow the data and settings (planning only here, with the DB open)
+        @OptIn(kotlinx.coroutines.FlowPreview::class)
+        viewModelScope.launch {
+            model.filterNotNull().debounce(1_000).collectLatest { m ->
+                runCatching { com.nordinary.cyclus.surfaces.SystemSurfaces.sync(app, repo, m.snapshot, m.settings) }
+            }
+        }
+    }
+
 
     fun updateLog(day: Day, transform: (DayLog) -> DayLog) {
         viewModelScope.launch {
@@ -121,6 +134,7 @@ class AppViewModel(
         val today = m.snapshot.today
         viewModelScope.launch {
             val before = repo.log(today)
+            if (before?.flow?.isBleed == true) return@launch // already logged: never downgrade a logged level
             val overrideBefore = m.snapshot.data.overrides[today]
             val after = (before ?: DayLog.EMPTY).copy(flow = Flow.MEDIUM)
             repo.saveLog(today, after)
@@ -215,6 +229,34 @@ class AppViewModel(
     fun backupStatus() = app.backup.status()
 
     fun setSetting(key: String, value: String?) { viewModelScope.launch { repo.setSetting(key, value) } }
+
+    /** Opt-in for reminders (also answers the Today offer). Off removes every planned reminder. */
+    fun setNotifyConsent(on: Boolean) {
+        viewModelScope.launch {
+            repo.setSetting(com.nordinary.cyclus.presenter.NotifyKeys.CONSENT, if (on) "1" else null)
+            repo.setSetting(com.nordinary.cyclus.presenter.NotifyKeys.ASKED, "1")
+        }
+    }
+
+    fun declineReminderOffer() { setSetting(com.nordinary.cyclus.presenter.NotifyKeys.ASKED, "1") }
+
+    fun setNotifyKind(k: com.nordinary.cyclus.presenter.NotifyKind, on: Boolean) {
+        viewModelScope.launch {
+            repo.setSetting(com.nordinary.cyclus.presenter.NotifyKeys.kind(k), if (on == k.defaultOn) null else if (on) "1" else "0")
+            if (k == com.nordinary.cyclus.presenter.NotifyKind.BACKUP) {
+                repo.setSetting(com.nordinary.cyclus.presenter.NotifyKeys.BACKUP_SINCE, if (on) LocalDate.now().toEpochDay().toString() else null)
+            }
+        }
+    }
+
+    /** Debug: a real notification through the normal path, 10 s later (lock the phone to see the lock-screen version). */
+    fun testNotification() {
+        val discreet = model.value?.settings?.get(com.nordinary.cyclus.presenter.NotifyKeys.DISCREET) != "0"
+        viewModelScope.launch {
+            delay(10_000)
+            com.nordinary.cyclus.notify.Notifier.post(app, com.nordinary.cyclus.presenter.NotifyKind.PERIOD_SOON, discreet)
+        }
+    }
 
     fun setPin(pin: String) {
         viewModelScope.launch(Dispatchers.Default) {
@@ -391,7 +433,9 @@ class AppViewModel(
             repo.replaceAll(
                 logs = s.logs,
                 episodes = s.pausedSince?.let { listOf(Episode("demo-hbc", EpisodeKind.HORMONAL_CONTRACEPTION, it)) } ?: emptyList(),
-                settings = if (s.mode == Mode.CONCEIVE) mapOf(KEY_MODE to "conceive") else emptyMap(),
+                // onboarding stays done: otherwise the empty moment inside the replace brings it back
+                settings = mapOf(com.nordinary.cyclus.presenter.Onboarding.DONE to "1") +
+                    (if (s.mode == Mode.CONCEIVE) mapOf(KEY_MODE to "conceive") else emptyMap()),
             )
         }
     }

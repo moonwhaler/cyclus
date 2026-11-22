@@ -58,6 +58,9 @@ data class PrivacyUiState(
     val lastExport: Int?,
     val lock: LockConfig,
     val lockPaused: Boolean,
+    val discreet: Boolean = true,
+    val widgetDetails: Boolean = false,
+    val shortcut: Boolean = false,
 )
 
 /** Datenschutz (prototype `renderPrivacy`), honest per platform (spec §7.8, ANDROID_PLAN §2.4, §6.4). */
@@ -77,6 +80,9 @@ fun PrivacyScreen(
     onExport: () -> Unit,
     onImport: () -> Unit,
     onErase: () -> Unit,
+    onDiscreet: (Boolean) -> Unit = {},
+    onWidgetDetails: (Boolean) -> Unit = {},
+    onShortcut: (Boolean) -> Unit = {},
 ) {
     val c = Cyclus.colors
     val scroll = TopAppBarDefaults.exitUntilCollapsedScrollBehavior()
@@ -143,6 +149,19 @@ fun PrivacyScreen(
                     if (Build.VERSION.SDK_INT >= 35) { Divider(); Info(stringResource(R.string.private_space_t), stringResource(R.string.private_space_s)) }
                 }
             }
+            Section(fmt.s("visibility")) {
+                Group {
+                    SwitchRow(fmt.s("discreetT"), if (state.discreet) fmt.s("discreetOn") else fmt.s("discreetOff"), state.discreet, onDiscreet)
+                    Divider()
+                    SwitchRow(
+                        stringResource(R.string.vis_widget_t),
+                        stringResource(if (state.widgetDetails) R.string.vis_widget_on else R.string.vis_widget_off), state.widgetDetails, onWidgetDetails,
+                    )
+                    Divider()
+                    SwitchRow(stringResource(R.string.vis_shortcut_t), stringResource(R.string.vis_shortcut_s), state.shortcut, onShortcut)
+                }
+                Note(stringResource(R.string.vis_files_note))
+            }
             Section(fmt.s("backups")) {
                 Group {
                     SwitchRow(fmt.s("devOnlyT"), fmt.s("devOnlyS"), state.deviceOnly, onDeviceOnly)
@@ -172,7 +191,7 @@ private fun backupLine(fmt: Fmt, s: PrivacyUiState): String = when {
 }
 
 @Composable
-private fun Section(label: String, content: @Composable () -> Unit) {
+internal fun Section(label: String, content: @Composable () -> Unit) {
     Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
         Text(label.uppercase(), Modifier.padding(horizontal = 4.dp), fontSize = 12.sp, fontWeight = FontWeight.SemiBold, letterSpacing = 0.7.sp, color = Cyclus.colors.ink2)
         content()
@@ -180,17 +199,17 @@ private fun Section(label: String, content: @Composable () -> Unit) {
 }
 
 @Composable
-private fun Group(content: @Composable () -> Unit) =
+internal fun Group(content: @Composable () -> Unit) =
     Column(Modifier.fillMaxWidth().clip(RoundedCornerShape(14.dp)).background(Cyclus.colors.surface)) { content() }
 
-@Composable private fun Divider() = HorizontalDivider(color = Cyclus.colors.line)
+@Composable internal fun Divider() = HorizontalDivider(color = Cyclus.colors.line)
 
 @Composable
-private fun Note(text: String, color: androidx.compose.ui.graphics.Color = Cyclus.colors.ink2) =
+internal fun Note(text: String, color: androidx.compose.ui.graphics.Color = Cyclus.colors.ink2) =
     Text(text, Modifier.padding(horizontal = 4.dp), fontSize = 12.sp, color = color)
 
 @Composable
-private fun Info(title: String, sub: String?) {
+internal fun Info(title: String, sub: String?) {
     val c = Cyclus.colors
     Column(Modifier.fillMaxWidth().heightIn(min = 50.dp).padding(horizontal = 14.dp, vertical = 12.dp)) {
         Text(title, fontWeight = FontWeight.Medium, color = c.ink)
@@ -199,7 +218,7 @@ private fun Info(title: String, sub: String?) {
 }
 
 @Composable
-private fun SwitchRow(title: String, sub: String?, on: Boolean, onChange: (Boolean) -> Unit) {
+internal fun SwitchRow(title: String, sub: String?, on: Boolean, onChange: (Boolean) -> Unit) {
     val c = Cyclus.colors
     Row(
         Modifier.fillMaxWidth().toggleable(on, role = Role.Switch, onValueChange = onChange).padding(horizontal = 14.dp, vertical = 12.dp),
@@ -214,7 +233,7 @@ private fun SwitchRow(title: String, sub: String?, on: Boolean, onChange: (Boole
 }
 
 @Composable
-private fun Link(title: String, sub: String?, onClick: () -> Unit, danger: Boolean = false) {
+internal fun Link(title: String, sub: String?, onClick: () -> Unit, danger: Boolean = false) {
     val c = Cyclus.colors
     Row(
         Modifier.fillMaxWidth().heightIn(min = 50.dp).clickable(role = Role.Button, onClick = onClick).padding(horizontal = 14.dp, vertical = 12.dp),

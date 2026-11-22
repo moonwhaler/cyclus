@@ -76,6 +76,7 @@ fun InsightsContent(
     onMute: (String) -> Unit,
     onUnmute: () -> Unit,
     onReport: (() -> Unit)?,
+    twoColumns: Boolean = false,
 ) {
     val c = Cyclus.colors
     Column(
@@ -87,57 +88,66 @@ fun InsightsContent(
                 Title(fmt.s("insEmptyT")); Body(fmt.s("insEmptyB"))
             }
             is InsightsUiState.Ready -> {
-                // equal heights even when one label wraps (German: „Tage, dein typischer Zyklus“)
-                Row(Modifier.height(IntrinsicSize.Min), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                    Stat("${state.typLo}–${state.typHi}", fmt.s("statCycle"), Modifier.weight(1f).fillMaxHeight())
-                    Stat(state.periodTypical?.toString() ?: "–", fmt.s("statPeriod"), Modifier.weight(1f).fillMaxHeight())
-                }
-                CyclusCard {
-                    Title(fmt.s("varyT", state.spread))
-                    Badge(fmt.s("tier_${state.tier.key}"))
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        Text(fmt.s("varyB", state.cyclesUsed) + " ", fontSize = 14.sp, color = c.ink2)
+                val left: @Composable () -> Unit = {
+                    // equal heights even when one label wraps (German: „Tage, dein typischer Zyklus“)
+                    Row(Modifier.height(IntrinsicSize.Min), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                        Stat("${state.typLo}–${state.typHi}", fmt.s("statCycle"), Modifier.weight(1f).fillMaxHeight())
+                        Stat(state.periodTypical?.toString() ?: "–", fmt.s("statPeriod"), Modifier.weight(1f).fillMaxHeight())
                     }
-                    Text(
-                        fmt.s("howWorks"), Modifier.clip(RoundedCornerShape(6.dp)).clickable(role = Role.Button, onClick = onMethod).padding(vertical = 4.dp),
-                        fontSize = 14.sp, fontWeight = FontWeight.SemiBold, color = c.period,
-                    )
-                }
-                Patterns(state.patterns, fmt, onMute, onUnmute)
-                CyclusCard {
-                    Title(fmt.s("cycleLen"))
-                    CycleLengthChart(state.bars, state.typLo, state.typHi, fmt)
-                    Text(fmt.s("bandNote"), fontSize = 12.sp, color = c.ink2)
-                }
-                state.temperature?.let { t ->
                     CyclusCard {
-                        Title(fmt.s("tempT"))
-                        TemperatureChartView(t, fmt)
+                        Title(fmt.s("varyT", state.spread))
+                        Badge(fmt.s("tier_${state.tier.key}"))
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Text(fmt.s("varyB", state.cyclesUsed) + " ", fontSize = 14.sp, color = c.ink2)
+                        }
                         Text(
-                            if (t.shiftCd != null && t.ovulationDay != null) fmt.s("tempShift", t.shiftCd!!, fmt.md(t.ovulationDay!!)) else fmt.s("tempNo"),
-                            fontSize = 12.sp, color = c.ink2,
+                            fmt.s("howWorks"), Modifier.clip(RoundedCornerShape(6.dp)).clickable(role = Role.Button, onClick = onMethod).padding(vertical = 4.dp),
+                            fontSize = 14.sp, fontWeight = FontWeight.SemiBold, color = c.period,
                         )
                     }
+                    Patterns(state.patterns, fmt, onMute, onUnmute)
+                    CyclusCard(onClick = onReport) {
+                        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) { Title(fmt.s("reportT")); if (onReport != null) Text("›", color = c.ink2, fontSize = 18.sp) }
+                        Body(if (onReport != null) fmt.s("reportB") else androidx.compose.ui.res.stringResource(com.nordinary.cyclus.R.string.rep_unavailable))
+                    }
                 }
-                CyclusCard {
-                    Title(fmt.s("heatT"))
-                    Text(fmt.s("heatB"), fontSize = 12.sp, color = c.ink2, modifier = Modifier.padding(bottom = 6.dp))
-                    Heat(state.heat, fmt)
-                }
-                CyclusCard(onClick = onReport) {
-                    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) { Title(fmt.s("reportT")); if (onReport != null) Text("›", color = c.ink2, fontSize = 18.sp) }
-                    Body(if (onReport != null) fmt.s("reportB") else androidx.compose.ui.res.stringResource(com.nordinary.cyclus.R.string.rep_unavailable))
-                }
-                SectionLabel(fmt.s("history"))
-                Column(Modifier.fillMaxWidth().clip(RoundedCornerShape(14.dp)).background(c.surface)) {
-                    state.history.forEachIndexed { i, h ->
-                        if (i > 0) HorizontalDivider(color = c.line)
-                        Column(Modifier.fillMaxWidth().padding(horizontal = 14.dp, vertical = 12.dp)) {
-                            Text(fmt.range(h.start, h.end), fontFamily = Nunito, fontWeight = FontWeight.Bold, color = c.ink, fontSize = 15.sp)
-                            Text(fmt.s("histRow", h.length, h.periodLength), fontSize = 13.sp, color = c.ink2)
+                val right: @Composable () -> Unit = {
+                    CyclusCard {
+                        Title(fmt.s("cycleLen"))
+                        CycleLengthChart(state.bars, state.typLo, state.typHi, fmt)
+                        Text(fmt.s("bandNote"), fontSize = 12.sp, color = c.ink2)
+                    }
+                    state.temperature?.let { t ->
+                        CyclusCard {
+                            Title(fmt.s("tempT"))
+                            TemperatureChartView(t, fmt)
+                            Text(
+                                if (t.shiftCd != null && t.ovulationDay != null) fmt.s("tempShift", t.shiftCd!!, fmt.md(t.ovulationDay!!)) else fmt.s("tempNo"),
+                                fontSize = 12.sp, color = c.ink2,
+                            )
+                        }
+                    }
+                    CyclusCard {
+                        Title(fmt.s("heatT"))
+                        Text(fmt.s("heatB"), fontSize = 12.sp, color = c.ink2, modifier = Modifier.padding(bottom = 6.dp))
+                        Heat(state.heat, fmt)
+                    }
+                    SectionLabel(fmt.s("history"))
+                    Column(Modifier.fillMaxWidth().clip(RoundedCornerShape(14.dp)).background(c.surface)) {
+                        state.history.forEachIndexed { i, h ->
+                            if (i > 0) HorizontalDivider(color = c.line)
+                            Column(Modifier.fillMaxWidth().padding(horizontal = 14.dp, vertical = 12.dp)) {
+                                Text(fmt.range(h.start, h.end), fontFamily = Nunito, fontWeight = FontWeight.Bold, color = c.ink, fontSize = 15.sp)
+                                Text(fmt.s("histRow", h.length, h.periodLength), fontSize = 13.sp, color = c.ink2)
+                            }
                         }
                     }
                 }
+                // expanded width: two columns (summary + patterns | charts + history)
+                if (twoColumns) Row(horizontalArrangement = Arrangement.spacedBy(16.dp), verticalAlignment = Alignment.Top) {
+                    Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(12.dp)) { left() }
+                    Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(12.dp)) { right() }
+                } else { left(); right() }
             }
         }
         Spacer(Modifier.height(96.dp))

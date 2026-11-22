@@ -55,6 +55,9 @@ fun PrivacyEntry(vm: AppViewModel, fmt: Fmt, snackbar: SnackbarHostState, onBack
             deviceSecure = (ctx.getSystemService(KeyguardManager::class.java)).isDeviceSecure,
             exportCount = m.settings[SettingKeys.EXPORT_COUNT]?.toIntOrNull() ?: 0,
             lastExport = m.settings[SettingKeys.EXPORT_LAST]?.toIntOrNull(),
+            discreet = m.settings[com.nordinary.cyclus.presenter.NotifyKeys.DISCREET] != "0",
+            widgetDetails = m.settings[com.nordinary.cyclus.presenter.NotifyKeys.WIDGET_DETAILS] == "1",
+            shortcut = m.settings[com.nordinary.cyclus.presenter.NotifyKeys.SHORTCUT] == "1",
             lock = lock, lockPaused = app.lock.isPaused(canAuth),
         ),
         onBack = onBack,
@@ -73,6 +76,9 @@ fun PrivacyEntry(vm: AppViewModel, fmt: Fmt, snackbar: SnackbarHostState, onBack
         onExport = { sheet = PrivacySheet.EXPORT },
         onImport = { app.lock.suspendForExternalActivity(); openDoc.launch(arrayOf("*/*")) },
         onErase = { sheet = PrivacySheet.ERASE },
+        onDiscreet = { vm.setSetting(com.nordinary.cyclus.presenter.NotifyKeys.DISCREET, if (it) null else "0") },
+        onWidgetDetails = { vm.setSetting(com.nordinary.cyclus.presenter.NotifyKeys.WIDGET_DETAILS, if (it) "1" else null) },
+        onShortcut = { vm.setSetting(com.nordinary.cyclus.presenter.NotifyKeys.SHORTCUT, if (it) "1" else null) },
     )
 
     when (sheet) {

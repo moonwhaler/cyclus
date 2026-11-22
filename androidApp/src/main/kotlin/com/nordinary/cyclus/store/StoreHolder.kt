@@ -99,7 +99,9 @@ class StoreHolder(private val context: Context, val backup: BackupCoordinator, p
                 AndroidDatabase.destroy(context, dbName)
                 backup.eraseFilesLocked()
                 java.io.File(context.cacheDir, "share").deleteRecursively() // report PDFs
+                com.nordinary.cyclus.surfaces.SystemSurfaces.clearLocked(context) // reminders, widget days, shortcut
             }
+            runCatching { com.nordinary.cyclus.widget.CyclusWidgets.refresh(context) } // back to the neutral state
             _state.value = open()
             onDone()
         }

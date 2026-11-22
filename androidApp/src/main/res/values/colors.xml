@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <color name="cyclus_bg">#FBF8F5</color>
+    <color name="notify_accent">#B3264E</color>
     <color name="ic_launcher_background">#FBF8F5</color>
 </resources>

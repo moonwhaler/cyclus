@@ -559,6 +559,8 @@ Timeline: one entry per day at local midnight, plus a reload after each save (`W
 | Window opening (Conceive) | On in Conceive | "Cyclus · Check-in" | "Your fertile window is likely starting." |
 | BBT morning reminder (Conceive, if BBT used) | Off | "Cyclus · Reminder" | "Take your temperature before getting up." |
 
+**Opt-in (owner decision 2026-11-22, both platforms):** no notification is scheduled until the user accepts the in-context offer (Today: „Vor deiner Periode erinnern?“) or turns notifications on in Settings; the „Default“ column applies after that. Detailed copy never contains dates, numbers or symptoms; the lock screen only ever shows the discreet title.
+
 Copy note in settings: "Notifications also appear on your Apple Watch."
 
 ---
@@ -723,7 +725,9 @@ struct LocalDate: Codable, Hashable, Comparable, Sendable { // civil date, no ti
 9. **Import.** All history, batched by year with progress; `HKAnchoredObjectQuery` anchors persisted per type; `HKObserverQuery` + `enableBackgroundDelivery(.immediate)` for flow and symptoms, deferred until unlocked.
 
 #### 11.4.2 Field mapping
-| Cyclus field | HealthKit | Mirror default | Loss / note |
+**Owner decision 2026-11-22 (both platforms): every mirror (write) category starts off; the user switches each on in the Privacy Center. The defaults below are the earlier plan and apply only as the suggested order of the switches.**
+
+| Cyclus field | HealthKit | Mirror default (superseded: all off) | Loss / note |
 |---|---|---|---|
 | flow light/medium/heavy/unspecified | `menstrualFlow` (`.light/.medium/.heavy/.unspecified`) + `HKMetadataKeyMenstrualCycleStart` | On | — |
 | flow spotting | `intermenstrualBleeding` | On | Spotting is never written as `menstrualFlow` |

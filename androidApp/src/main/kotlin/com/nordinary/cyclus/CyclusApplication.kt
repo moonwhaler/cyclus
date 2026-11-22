@@ -16,6 +16,8 @@ class CyclusApplication : Application() {
     val backup: BackupCoordinator by lazy { BackupCoordinator(this) }
     val store: StoreHolder by lazy { StoreHolder(this, backup) }
     val lock = com.nordinary.cyclus.lock.AppLock()
+    /** Widget/tile/shortcut action waiting for the unlocked, ready app ([ActionEntry]); consumed once. */
+    val pendingAction = kotlinx.coroutines.flow.MutableStateFlow<String?>(null)
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
 
     override fun onCreate() {

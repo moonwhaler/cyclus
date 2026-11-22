@@ -77,6 +77,9 @@ fun TodayContent(
     onChangeStage: () -> Unit,
     onLh: (com.nordinary.cyclus.core.LhResult) -> Unit = {},
     onWhy: () -> Unit = {},
+    /** In-context opt-in for „Periode bald“ (nothing is armed before the user says yes, on every API level). */
+    reminderOffer: Boolean = false,
+    onReminderOffer: (Boolean) -> Unit = {},
 ) {
     val c = Cyclus.colors
     Column(
@@ -125,6 +128,14 @@ fun TodayContent(
         }
 
         Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+            if (reminderOffer) CyclusCard {
+                CardTitle(androidx.compose.ui.res.stringResource(com.nordinary.cyclus.R.string.offer_t))
+                CardBody(androidx.compose.ui.res.stringResource(com.nordinary.cyclus.R.string.offer_b))
+                Row(Modifier.fillMaxWidth().padding(top = 10.dp), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                    SecondaryButton(androidx.compose.ui.res.stringResource(com.nordinary.cyclus.R.string.offer_no), { onReminderOffer(false) }, Modifier.weight(1f))
+                    PrimaryButton(androidx.compose.ui.res.stringResource(com.nordinary.cyclus.R.string.offer_yes), { onReminderOffer(true) }, Modifier.weight(1f))
+                }
+            }
             CyclusCard(onClick = onOpenLog) {
                 Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
                     CardTitle(fmt.s("todaysLog"))

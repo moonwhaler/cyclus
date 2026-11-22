@@ -10,6 +10,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.LinearWavyProgressIndicator
 import androidx.compose.material3.Surface
@@ -53,6 +54,7 @@ class MainActivity : FragmentActivity() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) setRecentsScreenshotEnabled(false)
         else window.setFlags(WindowManager.LayoutParams.FLAG_SECURE, WindowManager.LayoutParams.FLAG_SECURE)
         app.store.ensureOpen()
+        if (savedInstanceState == null) takeAction(intent) // not again after rotation / recreation
         setContent {
             CyclusTheme {
                 Surface(color = Cyclus.colors.bg) {
@@ -67,6 +69,18 @@ class MainActivity : FragmentActivity() {
                 }
             }
         }
+    }
+
+    override fun onNewIntent(intent: android.content.Intent) {
+        super.onNewIntent(intent)
+        takeAction(intent)
+    }
+
+    /** Moves a widget/tile/shortcut action (only via the non-exported alias) to the app and strips it from the intent. */
+    private fun takeAction(i: android.content.Intent?) {
+        ActionEntry.actionOf(i)?.let { app.pendingAction.value = it }
+        i?.removeExtra(ActionEntry.EXTRA)
+        if (i != null) setIntent(i)
     }
 
     override fun onResume() {
@@ -108,8 +122,13 @@ class MainActivity : FragmentActivity() {
                 when {
                     m == null -> {}
                     m.showOnboarding || active -> {
-                        LaunchedEffect(Unit) { vm.onboardingActive.value = true }
-                        com.nordinary.cyclus.ui.onboarding.OnboardingScreen(vm, fmt)
+                        LaunchedEffect(Unit) { vm.onboardingActive.value = true; app.pendingAction.value = null } // nothing to log into yet
+                        // tablets / landscape: a readable column, not full width
+                        androidx.compose.foundation.layout.Box(Modifier.fillMaxSize(), contentAlignment = Alignment.TopCenter) {
+                            androidx.compose.foundation.layout.Box(Modifier.widthIn(max = 640.dp).fillMaxSize()) {
+                                com.nordinary.cyclus.ui.onboarding.OnboardingScreen(vm, fmt)
+                            }
+                        }
                     }
                     else -> CyclusApp(vm, debug = BuildConfig.DEBUG)
                 }
