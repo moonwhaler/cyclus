@@ -6,12 +6,12 @@
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Nunito:wght@600;700;800&display=swap">
 <style>
 /* Layout: interview stage = control panel beside a 390×844 iPhone; on phones the app stacks above the panel.
-   Tokens mirror DESIGN_SPEC §5.1 (contrast-verified). */
+   Tokens mirror DESIGN_SPEC §5.1 (contrast-verified). German first, English second. */
 :root{
   --bg:#FBF8F5; --surface:#FFFFFF; --surface2:#F3EEEA; --ink:#1D1A1C; --ink2:#6B6267; --line:#E6DED8;
   --period:#B3264E; --pre:#6A4C9C; --mid:#8A7F76; --fertile:#13706F; --success:#2E7D5B; --warning:#8F5600;
   --onAccent:#FFFFFF; --stage:#EEE7E1; --bezel:#1D1A1C; --glass:rgba(255,255,255,.66); --glassLine:rgba(29,26,28,.08);
-  --scrim:rgba(29,26,28,.34); --shadow:0 10px 40px rgba(60,30,40,.18);
+  --scrim:rgba(29,26,28,.34); --shadow:0 10px 40px rgba(60,30,40,.18); --toastBtn:#FF9DB3;
   --f-text:-apple-system,BlinkMacSystemFont,"SF Pro Text","SF Pro Display",system-ui,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;
   --f-round:ui-rounded,"SF Pro Rounded","Nunito",-apple-system,system-ui,sans-serif;
 }
@@ -19,16 +19,17 @@
   --bg:#141114; --surface:#1E1A1E; --surface2:#29242A; --ink:#F4EFF1; --ink2:#ABA1A6; --line:#3A3438;
   --period:#FF8FA8; --pre:#BBA6EC; --mid:#8F858A; --fertile:#5FD0C8; --success:#6FCF9F; --warning:#F2B65A;
   --onAccent:#141114; --stage:#0B090B; --bezel:#2E292E; --glass:rgba(34,29,34,.66); --glassLine:rgba(255,255,255,.08);
-  --scrim:rgba(0,0,0,.55); --shadow:0 10px 40px rgba(0,0,0,.5); color-scheme:dark }}
+  --scrim:rgba(0,0,0,.55); --shadow:0 10px 40px rgba(0,0,0,.5); --toastBtn:#B3264E; color-scheme:dark }}
 :root[data-theme="dark"]{
   --bg:#141114; --surface:#1E1A1E; --surface2:#29242A; --ink:#F4EFF1; --ink2:#ABA1A6; --line:#3A3438;
   --period:#FF8FA8; --pre:#BBA6EC; --mid:#8F858A; --fertile:#5FD0C8; --success:#6FCF9F; --warning:#F2B65A;
   --onAccent:#141114; --stage:#0B090B; --bezel:#2E292E; --glass:rgba(34,29,34,.66); --glassLine:rgba(255,255,255,.08);
-  --scrim:rgba(0,0,0,.55); --shadow:0 10px 40px rgba(0,0,0,.5); color-scheme:dark }
+  --scrim:rgba(0,0,0,.55); --shadow:0 10px 40px rgba(0,0,0,.5); --toastBtn:#B3264E; color-scheme:dark }
 
 *{box-sizing:border-box}
 body{background:var(--stage);color:var(--ink);font-family:var(--f-text);font-size:15px;line-height:1.4;
-  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:24px}
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:24px;
+  hyphens:auto;-webkit-hyphens:auto;overflow-wrap:break-word}
 button{font:inherit;color:inherit;background:none;border:0;cursor:pointer;padding:0}
 button:focus-visible,input:focus-visible,textarea:focus-visible,select:focus-visible,[tabindex]:focus-visible{outline:2px solid var(--period);outline-offset:2px;border-radius:8px}
 .num{font-family:var(--f-round);font-variant-numeric:tabular-nums}
@@ -65,11 +66,12 @@ button:focus-visible,input:focus-visible,textarea:focus-visible,select:focus-vis
 .sb-icons{display:flex;gap:6px;align-items:center}
 .main{flex:1 1 auto;overflow-y:auto;overflow-x:hidden;padding:0 16px 132px;scrollbar-width:none}
 .main::-webkit-scrollbar{display:none}
-.navrow{display:flex;align-items:center;justify-content:space-between;padding:6px 0 4px}
+.navrow{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:6px 0 4px}
+.navrow > div:first-child{min-width:0}
 .navrow .date{font-size:13px;color:var(--ink2);font-weight:500}
-.navrow h2{margin:0;font-size:32px;font-weight:700;letter-spacing:-.01em}
-.navicons{display:flex;gap:8px}
-.iconbtn{width:38px;height:38px;border-radius:999px;display:grid;place-items:center;background:var(--glass);border:1px solid var(--glassLine);backdrop-filter:blur(18px) saturate(1.6);-webkit-backdrop-filter:blur(18px) saturate(1.6)}
+.navrow h2{margin:0;font-size:32px;font-weight:700;letter-spacing:-.01em;hyphens:manual}
+.navicons{display:flex;gap:8px;flex:0 0 auto}
+.iconbtn{width:38px;height:38px;border-radius:999px;display:grid;place-items:center;background:var(--glass);border:1px solid var(--glassLine);backdrop-filter:blur(18px) saturate(1.6);-webkit-backdrop-filter:blur(18px) saturate(1.6);flex:0 0 auto}
 .iconbtn svg{width:19px;height:19px}
 
 .tabbar{position:absolute;left:14px;right:14px;bottom:18px;height:64px;border-radius:32px;display:flex;justify-content:space-around;align-items:center;background:var(--glass);border:1px solid var(--glassLine);backdrop-filter:blur(22px) saturate(1.7);-webkit-backdrop-filter:blur(22px) saturate(1.7);z-index:20;box-shadow:0 6px 24px rgba(0,0,0,.08)}
@@ -80,39 +82,41 @@ button:focus-visible,input:focus-visible,textarea:focus-visible,select:focus-vis
 .fab svg{width:22px;height:22px}
 
 /* ---------- cards & common ---------- */
-.card{background:var(--surface);border-radius:16px;padding:14px 16px;display:flex;flex-direction:column;gap:6px}
+.card{background:var(--surface);border-radius:16px;padding:14px 16px;display:flex;flex-direction:column;gap:6px;width:100%}
 .card h3{margin:0;font-size:15px;font-weight:600}
 .card p{margin:0;color:var(--ink2);font-size:14px}
 .stack{display:flex;flex-direction:column;gap:12px}
 .row{display:flex;align-items:center;gap:10px}
 .between{justify-content:space-between}
+.row > *{min-width:0}
 .muted{color:var(--ink2)}
 .small{font-size:13px}
 .tiny{font-size:12px}
-.badge{display:inline-flex;align-items:center;gap:6px;padding:5px 11px;border-radius:999px;font-size:12px;font-weight:600;background:var(--surface2);color:var(--ink)}
-.badge .dot{width:7px;height:7px;border-radius:50%;background:currentColor}
+.badge{display:inline-flex;align-items:center;gap:6px;padding:5px 11px;border-radius:999px;font-size:12px;font-weight:600;background:var(--surface2);color:var(--ink);max-width:100%;text-align:left;flex:0 0 auto}
+.badge .dot{width:7px;height:7px;border-radius:50%;background:currentColor;flex:0 0 auto}
 .badge.fert{color:var(--fertile)}
-.linkrow{display:flex;justify-content:space-between;align-items:center;padding:12px 2px;font-weight:600;color:var(--period)}
+.linkrow{display:flex;justify-content:space-between;align-items:center;padding:12px 2px;font-weight:600;color:var(--period);width:100%;text-align:left}
 .foot{font-size:12px;color:var(--ink2);text-align:center;padding:6px 0 2px}
-.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;height:50px;padding:0 22px;border-radius:25px;font-weight:700;font-size:16px}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:50px;padding:8px 22px;border-radius:25px;font-weight:700;font-size:16px;text-align:center;line-height:1.2}
 .btn.primary{background:var(--period);color:var(--onAccent)}
 .btn.secondary{background:var(--surface2);color:var(--ink)}
 .btn.block{width:100%}
-.btn.small{height:38px;font-size:14px;padding:0 16px}
+.btn.small{min-height:38px;font-size:14px;padding:6px 16px}
 .seg{display:flex;background:var(--surface2);border-radius:12px;padding:3px;gap:3px}
-.seg button{flex:1;padding:8px 6px;border-radius:9px;font-size:13px;font-weight:600;color:var(--ink2);min-height:36px}
+.seg button{flex:1 1 0;min-width:0;padding:8px 6px;border-radius:9px;font-size:13px;font-weight:600;color:var(--ink2);min-height:36px;line-height:1.2}
 .seg button[aria-pressed="true"]{background:var(--surface);color:var(--ink);box-shadow:0 1px 3px rgba(0,0,0,.12)}
 
-/* ring */
-.ringwrap{position:relative;width:min(300px,82%);margin:4px auto 0;aspect-ratio:1;max-width:100%}
+/* ring — container-sized text, max three lines, details live below the ring (spec §6 CycleRing) */
+.ringwrap{position:relative;width:min(300px,82%);margin:4px auto 0;aspect-ratio:1;max-width:100%;container-type:inline-size}
 .ringwrap svg{width:100%;height:100%;display:block}
-.ringcenter{position:absolute;inset:21% 19%;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;gap:2px}
-.ringcenter .kicker{font-size:14px;color:var(--ink2);font-weight:600}
-.ringcenter .big{font-family:var(--f-round);font-weight:800;font-size:44px;line-height:1.05;letter-spacing:-.01em;text-wrap:balance}
-.ringcenter .big.md{font-size:27px}
-.ringcenter .sub{font-size:13px;color:var(--ink2);text-wrap:balance}
-.ringcenter .range{font-family:var(--f-round);font-weight:700;font-size:20px;color:var(--ink)}
-.under{display:flex;flex-direction:column;align-items:center;gap:10px;margin:2px 0 14px}
+.ringcenter{position:absolute;left:21%;right:21%;top:22%;bottom:24%;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;gap:2px;hyphens:manual;overflow:hidden}
+.ringcenter > *{max-width:100%}
+.ringcenter .kicker{font-size:13px;color:var(--ink2);font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ringcenter .big{font-family:var(--f-round);font-weight:800;font-size:40px;line-height:1.05;letter-spacing:-.01em;white-space:nowrap}
+.ringcenter .sub{font-size:13px;color:var(--ink2);line-height:1.3;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;text-wrap:balance}
+.ringcenter .range{font-family:var(--f-round);font-weight:700;font-size:18px;color:var(--ink);white-space:nowrap}
+.under{display:flex;flex-direction:column;align-items:center;gap:10px;margin:2px 0 14px;text-align:center}
+.under .ovl{font-size:14px;color:var(--ink);font-weight:600;text-wrap:balance}
 
 /* sheets & pushed screens */
 .layer{position:absolute;inset:0;z-index:40;pointer-events:none}
@@ -122,8 +126,9 @@ button:focus-visible,input:focus-visible,textarea:focus-visible,select:focus-vis
 .sheet{position:absolute;left:0;right:0;bottom:0;max-height:93%;background:var(--bg);border-radius:24px 24px 0 0;transform:translateY(102%);transition:transform .34s cubic-bezier(.3,.9,.3,1);display:flex;flex-direction:column}
 .layer.open .sheet{transform:none}
 .grab{width:38px;height:5px;border-radius:3px;background:var(--line);margin:8px auto 2px;flex:0 0 auto}
-.sheethead{display:flex;align-items:center;justify-content:space-between;padding:6px 16px 10px;flex:0 0 auto}
-.sheethead h3{margin:0;font-size:17px;font-weight:700}
+.sheethead{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:6px 16px 10px;flex:0 0 auto}
+.sheethead h3{margin:0;font-size:17px;font-weight:700;text-align:center;flex:1;min-width:0}
+.sheethead .x{color:var(--period);font-weight:600;flex:0 0 auto}
 .sheetbody{overflow-y:auto;padding:0 16px 28px;display:flex;flex-direction:column;gap:18px;scrollbar-width:none}
 .sheetbody::-webkit-scrollbar{display:none}
 .push{position:absolute;inset:0;z-index:35;background:var(--bg);transform:translateX(102%);transition:transform .34s cubic-bezier(.3,.9,.3,1);display:flex;flex-direction:column}
@@ -132,7 +137,7 @@ button:focus-visible,input:focus-visible,textarea:focus-visible,select:focus-vis
 .pushhead button{color:var(--period);font-weight:600;display:flex;align-items:center;gap:2px;padding:6px}
 .pushbody{flex:1;overflow-y:auto;padding:0 16px 40px;display:flex;flex-direction:column;gap:16px;scrollbar-width:none}
 .pushbody::-webkit-scrollbar{display:none}
-.pushbody h2{margin:0;font-size:30px;font-weight:700}
+.pushbody h2{margin:0;font-size:30px;font-weight:700;hyphens:manual}
 .sec{display:flex;flex-direction:column;gap:8px}
 .sec > .lbl{font-size:12px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--ink2);padding:0 4px}
 .list{background:var(--surface);border-radius:14px;display:flex;flex-direction:column}
@@ -150,24 +155,24 @@ button:focus-visible,input:focus-visible,textarea:focus-visible,select:focus-vis
 
 /* log sheet */
 .lgroup{display:flex;flex-direction:column;gap:10px}
-.lgroup > .lbl{font-size:13px;font-weight:600;color:var(--ink2);display:flex;justify-content:space-between}
+.lgroup > .lbl{font-size:13px;font-weight:600;color:var(--ink2);display:flex;justify-content:space-between;gap:10px}
 .chips{display:flex;flex-wrap:wrap;gap:8px}
-.chip{display:inline-flex;align-items:center;gap:6px;min-height:40px;padding:0 14px;border-radius:999px;background:var(--surface);border:1px solid var(--line);font-size:14px;font-weight:500}
+.chip{display:inline-flex;align-items:center;gap:6px;min-height:40px;padding:6px 14px;border-radius:999px;background:var(--surface);border:1px solid var(--line);font-size:14px;font-weight:500;line-height:1.2;text-align:left;max-width:100%}
 .chip[aria-pressed="true"]{background:color-mix(in srgb,var(--period) 14%,var(--surface));border-color:var(--period);color:var(--ink)}
 .chip[aria-pressed="true"]::before{content:"✓";font-weight:800;color:var(--period)}
 .chip.sugg{border-style:dashed}
 .chip.lh[aria-pressed="true"]{background:color-mix(in srgb,var(--fertile) 16%,var(--surface));border-color:var(--fertile)}
 .chip.lh[aria-pressed="true"]::before{color:var(--fertile)}
-.flow{display:grid;grid-template-columns:repeat(5,1fr);gap:6px}
-.drop{display:flex;flex-direction:column;align-items:center;gap:4px;padding:8px 0;border-radius:14px;background:var(--surface);border:1px solid var(--line);font-size:12px;font-weight:600;min-height:72px;justify-content:center}
-.drop svg{width:28px;height:28px}
+.flow{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:6px}
+.drop{display:flex;flex-direction:column;align-items:center;gap:4px;padding:8px 2px;border-radius:14px;background:var(--surface);border:1px solid var(--line);font-size:11.5px;font-weight:600;min-height:74px;justify-content:center;line-height:1.15;text-align:center}
+.drop svg{width:28px;height:28px;flex:0 0 auto}
 .drop[aria-pressed="true"]{border-color:var(--period);background:color-mix(in srgb,var(--period) 12%,var(--surface))}
 .scale{display:grid;grid-template-columns:repeat(5,1fr);gap:4px}
 .scale button{min-height:40px;border-radius:10px;background:var(--surface);border:1px solid var(--line);font-family:var(--f-round);font-weight:700}
 .scale button[aria-pressed="true"]{background:var(--ink);color:var(--bg);border-color:var(--ink)}
-.scaleends{display:flex;justify-content:space-between;font-size:12px;color:var(--ink2)}
-.painwrap{display:grid;grid-template-columns:120px 1fr;gap:14px;align-items:center;background:var(--surface);border-radius:14px;padding:12px}
-.painwrap svg{width:120px;height:auto}
+.scaleends{display:flex;justify-content:space-between;gap:10px;font-size:12px;color:var(--ink2)}
+.painwrap{display:grid;grid-template-columns:110px minmax(0,1fr);gap:14px;align-items:center;background:var(--surface);border-radius:14px;padding:12px}
+.painwrap svg{width:110px;height:auto}
 .region{cursor:pointer;fill:var(--surface2);stroke:var(--line);stroke-width:1.5}
 .region.on{fill:color-mix(in srgb,var(--period) 55%,transparent)}
 .region.sel{stroke:var(--period);stroke-width:2.5}
@@ -175,7 +180,7 @@ input[type=range]{width:100%;accent-color:var(--period)}
 .bbt{display:flex;align-items:center;gap:8px}
 .bbt input{width:96px;height:44px;border-radius:10px;border:1px solid var(--line);background:var(--surface);color:var(--ink);font:600 17px var(--f-round);text-align:center}
 textarea,.field{width:100%;border-radius:12px;border:1px solid var(--line);background:var(--surface);color:var(--ink);font:inherit;padding:10px 12px;resize:vertical}
-.nothing{display:flex;align-items:center;justify-content:center;gap:8px;min-height:46px;border-radius:14px;border:1px dashed var(--ink2);font-weight:600;color:var(--ink)}
+.nothing{display:flex;align-items:center;justify-content:center;gap:8px;min-height:46px;padding:6px 12px;border-radius:14px;border:1px dashed var(--ink2);font-weight:600;color:var(--ink);text-align:center}
 .nothing[aria-pressed="true"]{border-style:solid;border-color:var(--success);color:var(--success)}
 
 /* calendar */
@@ -196,12 +201,12 @@ textarea,.field{width:100%;border-radius:12px;border:1px solid var(--line);backg
 .day .fx{position:absolute;inset:2px 1px 12px;border-radius:12px;background-image:radial-gradient(var(--fertile) 1px,transparent 1.2px);background-size:6px 6px;opacity:.55}
 .day .mk{position:absolute;top:0;right:3px;font-size:11px;line-height:1;color:var(--fertile);z-index:2}
 .day .lg{width:4px;height:4px;border-radius:50%;background:var(--ink2);margin-top:3px}
-.legend{display:grid;grid-template-columns:1fr 1fr;gap:8px 12px;font-size:12px;color:var(--ink2);background:var(--surface);border-radius:14px;padding:12px}
-.legend span{display:flex;align-items:center;gap:8px}
+.legend{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px 12px;font-size:12px;color:var(--ink2);background:var(--surface);border-radius:14px;padding:12px}
+.legend span{display:flex;align-items:center;gap:8px;min-width:0}
 .sw{width:18px;height:18px;border-radius:50%;flex:0 0 auto}
 
 /* insights */
-.statgrid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.statgrid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
 .stat{background:var(--surface);border-radius:14px;padding:12px 14px}
 .stat .v{font-family:var(--f-round);font-weight:800;font-size:24px}
 .stat .k{font-size:12px;color:var(--ink2)}
@@ -210,15 +215,14 @@ textarea,.field{width:100%;border-radius:12px;border:1px solid var(--line);backg
 .heat{display:grid;gap:3px;font-size:11px}
 .heat .c{height:20px;border-radius:4px;background:var(--period)}
 .heat .h{color:var(--ink2);text-align:center;font-variant-numeric:tabular-nums}
-.heat .r{color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;padding-right:4px}
-.hist .li .t b{font-family:var(--f-round);font-weight:700}
+.heat .r{color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;padding-right:4px;hyphens:manual}
 
 /* report preview */
 .paper{background:#fff;color:#1D1A1C;border-radius:6px;box-shadow:0 4px 18px rgba(0,0,0,.18);padding:18px 16px;font-size:10px;line-height:1.35;aspect-ratio:1/1.414;max-width:100%;display:flex;flex-direction:column;gap:9px;overflow:hidden}
 .paper h4{margin:0;font-size:14px}
 .paper table{width:100%;border-collapse:collapse;font-variant-numeric:tabular-nums}
-.paper td{padding:3px 0;border-bottom:1px solid #eee}
-.paper td:last-child{text-align:right;font-weight:600}
+.paper td{padding:3px 0;border-bottom:1px solid #eee;vertical-align:top}
+.paper td:last-child{text-align:right;font-weight:600;padding-left:8px}
 .paper .ref{border:1px solid #ccc;border-radius:4px;padding:6px 8px;color:#444}
 .paper .mini{display:grid;grid-template-columns:repeat(31,1fr);gap:1px}
 .paper .mini i{height:8px;background:#eee;border-radius:1px}
@@ -226,8 +230,7 @@ textarea,.field{width:100%;border-radius:12px;border:1px solid var(--line);backg
 .paper .pf{margin-top:auto;border-top:1px solid #ddd;padding-top:5px;color:#666;font-size:8.5px}
 
 /* why sheet */
-.trail{display:flex;flex-direction:column;gap:0;position:relative}
-.step{display:grid;grid-template-columns:22px 1fr;gap:10px;padding-bottom:16px;position:relative}
+.step{display:grid;grid-template-columns:22px minmax(0,1fr);gap:10px;padding-bottom:16px;position:relative}
 .step::before{content:"";position:absolute;left:10px;top:20px;bottom:0;width:2px;background:var(--line)}
 .step:last-child::before{display:none}
 .step .b{width:22px;height:22px;border-radius:50%;background:var(--surface);border:2px solid var(--fertile);display:grid;place-items:center;font-size:11px;color:var(--fertile);font-weight:800;z-index:1}
@@ -235,84 +238,32 @@ textarea,.field{width:100%;border-radius:12px;border:1px solid var(--line);backg
 .step .w{font-family:var(--f-round);font-weight:700;color:var(--fertile)}
 
 /* overlays */
-.toast{position:absolute;left:50%;bottom:170px;transform:translate(-50%,20px);opacity:0;z-index:60;background:var(--ink);color:var(--bg);padding:10px 14px 10px 16px;border-radius:14px;font-size:14px;font-weight:600;display:flex;gap:14px;align-items:center;transition:all .25s;pointer-events:none;white-space:nowrap}
-.toast.show{opacity:1;transform:translate(-50%,0);pointer-events:auto}
-.toast button{color:var(--period);font-weight:700}
-:root .toast button{color:color-mix(in srgb,var(--period) 60%,var(--bg))}
+.toast{position:absolute;left:16px;right:16px;bottom:170px;margin:0 auto;width:max-content;max-width:calc(100% - 32px);transform:translateY(20px);opacity:0;z-index:60;background:var(--ink);color:var(--bg);padding:10px 14px 10px 16px;border-radius:14px;font-size:14px;font-weight:600;display:flex;gap:14px;align-items:center;transition:all .25s;pointer-events:none}
+.toast.show{opacity:1;transform:none;pointer-events:auto}
+.toast button{color:var(--toastBtn);font-weight:700;flex:0 0 auto}
 .lock,.onb{position:absolute;inset:0;z-index:80;background:var(--bg);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;padding:60px 28px 40px;text-align:center}
-.glyph{width:76px;height:76px;border-radius:22px;background:var(--period);display:grid;place-items:center}
+.glyph{width:76px;height:76px;border-radius:22px;background:var(--period);display:grid;place-items:center;color:#fff}
 .glyph svg{width:46px;height:46px}
-.onb{justify-content:flex-start;text-align:left;align-items:stretch;gap:18px;padding-top:70px}
-.onb h2{font-size:30px;line-height:1.15;margin:0;font-weight:800;font-family:var(--f-round);text-wrap:balance}
+.onb{justify-content:flex-start;text-align:left;align-items:stretch;gap:18px;padding-top:70px;overflow-y:auto}
+.onb h2{font-size:28px;line-height:1.15;margin:0;font-weight:800;font-family:var(--f-round);text-wrap:balance;hyphens:manual}
 .onb p{margin:0;color:var(--ink2)}
 .onb .grow{flex:1}
 .onb .dots{display:flex;gap:6px;justify-content:center}
 .onb .dots i{width:6px;height:6px;border-radius:3px;background:var(--line)}
 .onb .dots i.on{width:18px;background:var(--period)}
 .promise{display:flex;flex-direction:column;gap:14px}
-.promise div{display:grid;grid-template-columns:36px 1fr;gap:12px;align-items:center}
+.promise div{display:grid;grid-template-columns:36px minmax(0,1fr);gap:12px;align-items:center}
 .promise svg{width:28px;height:28px;color:var(--period)}
 .bar{height:6px;border-radius:3px;background:var(--surface2);overflow:hidden}
 .bar i{display:block;height:100%;background:var(--period);width:0;transition:width 1.2s ease}
 .faceid{width:64px;height:64px;color:var(--period)}
 @media (prefers-reduced-motion: reduce){
   .sheet,.push,.scrim,.toast,.switch,.switch::after,.bar i{transition:none!important}
-  .ring-anim{animation:none!important}
 }
-.ring-anim{animation:ringIn .7s ease-out both}
-@keyframes ringIn{from{stroke-dashoffset:var(--len)}to{stroke-dashoffset:0}}
-.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
 </style>
 
 <div class="stage">
-  <aside class="panel" id="panel" aria-label="Prototype controls">
-    <div class="pgroup">
-      <h1>Cyclus <span>prototype</span></h1>
-      <p>Clickable iPhone prototype for user interviews. Everything runs on sample data in this page. The period and fertility estimates come from the same models as the design spec, so logging changes them live.</p>
-    </div>
-    <div class="pgroup">
-      <div class="plabel">Scenario</div>
-      <div class="pbtns" id="scen">
-        <button class="pbtn" data-scen="day12">Day 12</button>
-        <button class="pbtn" data-scen="expected">Period due</button>
-        <button class="pbtn" data-scen="period">Period day 2</button>
-        <button class="pbtn" data-scen="hbc">On the pill</button>
-        <button class="pbtn" data-scen="empty">New user</button>
-      </div>
-      <div class="pbtns">
-        <button class="pbtn" data-scen="conceive">Trying · before LH+</button>
-        <button class="pbtn" data-scen="conceive2ww">Trying · after temp rise</button>
-      </div>
-    </div>
-    <div class="pgroup">
-      <div class="plabel">Simulate</div>
-      <div class="pbtns">
-        <button class="pbtn" data-sim="onboarding">Run onboarding</button>
-        <button class="pbtn" data-sim="lock">Show app lock</button>
-      </div>
-    </div>
-    <div class="pgroup">
-      <div class="plabel">Appearance</div>
-      <div class="pbtns" id="themes">
-        <button class="pbtn" data-theme-set="system" aria-pressed="true">System</button>
-        <button class="pbtn" data-theme-set="light">Light</button>
-        <button class="pbtn" data-theme-set="dark">Dark</button>
-      </div>
-    </div>
-    <div class="pgroup">
-      <div class="plabel">Interview tasks</div>
-      <ol class="tasks">
-        <li>Your period started today. Log it.</li>
-        <li>When is your next period expected, and how sure is the app?</li>
-        <li>Log cramps, a headache and how you slept.</li>
-        <li>Trying scenario: log today's LH test as positive. What changed?</li>
-        <li>Make a summary for your gynecologist without sexual activity in it.</li>
-        <li>Stop period details showing on your Lock Screen.</li>
-      </ol>
-    </div>
-    <p class="pnote">Sample data only, dated around 22 Nov 2026. Nothing is stored or sent. Not a medical device. Fertility estimates are not for birth control.</p>
-  </aside>
-
+  <aside class="panel" id="panel" aria-label="Prototype controls"></aside>
   <div class="device">
     <div class="screen" id="app" aria-live="polite"></div>
   </div>
@@ -321,54 +272,235 @@ textarea,.field{width:100%;border-radius:12px;border:1px solid var(--line);backg
 <script>
 (() => {
 "use strict";
-/* ============ dates ============ */
-const DAY = 86400000;
-const D = (y,m,d) => Math.round(Date.UTC(y,m-1,d)/DAY);
-const asDate = n => new Date(n*DAY);
-const fMD = new Intl.DateTimeFormat('en-US',{month:'short',day:'numeric',timeZone:'UTC'});
-const fW = new Intl.DateTimeFormat('en-US',{weekday:'short',timeZone:'UTC'});
-const fWMD = new Intl.DateTimeFormat('en-US',{weekday:'short',month:'short',day:'numeric',timeZone:'UTC'});
-const fLong = new Intl.DateTimeFormat('en-US',{weekday:'long',month:'long',day:'numeric',timeZone:'UTC'});
-const fMY = new Intl.DateTimeFormat('en-US',{month:'long',year:'numeric',timeZone:'UTC'});
-const md = n => fMD.format(asDate(n));
-const range = (a,b) => a===b ? md(a) : asDate(a).getUTCMonth()===asDate(b).getUTCMonth() ? `${md(a)}–${asDate(b).getUTCDate()}` : `${md(a)} – ${md(b)}`;
-const TODAY = D(2026,11,22);
-
-/* ============ seeded random ============ */
-function rng(seed){ return () => { seed |= 0; seed = seed + 0x6D2B79F5 | 0; let t = Math.imul(seed ^ seed >>> 15, 1 | seed); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; }; }
-
-/* ============ vocab ============ */
-const SYMPTOMS = ['Cramps','Headache','Tired','Bloating','Breast tenderness','Acne','Back pain','Nausea','Cravings','Insomnia','Hot flashes','Night sweats','Dizziness','Diarrhea','Constipation'];
-const PINNED = ['Cramps','Headache','Tired','Bloating'];
-const FLOWS = [['none','None'],['spotting','Spotting'],['light','Light'],['medium','Medium'],['heavy','Heavy']];
-const MUCUS = [['dry','Dry'],['sticky','Sticky'],['creamy','Creamy'],['watery','Watery'],['eggwhite','Egg white'],['unusual','Unusual']];
-const TAGS = ['Stress','Travel','Alcohol','Sport','Sick'];
-const REGIONS = [
-  {id:'head',label:'Head',el:'<ellipse cx="60" cy="22" rx="15" ry="18"/>'},
-  {id:'chest',label:'Breasts / chest',el:'<rect x="36" y="48" width="48" height="30" rx="10"/>'},
-  {id:'upper',label:'Upper abdomen',el:'<rect x="38" y="80" width="44" height="22" rx="8"/>'},
-  {id:'lowL',label:'Lower abdomen, left',el:'<rect x="38" y="104" width="14" height="26" rx="6"/>'},
-  {id:'lowC',label:'Lower abdomen, centre',el:'<rect x="53" y="104" width="14" height="26" rx="6"/>'},
-  {id:'lowR',label:'Lower abdomen, right',el:'<rect x="68" y="104" width="14" height="26" rx="6"/>'},
-  {id:'pelvis',label:'Pelvis',el:'<path d="M40 132h40l-8 18H48z"/>'},
-  {id:'thighs',label:'Thighs',el:'<rect x="40" y="152" width="40" height="36" rx="10"/>'},
-];
-
 /* ============ state ============ */
 const S = {
-  mode:'track', showFertTrack:false, episode:null, tab:'today', logs:new Map(), overrides:new Map(),
-  layer:null, push:null, logDate:TODAY, dayDetail:null, calMonth:[2026,11], painSel:'lowC',
-  lock:false, onb:null, toast:null, report:{range:6, lang:'EN', inc:{bleed:true,lengths:true,sym:true,pain:true,mood:true,temp:false,notes:false,contra:false,sex:false}, questions:'Is it normal that cramps keep me home on day 1?', preview:false},
+  lang:'de', mode:'track', showFertTrack:false, episode:null, tab:'today', logs:new Map(), overrides:new Map(),
+  layer:null, push:null, logDate:0, dayDetail:null, calMonth:[2026,11], painSel:'lowC',
+  lock:false, onb:null, toast:null, theme:'system',
+  report:{range:6, lang:'DE', inc:{bleed:true,lengths:true,sym:true,pain:true,mood:true,temp:false,notes:false,contra:false,sex:false}, questions:null, preview:false},
   privacy:{appLock:true, pin:false, pinOnly:false, discreet:true, lockWidget:false, deviceOnly:false,
     hk:{flow:true,spotting:true,symptoms:true,bbt:true,mood:false,mucus:false,lh:false,sex:false,contra:false}},
   eraseText:'', scen:'day12', lastChange:null
 };
-const getLog = d => S.logs.get(d) || {symptoms:[], pain:{}, tags:[]};
-function setLog(d, fn){
-  const l = structuredClone(getLog(d));
-  fn(l); l.updated = true;
-  S.logs.set(d, l);
+
+/* ============ i18n (German first) ============ */
+const TX = {
+  // panel
+  pTitle:{de:'Cyclus <span>Prototyp</span>', en:'Cyclus <span>prototype</span>'},
+  pIntro:{de:'Klickbarer iPhone-Prototyp für Nutzerinterviews. Alles läuft mit Beispieldaten in dieser Seite. Perioden- und Fruchtbarkeitsschätzung nutzen dieselben Modelle wie die Design-Spezifikation, Einträge ändern sie also live.',
+          en:'Clickable iPhone prototype for user interviews. Everything runs on sample data in this page. Period and fertility estimates use the same models as the design spec, so logging changes them live.'},
+  pScen:{de:'Szenario',en:'Scenario'}, pSim:{de:'Simulieren',en:'Simulate'}, pLook:{de:'Darstellung',en:'Appearance'}, pLang:{de:'Sprache',en:'Language'}, pTasks:{de:'Interview-Aufgaben',en:'Interview tasks'},
+  sc_day12:{de:'Tag 12',en:'Day 12'}, sc_expected:{de:'Periode fällig',en:'Period due'}, sc_period:{de:'Periodentag 2',en:'Period day 2'}, sc_hbc:{de:'Mit Pille',en:'On the pill'}, sc_empty:{de:'Ohne Daten',en:'No data'},
+  sc_conceive:{de:'Kinderwunsch · vor LH+',en:'Trying · before LH+'}, sc_conceive2ww:{de:'Kinderwunsch · nach Temperaturanstieg',en:'Trying · after temperature rise'},
+  simOnb:{de:'Onboarding starten',en:'Run onboarding'}, simLock:{de:'App-Sperre zeigen',en:'Show app lock'},
+  thSystem:{de:'System',en:'System'}, thLight:{de:'Hell',en:'Light'}, thDark:{de:'Dunkel',en:'Dark'},
+  tasks:{de:['Deine Periode hat heute begonnen. Trag sie ein.','Wann kommt deine nächste Periode, und wie sicher ist die App?','Trag Krämpfe, Kopfschmerzen und deinen Schlaf ein.','Kinderwunsch-Szenario: Trag den heutigen LH-Test als positiv ein. Was hat sich verändert?','Erstelle einen Arztbericht ohne Angaben zu Sex.','Sorg dafür, dass keine Periodendetails auf dem Sperrbildschirm erscheinen.'],
+         en:['Your period started today. Log it.','When is your next period expected, and how sure is the app?','Log cramps, a headache and how you slept.','Trying scenario: log today\'s LH test as positive. What changed?','Make a summary for your gynecologist without sexual activity in it.','Stop period details showing on your Lock Screen.']},
+  pNote:{de:'Nur Beispieldaten, rund um den 22. Nov. 2026. Es wird nichts gespeichert oder gesendet. Kein Medizinprodukt. Fruchtbarkeitsschätzungen sind nicht zur Verhütung geeignet. Ohne Apple Watch: Handgelenkstemperatur wird hier nicht gezeigt.',
+         en:'Sample data only, around 22 Nov 2026. Nothing is stored or sent. Not a medical device. Fertility estimates are not for birth control. No Apple Watch: wrist temperature is not shown here.'},
+  // chrome
+  tabToday:{de:'Heute',en:'Today'}, tabCal:{de:'Kalender',en:'Calendar'}, tabIns:{de:'Einblicke',en:'Insights'}, fab:{de:'Eintragen',en:'Log'},
+  aPrivacy:{de:'Datenschutz',en:'Privacy'}, aSettings:{de:'Einstellungen',en:'Settings'},
+  today:{de:'Heute',en:'Today'}, tomorrow:{de:'Morgen',en:'Tomorrow'},
+  close:{de:'Schließen',en:'Close'}, done:{de:'Fertig',en:'Done'}, cancel:{de:'Abbrechen',en:'Cancel'}, undo:{de:'Rückgängig',en:'Undo'},
+  // today
+  cycleDay:{de:'Zyklustag',en:'Cycle day'}, cycleDayN:{de:n=>`Zyklustag ${n}`, en:n=>`Cycle day ${n}`},
+  nextPeriod:{de:'Nächste Periode',en:'Next period'}, periodIn:{de:'Periode erwartet in',en:'Period expected in'}, daysRange:{de:(a,b)=>`${a}–${b} Tagen`, en:(a,b)=>`${a}–${b} days`},
+  expectedNow:{de:'Periode jetzt erwartet',en:'Period expected now'}, later:{de:'Später als sonst',en:'Later than usual'}, expectedOn:{de:r=>`Erwartet: ${r}`, en:r=>`Expected ${r}`},
+  tier_rough:{de:'Grobe Schätzung',en:'Rough estimate'}, tier_getting:{de:'Wird genauer',en:'Getting there'}, tier_history:{de:'Basiert auf deinem Verlauf',en:'Based on your history'},
+  periodStarted:{de:'Periode hat heute begonnen',en:'Period started today'}, logEarlier:{de:'Früheres Datum eintragen',en:'Log an earlier date'},
+  welcome:{de:'Willkommen',en:'Welcome'}, letsStart:{de:'Los geht’s',en:'Let’s start'}, startSub:{de:'Trag deine Periode ein, dann starten die Prognosen',en:'Log your period to start predictions'},
+  paused:{de:'Pausiert',en:'Paused'}, pausedSub:{de:l=>`Keine Prognosen · ${l}`, en:l=>`No predictions · ${l}`},
+  stillLogged:{de:'Blutungen werden weiter erfasst',en:'Bleeding is still logged'}, changeStage:{de:'Lebensphase ändern',en:'Change life stage'},
+  period:{de:'Periode',en:'Period'}, dayN:{de:n=>`Tag ${n}`, en:n=>`Day ${n}`}, howHeavy:{de:'Wie stark ist sie heute?',en:'How heavy is it today?'}, ended:{de:'Vorbei',en:'Ended'},
+  fertToday:{de:'Fruchtbarkeit heute',en:'Fertility today'},
+  ft0:{de:'Geringer',en:'Lower'}, ft1:{de:'Möglich',en:'Possible'}, ft2:{de:'Hoch',en:'High'}, ft3:{de:'✦ Am höchsten',en:'✦ Peak'},
+  ftAdj1:{de:'Mögliche',en:'Possible'}, ftAdj2:{de:'Hohe',en:'High'}, ftAdj3:{de:'Höchste',en:'Peak'},
+  windowOpens:{de:n=>`Fenster öffnet in etwa ${n} ${n>1?'Tagen':'Tag'}`, en:n=>`Window opens in about ${n} day${n>1?'s':''}`}, windowPassed:{de:'Fenster ist wahrscheinlich vorbei',en:'Window has likely passed'},
+  ovEst:{de:r=>`Eisprung geschätzt: ${r}`, en:r=>`Ovulation estimated: ${r}`}, ovSoonTT:{de:'Eisprung wahrscheinlich heute oder morgen',en:'Ovulation likely today or tomorrow'}, ovSoon:{de:r=>`Eisprung wahrscheinlich: ${r}`, en:r=>`Ovulation likely: ${r}`},
+  afterOv:{de:'Nach dem Eisprung',en:'After ovulation'}, ovOccurred:{de:d=>`Eisprung wahrscheinlich um den ${d}`, en:d=>`Ovulation likely occurred around ${d}`},
+  testTitle:{de:'Frühester zuverlässiger Schwangerschaftstest',en:'Earliest reliable pregnancy test'},
+  testBody:{de:d=>`<b style="color:var(--ink)">${d}</b>. Wer früher testet, sieht oft ein negatives Ergebnis, auch bei einer Schwangerschaft.`, en:d=>`<b style="color:var(--ink)">${d}</b>. Testing earlier often shows a negative result even if you are pregnant.`},
+  bestDays:{de:'Beste Tage',en:'Best days'}, bestTip:{de:'Sex alle 1–2 Tage an Tagen mit hoher oder höchster Chance gibt die besten Aussichten.',en:'Sex every 1–2 days during High and Peak days gives the best chance.'},
+  lhTests:{de:'LH-Tests',en:'LH tests'}, lhPlan:{de:(d,n)=>`Starte am <b style="color:var(--ink)">${d}</b> mit dem Testen. Nach deinen letzten ${n} Zyklen brauchst du wahrscheinlich 4–6 Tests.`, en:(d,n)=>`Start testing on <b style="color:var(--ink)">${d}</b>. Based on your last ${n} cycles, you will likely need 4–6 tests.`},
+  lhToday:{de:'LH-Test · heute',en:'LH test · today'}, lhNegSoFar:{de:n=>`${n} negativ bisher`, en:n=>`${n} negative so far`},
+  lh_neg:{de:'Negativ',en:'Negative'}, lh_pos:{de:'Positiv',en:'Positive'}, lh_surge:{de:'Östrogen-Anstieg',en:'Estrogen surge'},
+  chip_cal:{de:'Kalenderschätzung',en:'Calendar estimate'}, chip_lh:{de:'Aktualisiert durch deinen LH-Test',en:'Updated by your LH test'}, chip_lhs:{de:'Aktualisiert durch deine LH-Tests',en:'Updated by your LH tests'}, chip_mucus:{de:'Aktualisiert durch deinen Zervixschleim',en:'Updated by your mucus'}, chip_shift:{de:'Temperaturanstieg erkannt',en:'Temperature rise detected'},
+  whyLink:{de:'Warum dieses Fenster?',en:'Why this window?'}, notBC:{de:'Nicht zur Verhütung geeignet.',en:'Not for birth control.'},
+  todaysLog:{de:'Heutiger Eintrag',en:'Today’s log'}, nothingYet:{de:'Heute noch nichts eingetragen.',en:'Nothing logged yet today.'},
+  flowWord:{de:f=>`Blutung ${f.toLowerCase()}`, en:f=>`${f} flow`}, moodN:{de:n=>`Stimmung ${n}/5`, en:n=>`Mood ${n}/5`}, lhWord:{de:x=>`LH ${x.toLowerCase()}`, en:x=>`LH ${x.toLowerCase()}`},
+  fertWinTrack:{de:'Fruchtbares Fenster (Schätzung)',en:'Fertile window (estimate)'},
+  preTitle:{de:d=>`Tage vor der Periode ab ${d}`, en:d=>`Pre-period window starts ${d}`},
+  preBody:{de:'Die 7 Tage vor deiner Periode, in denen viele Blähungen oder Stimmungsschwankungen bemerken.',en:'The 7 days before your period, when many people notice bloating or mood changes.'},
+  insCramps:{de:'Krämpfe an Tag 1–2',en:'Cramps on day 1–2'}, insCrampsBody:{de:(h,n)=>`Bei ${h} deiner letzten ${n} Perioden hast du an den ersten zwei Tagen Krämpfe eingetragen.`, en:(h,n)=>`In ${h} of your last ${n} periods you logged cramps on the first two days.`},
+  consistent:{de:'Deutliches Muster',en:'Consistent pattern'}, early:{de:'Erstes Signal',en:'Early signal'}, previewV15:{de:'Muster-Einblicke kommen mit v1.5 · hier als Vorschau',en:'Pattern insights arrive in v1.5 · shown here as a preview'},
+  ringNone:{de:'Noch keine Zyklusdaten.',en:'No cycle data yet.'},
+  ringA:{de:(cd,a,b)=>`Zyklustag ${cd}. Nächste Periode erwartet zwischen ${a} und ${b}.`, en:(cd,a,b)=>`Cycle day ${cd}. Next period expected between ${a} and ${b}.`},
+  ringF:{de:(a,b)=>` Geschätztes fruchtbares Fenster ${a} bis ${b}.`, en:(a,b)=>` Estimated fertile window ${a} to ${b}.`},
+  // calendar
+  prevMonth:{de:'Vorheriger Monat',en:'Previous month'}, nextMonth:{de:'Nächster Monat',en:'Next month'},
+  wk:{de:['Mo','Di','Mi','Do','Fr','Sa','So'],en:['Mo','Tu','We','Th','Fr','Sa','Su']},
+  calTip:{de:'Tippe auf einen Tag für Details. In der App: lange drücken, um einen Periodenbeginn zu markieren.',en:'Tap a day for details. In the app: long-press to mark a period start.'},
+  lgPeriod:{de:'Periode',en:'Period'}, lgPred:{de:'Erwartete Periode',en:'Predicted period'}, lgPre:{de:'Tage vor der Periode',en:'Pre-period window'}, lgLogged:{de:'Etwas eingetragen',en:'Something logged'},
+  lgFert:{de:'Fruchtbares Fenster (Schätzung)',en:'Fertile window (estimate)'}, lgOv:{de:'Eisprung · höchste Chance',en:'Ovulation · peak day'},
+  aPeriod:{de:', Periode',en:', period'}, aPred:{de:', erwartete Periode',en:', predicted period'}, aLogged:{de:', Einträge vorhanden',en:', logged'},
+  // insights
+  insEmptyT:{de:'Einblicke brauchen etwas Verlauf',en:'Insights need a little history'}, insEmptyB:{de:'Nach deinem ersten vollständigen Zyklus siehst du hier deine Zykluslänge. Muster erscheinen nach 2–3 Zyklen.',en:'After your first full cycle you’ll see your cycle length here. Patterns appear after 2–3 cycles.'},
+  statCycle:{de:'Tage, dein typischer Zyklus',en:'days, your typical cycle'}, statPeriod:{de:'Tage, typische Periode',en:'days, typical period'},
+  varyT:{de:n=>`Deine Zyklen schwanken um etwa ${n} Tage`, en:n=>`Your cycles vary by about ${n} days`}, varyB:{de:n=>`Basiert auf ${n} Zyklen. Neuere zählen mehr.`, en:n=>`Based on ${n} cycles. Recent cycles count more.`},
+  howWorks:{de:'So funktioniert’s',en:'How this works'}, cycleLen:{de:'Zykluslänge',en:'Cycle length'}, bandNote:{de:'Schattierter Bereich: dein typischer Bereich.',en:'Shaded band: your typical range.'},
+  cycAria:{de:(n,a,b,mi,ma)=>`Zykluslängen über ${n} Zyklen, typisch ${a} bis ${b} Tage, kürzester ${mi}, längster ${ma}.`, en:(n,a,b,mi,ma)=>`Cycle lengths over ${n} cycles, typically ${a} to ${b} days, shortest ${mi}, longest ${ma}.`},
+  tempT:{de:'Temperatur in diesem Zyklus',en:'Temperature this cycle'}, coverline:{de:'Hilfslinie',en:'coverline'},
+  tempShift:{de:(c,d)=>`Drei höhere Werte ab Zyklustag ${c}. Eisprung wahrscheinlich um den ${d}.`, en:(c,d)=>`Three higher readings from cycle day ${c}. Ovulation likely occurred around ${d}.`},
+  tempNo:{de:'Noch kein Temperaturanstieg. Miss weiter vor dem Aufstehen.',en:'No temperature rise yet. Keep measuring before getting up.'},
+  learnedT:{de:'Dein gelerntes Timing',en:'Your learned timing'},
+  learnedB:{de:(m,n)=>`Etwa <b style="color:var(--ink)">${m} Tage</b> vom Eisprung bis zur Periode (aus ${n} Zyklen mit klarer Schätzung). Dein LH-Anstieg kommt meist 1 Tag vor dem Eisprung.`, en:(m,n)=>`About <b style="color:var(--ink)">${m} days</b> from ovulation to your period (from ${n} cycles with a clear estimate). Your LH surge usually comes 1 day before ovulation.`},
+  heatT:{de:'Symptome rund um deine Periode',en:'Symptoms around your period'}, heatB:{de:'Wie oft du ein Symptom eingetragen hast, an Tagen mit Einträgen.',en:'How often you logged each symptom, on days you logged.'},
+  reportT:{de:'Arztbericht',en:'Doctor Visit Pack'}, reportB:{de:'Eine klare Übersicht für deine Gynäkologin, deinen Gynäkologen oder deine Hebamme. Du bestimmst, was ins PDF kommt.',en:'A clear summary for your gynecologist or midwife, as a PDF you choose what goes into.'},
+  history:{de:'Zyklusverlauf',en:'Cycle history'}, histRow:{de:(n,m)=>`${n} Tage · Periode ${m} Tage`, en:(n,m)=>`${n} days · period ${m} days`},
+  // log sheet
+  flowL:{de:'Blutung',en:'Flow'}, pinned:{de:'Angeheftet',en:'Pinned'}, edit:{de:'Bearbeiten',en:'Edit'}, often:{de:'Oft um diese Zeit eingetragen',en:'Often logged around this time'},
+  moreSym:{de:'Weitere Symptome',en:'More symptoms'}, painL:{de:'Schmerzen',en:'Pain'}, painHint:{de:'tippe, wo es wehtut',en:'tap where it hurts'},
+  painNone:{de:'0 keine',en:'0 none'}, painMax:{de:'10 stärkste',en:'10 worst'}, noPain:{de:'Keine Schmerzen eingetragen',en:'No pain logged'}, bodyMap:{de:'Körperkarte',en:'Body map'},
+  mood:{de:'Stimmung',en:'Mood'}, energy:{de:'Energie',en:'Energy'}, sleep:{de:'Schlafqualität',en:'Sleep quality'},
+  moodLo:{de:'Schlecht',en:'Low'}, moodHi:{de:'Super',en:'Great'}, enLo:{de:'Erschöpft',en:'Exhausted'}, enHi:{de:'Voller Energie',en:'Energetic'}, slLo:{de:'Schlecht',en:'Poor'}, slHi:{de:'Erholsam',en:'Restful'},
+  discharge:{de:'Ausfluss',en:'Discharge'}, lhTest:{de:'LH-Test',en:'LH test'}, bbtL:{de:'Basaltemperatur',en:'Basal temperature'}, bbtHint:{de:'vor dem Aufstehen',en:'before getting up'},
+  tempL:{de:'Temperatur',en:'Temperature'}, optional:{de:'optional',en:'optional'}, lower:{de:'Niedriger',en:'Lower'}, higher:{de:'Höher',en:'Higher'}, bbtAria:{de:'Basaltemperatur in Grad Celsius',en:'Basal temperature in degrees Celsius'},
+  tags:{de:'Stichworte',en:'Tags'}, newTag:{de:'+ Neues Stichwort',en:'+ New tag'}, note:{de:'Notiz',en:'Note'}, notePh:{de:'Was du dir merken möchtest',en:'Anything else worth remembering'},
+  nothing:{de:'Sonst nichts heute',en:'Nothing else today'}, nothingOn:{de:'✓ Markiert: sonst nichts heute',en:'✓ Marked: nothing else today'},
+  nothingHint:{de:'So kann Cyclus „keine Symptome“ von „nicht eingetragen“ unterscheiden.',en:'Helps Cyclus tell “no symptoms” apart from “not logged”.'},
+  sex:{de:'Sex',en:'Sex'}, prevDay:{de:'Vorheriger Tag',en:'Previous day'}, nextDay:{de:'Nächster Tag',en:'Next day'},
+  // day sheet
+  dsNothing:{de:'An diesem Tag ist nichts eingetragen.',en:'Nothing logged on this day.'}, dsSource:{de:'Quelle: in Cyclus eingetragen',en:'Source: logged in Cyclus'},
+  logThisDay:{de:'Diesen Tag eintragen',en:'Log this day'}, markStart:{de:'Periodenbeginn',en:'Period start'}, predPeriod:{de:'Erwartete Periode',en:'Predicted period'},
+  fertBadge:{de:a=>`${a} Fruchtbarkeit (Schätzung)`, en:a=>`${a} fertility (estimate)`}, symptoms:{de:'Symptome',en:'Symptoms'},
+  // why sheet
+  whyT:{de:'Warum dieses Fenster?',en:'Why this window?'}, fromCycles:{de:n=>`Aus deinen letzten ${n} Zyklen`, en:n=>`From your last ${n} cycles`},
+  fromCyclesSub:{de:(m,n)=>`Meist etwa ${m} Tage vom Eisprung bis zur Periode (gelernt aus ${n} Zyklen)`, en:(m,n)=>`Usually about ${m} days from ovulation to period (learned from ${n} cycles)`},
+  ev_lhpos:{de:'Positiver LH-Test',en:'Positive LH test'}, ev_lhneg:{de:'Negativer LH-Test',en:'Negative LH test'}, ev_surge:{de:'Östrogen-Anstieg im LH-Test',en:'Estrogen surge on LH test'},
+  ev_ew:{de:'Spinnbarer Zervixschleim',en:'Egg-white mucus'}, ev_dry:{de:'Trockener oder klebriger Schleim',en:'Dry or sticky mucus'}, ev_peak:{de:'Schleim-Höhepunkt',en:'Mucus peak day'}, ev_shift:{de:'Temperaturanstieg (3 höhere Werte)',en:'Temperature rise (3 higher readings)'},
+  windowR:{de:r=>`Fenster ${r}`, en:r=>`Window ${r}`}, windowUnclear:{de:'Fenster unklar',en:'Window unclear'}, confirmed:{de:'(bestätigt die Schätzung)',en:'(confirmed the estimate)'},
+  concOcc:{de:(d,r)=>`Eisprung wahrscheinlich um den ${d} (${r}).`, en:(d,r)=>`Ovulation likely occurred around ${d} (${r}).`}, concSoon:{de:r=>`Eisprung am wahrscheinlichsten ${r}.`, en:r=>`Ovulation most likely ${r}.`},
+  whyBody:{de:'Jedes Signal, das du einträgst, verbessert die Schätzung. LH-Tests und Temperatur grenzen sie am stärksten ein. Cyclus lernt dein persönliches Timing aus jedem Zyklus.',en:'Each signal you log updates the estimate. LH tests and temperature narrow it the most. Cyclus learns your personal timing from every cycle.'},
+  whyFoot:{de:'Die Schätzung kombiniert Zyklusverlauf, LH-Tests, Ausfluss und Temperatur. Sie kann falsch sein, besonders bei unregelmäßigen Zyklen. Nicht zur Verhütung geeignet.',en:'Estimates combine your cycle history, LH tests, discharge and temperature. They can be wrong, especially with irregular cycles. Not for birth control.'},
+  // method
+  methodT:{de:'So funktionieren Prognosen',en:'How predictions work'},
+  method:{de:['Cyclus schaut auf die Länge deiner letzten Zyklen, neuere zählen mehr. Es zeigt einen Bereich, in dem deine nächste Periode etwa 8 von 10 Mal beginnt.','Mit wenigen Zyklen ist der Bereich absichtlich breit. Er wird enger, je mehr du einträgst. Ungewöhnlich lange Zyklen, etwa durch einen vergessenen Eintrag, fragt Cyclus nach, statt sie still mitzuzählen.','Alles wird auf deinem iPhone berechnet. Cyclus erhält deine Daten nie.'],
+          en:['Cyclus looks at the length of your recent cycles, counting the newest ones more. It shows a range where your next period is likely to start, about 8 times out of 10.','With few cycles the range is wide on purpose. It narrows as you log more. Unusually long cycles, for example from a missed log, are asked about instead of silently counted.','Everything is calculated on your iPhone. Cyclus never receives your data.']},
+  // erase
+  eraseT:{de:'Alles löschen',en:'Erase everything'}, eraseWord:{de:'LÖSCHEN',en:'ERASE'},
+  er1:{de:'✓ Alle Cyclus-Daten auf diesem iPhone',en:'✓ All Cyclus data on this iPhone'}, er2:{de:'✓ Daten, die Cyclus in Apple Health geschrieben hat',en:'✓ Data Cyclus wrote to Apple Health'}, er2s:{de:'Lässt sich abwählen',en:'Can be switched off'},
+  er3:{de:'✗ Nicht löschbar',en:'✗ Can’t erase'}, er3s:{de:'Ältere iCloud- oder Computer-Backups, geteilte Exporte und PDFs, Health-Einträge anderer Apps',en:'Older iCloud or computer backups, exports and PDFs you shared, Health entries from other apps'},
+  typeToConfirm:{de:w=>`Gib ${w} ein, um zu bestätigen`, en:w=>`Type ${w} to confirm`},
+  // privacy
+  privT:{de:'Datenschutz',en:'Privacy'}, back:{de:'Zurück',en:'Back'}, whereData:{de:'Wo deine Daten sind',en:'Where your data is'},
+  onPhone:{de:'Auf diesem iPhone',en:'On this iPhone'}, onPhoneS:{de:'Verschlüsselt, solange dein iPhone gesperrt ist',en:'Encrypted while your phone is locked'},
+  inHealth:{de:'In Apple Health',en:'In Apple Health'}, nothingW:{de:'Nichts',en:'Nothing'},
+  inBackups:{de:'In Backups',en:'In backups'}, bkDevice:{de:'Nur auf dem Gerät. In keinem Backup.',en:'Device only. Not in any backup.'}, bkIncl:{de:'Enthalten. Bei iCloud-Backup hält Apple die Schlüssel, außer der Erweiterte Datenschutz ist aktiv.',en:'Included. With iCloud Backup, Apple holds the keys unless Advanced Data Protection is on.'},
+  exportsT:{de:'Deine Exporte',en:'Exports you’ve made'}, exportsS:{de:'2, zuletzt am 3. Nov. Geteilte Kopien können wir nicht löschen.',en:'2, last on Nov 3. We can’t delete copies you shared.'},
+  noServers:{de:'Wir erhalten deine Daten nie. Es gibt keine Cyclus-Server.',en:'We never receive your data. There are no Cyclus servers.'},
+  protection:{de:'Schutz',en:'Protection'}, faceLock:{de:'Mit Face ID sperren',en:'Lock with Face ID'}, pinT:{de:'Cyclus-PIN',en:'Cyclus PIN'}, pinS:{de:'Ein Code nur für diese App, getrennt vom iPhone-Code',en:'A code only for this app, separate from your phone passcode'},
+  pinOnlyT:{de:'Nur PIN, kein Face ID',en:'PIN only, no Face ID'}, pinOnlyS:{de:'Hilfreich, wenn jemand anderes deinen iPhone-Code kennt',en:'Useful if someone else knows your phone passcode'},
+  visibility:{de:'Sichtbarkeit',en:'Visibility'}, discreetT:{de:'Diskrete Mitteilungen',en:'Discreet notifications'}, discreetOn:{de:'Zeigt „Cyclus · Erinnerung“',en:'Shows “Cyclus · Check-in”'}, discreetOff:{de:'Zeigt Details wie „Deine Periode beginnt bald“',en:'Shows details like “Your period may start soon”'},
+  lockWT:{de:'Details im Sperrbildschirm-Widget',en:'Details on Lock Screen widget'}, lockWOn:{de:'Zeigt Zyklustag und nächste Periode',en:'Shows cycle day and next period'}, lockWOff:{de:'Ausgeblendet. Zeigt nur einen neutralen Ring.',en:'Hidden. Shows only an abstract ring.'},
+  hkFlow:{de:'Blutung',en:'Flow'}, hkSpot:{de:'Schmierblutung',en:'Spotting'}, hkSym:{de:'Symptome',en:'Symptoms'}, hkTemp:{de:'Temperatur',en:'Temperature'}, hkMood:{de:'Stimmung',en:'Mood'}, hkMucus:{de:'Ausfluss',en:'Discharge'}, hkLh:{de:'LH-Tests',en:'LH tests'}, hkSex:{de:'Sex',en:'Sexual activity'}, hkContra:{de:'Verhütung',en:'Contraception'},
+  hkNoLock:{de:'Apple Health hat keine eigene Sperre',en:'Apple Health has no separate lock'}, hkShared:{de:'Personen, mit denen du Health-Daten teilst, sehen das eventuell',en:'People you share Health data with may see this'},
+  backups:{de:'Backups',en:'Backups'}, devOnlyT:{de:'Nur auf dem Gerät',en:'Device only'}, devOnlyS:{de:'Cyclus aus iPhone-Backups ausschließen. Geht dein iPhone verloren, sind Daten weg, die nicht in Apple Health oder einem Export sind.',en:'Exclude Cyclus from iPhone backups. If you lose this phone, data not in Apple Health or an export is gone.'},
+  encBk:{de:'Verschlüsselte Sicherung erstellen',en:'Create encrypted backup'}, encBkS:{de:'Letzte Sicherung vor 34 Tagen',en:'Last backup 34 days ago'},
+  // settings
+  setT:{de:'Einstellungen',en:'Settings'}, goal:{de:'Ziel',en:'Goal'}, goalTrack:{de:'Zyklus verfolgen',en:'Track my cycle'}, goalConceive:{de:'Kinderwunsch',en:'Trying to get pregnant'},
+  showFertT:{de:'Fruchtbares Fenster zeigen',en:'Show fertile window'}, showFertS:{de:'Eine Schätzung auf Heute und im Kalender. Nicht zur Verhütung geeignet.',en:'An estimate on Today and in the calendar. Not for birth control.'},
+  affecting:{de:'Beeinflusst etwas deinen Zyklus?',en:'Anything affecting your cycle?'},
+  ep_none:{de:'Nichts davon',en:'None of these'}, ep_hbc:{de:'Hormonelle Verhütung',en:'Hormonal birth control'}, ep_preg:{de:'Schwanger',en:'Pregnant'}, ep_pp:{de:'Nach der Geburt oder Stillzeit',en:'Postpartum or breastfeeding'}, ep_peri:{de:'Perimenopause',en:'Perimenopause'}, ep_pcos:{de:'PCOS',en:'PCOS'}, ep_endo:{de:'Endometriose',en:'Endometriosis'}, ep_t:{de:'Testosteron',en:'Testosterone'},
+  epNote:{de:'Manches davon pausiert Prognosen oder macht die Bereiche breiter. So sagt die App nie „zu spät“, wenn es nicht stimmt.',en:'Some of these pause predictions or widen the ranges, so the app never says “late” when it isn’t.'},
+  more:{de:'Mehr',en:'More'}, notifT:{de:'Mitteilungen',en:'Notifications'}, notifS:{de:'Periode bald · diskret',en:'Period soon · discreet'}, langT:{de:'Sprache',en:'Language'},
+  purpose:{de:'Cyclus hilft dir, Perioden, Symptome und Wohlbefinden festzuhalten, Muster zu erkennen, fruchtbare Tage als Hilfe bei Kinderwunsch abzuschätzen und eine Übersicht mit deiner Ärztin oder deinem Arzt zu teilen. Nicht zur Verhütung bestimmt. Stellt keine Diagnosen.',
+           en:'Cyclus helps you record periods, symptoms and wellbeing, see patterns, estimate fertile days as an aid to conception, and share a summary with your healthcare provider. Not intended for contraception. Does not diagnose any condition.'},
+  // report
+  repIntro:{de:'Eine Übersicht für deinen Termin. Du bestimmst den Inhalt. Nichts wird hochgeladen.',en:'A summary for your appointment. You choose what’s included. Nothing is uploaded.'},
+  timeSpan:{de:'Zeitraum',en:'Time span'}, lastN:{de:n=>`Letzte ${n}`, en:n=>`Last ${n}`}, cyclesW:{de:'Zyklen',en:'cycles'}, include:{de:'Inhalt',en:'Include'}, offDefault:{de:'Standardmäßig aus',en:'Off by default'},
+  inc_bleed:{de:'Blutungskalender',en:'Bleeding calendar'}, inc_lengths:{de:'Zyklus- und Periodenlänge',en:'Cycle and period lengths'}, inc_sym:{de:'Symptome',en:'Symptoms'}, inc_pain:{de:'Schmerzen',en:'Pain'}, inc_mood:{de:'Stimmung und Energie',en:'Mood and energy'}, inc_temp:{de:'Temperatur',en:'Temperature'}, inc_notes:{de:'Notizen',en:'Notes'}, inc_contra:{de:'Verhütung',en:'Contraception'}, inc_sex:{de:'Sex',en:'Sexual activity'},
+  questions:{de:'Fragen für meinen Termin',en:'Questions for my appointment'}, qDefault:{de:'Ist es normal, dass mich die Krämpfe am ersten Tag zu Hause halten?',en:'Is it normal that cramps keep me home on day 1?'},
+  pdfLang:{de:'PDF-Sprache',en:'PDF language'}, previewBtn:{de:'PDF-Vorschau',en:'Preview PDF'}, updatePrev:{de:'Vorschau aktualisieren',en:'Update preview'}, prevLbl:{de:'Vorschau · Seite 1 von 3',en:'Preview · page 1 of 3'}, sharePdf:{de:'PDF teilen',en:'Share PDF'},
+  // onboarding
+  onb0T:{de:'Dein Zyklus, verstanden. Nie hochgeladen.',en:'Your cycle, understood. Never uploaded.'}, onb0B:{de:'Ein privates Zyklus- und Symptomtagebuch fürs iPhone.',en:'A private cycle and symptom diary for iPhone.'}, getStarted:{de:'Los geht’s',en:'Get started'},
+  onb1T:{de:'Privat von Grund auf',en:'Private by design'},
+  pr1:{de:'Kein Konto. Keine Server.',en:'No account. No servers.'}, pr1s:{de:'Deine Daten bleiben auf deinem iPhone.',en:'Your data stays on your iPhone.'},
+  pr2:{de:'Wir sehen deine Daten nie.',en:'We never see your data.'}, pr2s:{de:'Keine Werbung, kein Tracking, keine Analyse.',en:'No ads, no trackers, no analytics.'},
+  pr3:{de:'Du bestimmst, was in Apple Health landet.',en:'You decide what goes into Apple Health.'}, pr3s:{de:'Sensible Angaben bleiben draußen, bis du sie einschaltest.',en:'Sensitive items stay out unless you turn them on.'},
+  onb1N:{de:'Dein iPhone-Backup enthält Cyclus. Das kannst du unter Datenschutz ändern.',en:'Your iPhone backup includes Cyclus. You can change that in Privacy.'},
+  cont:{de:'Weiter',en:'Continue'}, skip:{de:'Überspringen',en:'Skip'},
+  onb2T:{de:'Bring deinen Verlauf mit',en:'Bring your history'}, onb2B:{de:'Importiere aus Apple Health, damit Prognosen ab dem ersten Tag funktionieren. Cyclus liest nur. Was es schreibt, entscheidest du später.',en:'Import from Apple Health so predictions work from day one. Cyclus only reads. You choose later what it writes.'},
+  importBtn:{de:'Aus Apple Health importieren',en:'Import from Apple Health'}, importing:{de:'Import aus Apple Health',en:'Importing from Apple Health'}, importingB:{de:'Lese Perioden, Symptome und Temperatur.',en:'Reading periods, symptoms and temperature.'},
+  lookFor:{de:'Suche nach Perioden…',en:'Looking for periods…'}, found:{de:'8 Perioden seit März 2026 gefunden.',en:'Found 8 periods since March 2026.'},
+  onb3T:{de:'Wann hat deine letzte Periode begonnen?',en:'When did your last period start?'}, onb3B:{de:'Eine Schätzung reicht. Du kannst es jederzeit ändern.',en:'An estimate is fine. You can change it anytime.'}, dontRemember:{de:'Weiß ich nicht mehr',en:'I don’t remember'}, lastPAria:{de:'Beginn der letzten Periode',en:'Last period start'},
+  onb4T:{de:'Beeinflusst etwas deinen Zyklus?',en:'Anything affecting your cycle?'}, onb4B:{de:'Das ändert, wie Cyclus Prognosen macht. Wähle alles Zutreffende.',en:'This changes how Cyclus predicts. Choose all that apply.'},
+  f_conceive:{de:'Kinderwunsch',en:'Trying to get pregnant'}, byear:{de:'Geburtsjahr (optional, bleibt auf deinem iPhone)',en:'Birth year (optional, stays on your iPhone)'}, noSay:{de:'Keine Angabe',en:'Prefer not to say'},
+  onb5T:{de:'Cyclus mit Face ID sperren?',en:'Lock Cyclus with Face ID?'}, onb5B:{de:'Wer dein iPhone benutzt, braucht dann dein Gesicht oder eine Cyclus-PIN, um die App zu öffnen.',en:'Anyone using your phone would need your face or a Cyclus PIN to open it.'},
+  turnOn:{de:'Einschalten',en:'Turn on'}, notNow:{de:'Jetzt nicht',en:'Not now'}, welcomeDlg:{de:'Willkommen',en:'Welcome'},
+  // lock
+  lockedT:{de:'Cyclus ist gesperrt',en:'Cyclus is locked'}, lockedB:{de:'Deine Daten bleiben verborgen, bis du entsperrst.',en:'Your data stays hidden until you unlock.'}, unlockBtn:{de:'Mit Face ID entsperren',en:'Unlock with Face ID'}, recognizing:{de:'Wird erkannt…',en:'Recognizing…'},
+  // toasts
+  tSaved:{de:'Gespeichert',en:'Saved'}, tPeriod:{de:'Periodenbeginn eingetragen',en:'Period start logged'}, tFlow:{de:'Blutung eingetragen',en:'Flow logged'}, tEnded:{de:'Periode als beendet markiert',en:'Marked period as ended'},
+  tLh:{de:'LH-Test eingetragen',en:'LH test logged'}, tLhPos:{de:'Positiver LH-Test eingetragen',en:'Positive LH test logged'}, tMarked:{de:'Als Periodenbeginn markiert',en:'Marked as period start'},
+  tBackup:{de:'Verschlüsselte Sicherung gespeichert (Prototyp)',en:'Encrypted backup saved (prototype)'}, tShare:{de:'Öffnet in der App das iOS-Teilen-Menü',en:'Opens the iOS share sheet in the app'},
+  tCond:{de:'Gespeichert. Die Bereiche werden für diese Erkrankung breiter.',en:'Saved. Ranges widen for this condition.'}, tNotif:{de:'Mitteilungen (Prototyp)',en:'Notifications (prototype)'},
+};
+const t = (k,...a) => { const e = TX[k]; if (!e) return k; const v = e[S.lang]; return typeof v==='function' ? v(...a) : v; };
+
+const SYM = {Cramps:['Krämpfe','Cramps'],Headache:['Kopfschmerzen','Headache'],Tired:['Müdigkeit','Tired'],Bloating:['Blähungen','Bloating'],'Breast tenderness':['Brustspannen','Breast tenderness'],Acne:['Pickel','Acne'],'Back pain':['Rückenschmerzen','Back pain'],Nausea:['Übelkeit','Nausea'],Cravings:['Heißhunger','Cravings'],Insomnia:['Schlaflosigkeit','Insomnia'],'Hot flashes':['Hitzewallungen','Hot flashes'],'Night sweats':['Nachtschweiß','Night sweats'],Dizziness:['Schwindel','Dizziness'],Diarrhea:['Durchfall','Diarrhea'],Constipation:['Verstopfung','Constipation']};
+const sym = k => SYM[k] ? SYM[k][S.lang==='de'?0:1] : k;
+const SYMPTOMS = Object.keys(SYM);
+const PINNED = ['Cramps','Headache','Tired','Bloating'];
+const FLOWL = {none:['Keine','None'],spotting:['Schmier­blutung','Spotting'],light:['Leicht','Light'],medium:['Mittel','Medium'],heavy:['Stark','Heavy']};
+const FLOWS = ['none','spotting','light','medium','heavy'];
+const flowL = k => FLOWL[k][S.lang==='de'?0:1];
+const MUCL = {dry:['Trocken','Dry'],sticky:['Klebrig','Sticky'],creamy:['Cremig','Creamy'],watery:['Wässrig','Watery'],eggwhite:['Spinnbar','Egg white'],unusual:['Auffällig','Unusual']};
+const MUCUS = Object.keys(MUCL);
+const mucL = k => MUCL[k][S.lang==='de'?0:1];
+const TAGL = {Stress:['Stress','Stress'],Travel:['Reise','Travel'],Alcohol:['Alkohol','Alcohol'],Sport:['Sport','Sport'],Sick:['Krank','Sick']};
+const TAGS = Object.keys(TAGL);
+const tagL = k => TAGL[k][S.lang==='de'?0:1];
+const REGIONS = [
+  {id:'head',l:['Kopf','Head'],el:'<ellipse cx="60" cy="22" rx="15" ry="18"/>'},
+  {id:'chest',l:['Brust','Breasts / chest'],el:'<rect x="36" y="48" width="48" height="30" rx="10"/>'},
+  {id:'upper',l:['Oberbauch','Upper abdomen'],el:'<rect x="38" y="80" width="44" height="22" rx="8"/>'},
+  {id:'lowL',l:['Unterbauch links','Lower abdomen, left'],el:'<rect x="38" y="104" width="14" height="26" rx="6"/>'},
+  {id:'lowC',l:['Unterbauch Mitte','Lower abdomen, centre'],el:'<rect x="53" y="104" width="14" height="26" rx="6"/>'},
+  {id:'lowR',l:['Unterbauch rechts','Lower abdomen, right'],el:'<rect x="68" y="104" width="14" height="26" rx="6"/>'},
+  {id:'pelvis',l:['Becken','Pelvis'],el:'<path d="M40 132h40l-8 18H48z"/>'},
+  {id:'thighs',l:['Oberschenkel','Thighs'],el:'<rect x="40" y="152" width="40" height="36" rx="10"/>'},
+];
+const regL = id => REGIONS.find(r=>r.id===id).l[S.lang==='de'?0:1];
+
+/* ============ dates ============ */
+const DAY = 86400000;
+const D = (y,m,d) => Math.round(Date.UTC(y,m-1,d)/DAY);
+const asDate = n => new Date(n*DAY);
+const TODAY = D(2026,11,22);
+S.logDate = TODAY;
+let F = {};
+function setLocale(){
+  const loc = S.lang==='de' ? 'de-DE' : 'en-US', z = {timeZone:'UTC'};
+  F = { md:new Intl.DateTimeFormat(loc,{month:'short',day:'numeric',...z}), w:new Intl.DateTimeFormat(loc,{weekday:'short',...z}),
+        wmd:new Intl.DateTimeFormat(loc,{weekday:'short',month:'short',day:'numeric',...z}), long:new Intl.DateTimeFormat(loc,{weekday:'long',day:'numeric',month:'long',...z}),
+        my:new Intl.DateTimeFormat(loc,{month:'long',year:'numeric',...z}), mon:new Intl.DateTimeFormat(loc,{month:'short',...z}) };
+  document.documentElement.lang = S.lang;
 }
+const md = n => F.md.format(asDate(n));
+const wmd = n => F.wmd.format(asDate(n));
+function range(a,b){
+  if (a===b) return md(a);
+  const A=asDate(a), B=asDate(b);
+  if (A.getUTCMonth()===B.getUTCMonth()) return S.lang==='de' ? `${A.getUTCDate()}.–${md(b)}` : `${md(a)}–${B.getUTCDate()}`;
+  return `${md(a)} – ${md(b)}`;
+}
+
+/* ============ seeded random ============ */
+function rng(seed){ return () => { seed |= 0; seed = seed + 0x6D2B79F5 | 0; let x = Math.imul(seed ^ seed >>> 15, 1 | seed); x = x + Math.imul(x ^ x >>> 7, 61 | x) ^ x; return ((x ^ x >>> 14) >>> 0) / 4294967296; }; }
+
+const getLog = d => S.logs.get(d) || {symptoms:[], pain:{}, tags:[]};
+function setLog(d, fn){ const l = structuredClone(getLog(d)); fn(l); S.logs.set(d, l); }
 
 /* ============ sample data ============ */
 function genScenario(key){
@@ -376,25 +508,24 @@ function genScenario(key){
   S.scen = key; S.tab = 'today'; S.layer = null; S.push = null; S.logDate = TODAY;
   if (key === 'empty') return;
   const lens = [29,28,30,29,28,29,30,29], plen=[5,4,5,6,5,4,5,5];
-  const curStartBy = {day12:TODAY-11, expected:TODAY-27, period:TODAY-1, hbc:TODAY-11, conceive:TODAY-13, conceive2ww:TODAY-17};
-  const cur = curStartBy[key];
+  const cur = {day12:TODAY-11, expected:TODAY-27, period:TODAY-1, hbc:TODAY-11, conceive:TODAY-13, conceive2ww:TODAY-17}[key];
   const starts = []; let s = cur;
   for (let i=lens.length-1;i>=0;i--){ s -= lens[i]; starts.unshift(s); }
   const r = rng(11);
   const flowPat = ['medium','heavy','medium','light','light','spotting'];
   const addDay = (day,k,toNext,pl) => {
     const l = {symptoms:[], pain:{}, tags:[]};
-    let obs = k<pl || r()<0.55;
+    const obs = k<pl || r()<0.55;
     if (k<pl) l.flow = flowPat[k];
     if (!obs) { if (l.flow) S.logs.set(day,l); return; }
-    const p = (x) => r()<x;
+    const p = x => r()<x;
     if (p(k<=1?0.85:toNext<=1?0.4:0.04)) { l.symptoms.push('Cramps'); l.pain.lowC = 3+Math.floor(r()*5); }
     if (p(toNext<=2&&toNext>=1?0.5:0.06)) l.symptoms.push('Headache');
     if (p((k<=2||toNext<=3)?0.55:0.14)) l.symptoms.push('Tired');
     if (p(toNext<=5&&toNext>=1?0.5:0.07)) l.symptoms.push('Bloating');
     if (p(toNext<=6&&toNext>=2?0.38:0.03)) l.symptoms.push('Breast tenderness');
     if (p(toNext<=4&&toNext>=1?0.3:0.04)) l.symptoms.push('Acne');
-    if (p(k<=1?0.35:0.03)) { l.symptoms.push('Back pain'); }
+    if (p(k<=1?0.35:0.03)) l.symptoms.push('Back pain');
     l.mood = toNext<=3 ? 2+Math.floor(r()*2) : 3+Math.floor(r()*2);
     l.energy = (k<=1||toNext<=2) ? 2+Math.floor(r()*2) : 3+Math.floor(r()*2);
     if (r()<0.5) l.sleep = 2+Math.floor(r()*3);
@@ -404,14 +535,14 @@ function genScenario(key){
   starts.forEach((st,i) => { for (let k=0;k<lens[i];k++) addDay(st+k,k,lens[i]-k,plen[i]); });
   for (let day=cur; day<=TODAY; day++){
     const k = day-cur;
-    if (key==='conceive'||key==='conceive2ww'){ // keep current cycle clean & explicit
+    if (key==='conceive'||key==='conceive2ww'){
       const l = {symptoms:[], pain:{}, tags:[]};
       if (k<5) l.flow = flowPat[k];
       if (k===0||k===1) { l.symptoms.push('Cramps'); l.pain.lowC=5; }
       S.logs.set(day,l);
     } else addDay(day,k,30-k,5);
   }
-  if (key==='hbc') S.episode = {kind:'hbc', label:'Combined pill', start:TODAY-70};
+  if (key==='hbc') S.episode = {kind:'hbc', start:TODAY-70};
   if (key==='conceive'||key==='conceive2ww'){
     S.mode='conceive';
     const cd = n => cur+n-1;
@@ -427,7 +558,6 @@ function genScenario(key){
       setLog(cd(16), l=>{l.mucus='sticky';}); setLog(cd(17), l=>{l.mucus='sticky';});
       setLog(cd(12), l=>{l.sex=true}); setLog(cd(13), l=>{l.sex=true});
     }
-    S.logs.forEach(l => { l.updated = false; });
   }
 }
 
@@ -451,7 +581,6 @@ function periodDays(start){
 const T90 = [[3,1.638],[4,1.533],[5,1.476],[6,1.440],[8,1.397],[10,1.372],[12,1.356],[16,1.337],[20,1.325],[30,1.310],[1e9,1.2816]];
 function tq(df){ for (let i=1;i<T90.length;i++){ const [a,qa]=T90[i-1],[b,qb]=T90[i]; if (df<=b) return qa+(qb-qa)*Math.max(0,(df-a))/(b-a); } return 1.2816; }
 const tpdf = (x,df) => Math.pow(1+x*x/df, -(df+1)/2);
-
 function predict(){
   const starts = cycleStarts();
   if (!starts.length) return null;
@@ -468,14 +597,13 @@ function predict(){
   const last = starts[starts.length-1];
   let lo = last+Math.floor(loL), hi = last+Math.ceil(hiL);
   if (hi-lo<2) { lo-=1; hi+=1; }
-  const tier = neff<2 ? 'Rough estimate' : neff<5 ? 'Getting there' : 'Based on your history';
-  return {starts, lens, used, last, lo, hi, ml:last+Math.round(Math.exp(mun)), neff, mun, scale, df, loL, hiL, tier,
-    typLo:Math.floor(loL), typHi:Math.ceil(hiL)};
+  const tier = neff<2 ? 'rough' : neff<5 ? 'getting' : 'history';
+  return {starts, lens, used, last, lo, hi, neff, mun, scale, df, loL, hiL, tier, typLo:Math.floor(loL), typHi:Math.ceil(hiL)};
 }
 
 /* ============ fertility engine (spec §11.11) ============ */
-const WILCOX = [0.10,0.16,0.14,0.27,0.31,0.33]; // k = -5..0
-const LUT = {mean:13.0, sd:1.3, lo:9, hi:17, learned:5}; // personal luteal length (demo: learned from 5 cycles)
+const WILCOX = [0.10,0.16,0.14,0.27,0.31,0.33];
+const LUT = {mean:13.0, sd:1.3, lo:9, hi:17, learned:5};
 function lutPmf(){ const p={}; let z=0; for(let k=LUT.lo;k<=LUT.hi;k++){ p[k]=Math.exp(-0.5*((k-LUT.mean)/LUT.sd)**2); z+=p[k]; } for(const k in p) p[k]/=z; return p; }
 function evidenceFor(cs, uptoCd){
   const ev=[]; const bbt=[];
@@ -489,10 +617,8 @@ function evidenceFor(cs, uptoCd){
     if (l.mucus==='dry'||l.mucus==='sticky') ev.push({type:'dry',cd});
     if (typeof l.bbt==='number') bbt.push({cd,v:l.bbt});
   }
-  // mucus peak: last fertile-quality day followed by a logged non-fertile day
   const ews = ev.filter(e=>e.type==='ew').map(e=>e.cd);
   if (ews.length){ const p = Math.max(...ews); const nxt = S.logs.get(cs+p); if (p<uptoCd && nxt && nxt.mucus && !['eggwhite','watery'].includes(nxt.mucus)) ev.push({type:'peak',cd:p}); }
-  // Sensiplan BBT shift
   let shift=null;
   for (let i=6;i+2<bbt.length;i++){
     const consecutive = bbt[i+2].cd-bbt[i].cd===2 && bbt[i].cd-bbt[i-6].cd===6;
@@ -504,15 +630,15 @@ function evidenceFor(cs, uptoCd){
   return {ev, bbt, shift};
 }
 function likO(e,d){
-  const t=e.cd, k=d-t;
+  const x=e.cd, k=d-x;
   switch(e.type){
     case 'lhpos': return k===0?.15:k===1?.45:k===2?.30:k===3?.07:.003;
     case 'lhneg': return (k===1||k===2)?.20:.95;
     case 'surge': return (k>=1&&k<=5)?.8:.2;
-    case 'ew': return (t>=d-5&&t<=d)?.8:(t===d+1||t===d+2)?.4:.1;
-    case 'dry': return (t>=d-2&&t<=d)?.2:.8;
+    case 'ew': return (x>=d-5&&x<=d)?.8:(x===d+1||x===d+2)?.4:.1;
+    case 'dry': return (x>=d-2&&x<=d)?.2:.8;
     case 'peak': return k===-1?.2:k===0?.35:k===1?.3:k===2?.1:.01;
-    case 'shift': return ({[t-3]:.1,[t-2]:.3,[t-1]:.45,[t]:.15})[d] ?? .004;
+    case 'shift': return ({[x-3]:.1,[x-2]:.3,[x-1]:.45,[x]:.15})[d] ?? .004;
   }
   return 1;
 }
@@ -521,7 +647,6 @@ function fertility(pred, uptoCd){
   if (!pred) return null;
   const cs = pred.last, todayCd = TODAY-cs+1; uptoCd = uptoCd ?? todayCd;
   const Dmax = Math.max(60, Math.ceil(1.5*Math.exp(pred.mun)));
-  // cycle-length pmf (log-t predictive), conditioned on no period yet by today
   const Lp={}; let z=0;
   for (let L=Math.max(18,todayCd); L<=Dmax+17; L++){ Lp[L]=tpdf((Math.log(L)-pred.mun)/pred.scale,pred.df)/L; z+=Lp[L]; }
   for (const L in Lp) Lp[L]/=z;
@@ -543,38 +668,32 @@ function fertility(pred, uptoCd){
   const cw = cd => { let s=0; for (let k=-5;k<=0;k++) s+=(post[cd-k]||0)*WILCOX[k+5]; return s; };
   const days=[]; for (let cd=1; cd<=Dmax; cd++) days.push({cd, pf:pf(cd), c:cw(cd)});
   const topC = [...days].sort((a,b)=>b.c-a.c).slice(0,2).map(x=>x.cd);
-  const tierOf = x => x.pf>=0.6 && topC.includes(x.cd) ? 3 : x.pf>=0.5 ? 2 : x.pf>=0.15 ? 1 : 0;
-  days.forEach(x => x.tier = tierOf(x));
+  days.forEach(x => x.tier = x.pf>=0.6 && topC.includes(x.cd) ? 3 : x.pf>=0.5 ? 2 : x.pf>=0.15 ? 1 : 0);
   const inBand = days.filter(x=>x.pf>=0.15);
   const band = inBand.length ? [inBand[0].cd, inBand[inBand.length-1].cd] : null;
-  // MAP + 80% HPD over non-anovulatory mass
   const ds = Object.keys(post).map(Number).sort((a,b)=>post[b]-post[a]);
   const mapD = ds[0]; let acc=0; const hp=[]; const mass=1-pA;
   for (const d of ds){ hp.push(d); acc+=post[d]; if (acc>=0.8*mass) break; }
   const hpd=[Math.min(...hp), Math.max(...hp)];
-  const has = t => ev.some(e=>e.type===t);
+  const has = x => ev.some(e=>e.type===x);
   const w = hpd[1]-hpd[0]+1;
   const status = (shift && w<=3) ? 'occurred' : ((has('lhpos')||has('ew')||has('surge')) && w<=4 && hpd[0]>=todayCd-1) ? 'soon' : 'predicted';
-  // LH planner
-  // planner uses the evidence-free prior, so it does not drift after tests are logged
   let pz=0; for (const d in prior) pz+=prior[d];
-  let cum=0, planStart=null;
-  for (let t=6; t<=Dmax; t++){ cum=0; for (let d=6; d<=t+2; d++) cum+=(prior[d]||0)/pz; if (cum>=0.10){ planStart=t; break; } }
+  let planStart=null;
+  for (let x=6; x<=Dmax; x++){ let cum=0; for (let d=6; d<=x+2; d++) cum+=(prior[d]||0)/pz; if (cum>=0.10){ planStart=x; break; } }
   if (planStart===null) planStart=10;
-  const chip = shift ? 'Temperature rise detected' : has('lhpos') ? 'Updated by your LH test' : (has('ew')||has('dry')) ? 'Updated by your mucus' : has('lhneg') ? 'Updated by your LH tests' : 'Calendar estimate';
+  const chip = shift ? 'chip_shift' : has('lhpos') ? 'chip_lh' : (has('ew')||has('dry')) ? 'chip_mucus' : has('lhneg') ? 'chip_lhs' : 'chip_cal';
   return {cs, todayCd, Dmax, post, pA, days, band, mapD, hpd, status, shift, ev, bbt, planStart, chip, dateOf: cd=>cs+cd-1};
 }
 function trail(pred){
   const f0 = fertility(pred, 0); const out=[];
-  const name = {lhpos:'Positive LH test', lhneg:'Negative LH test', surge:'Estrogen surge on LH test', ew:'Egg-white mucus', dry:'Dry or sticky mucus', peak:'Mucus peak day', shift:'Temperature rise (3 higher readings)'};
-  out.push({label:`From your last ${pred.used.length} cycles`, sub:`Usually about ${LUT.mean} days from ovulation to period (learned from ${LUT.learned} cycles)`, band:f0.band, f:f0});
+  out.push({label:t('fromCycles',pred.used.length), sub:t('fromCyclesSub',String(LUT.mean).replace('.',S.lang==='de'?',':'.'),LUT.learned), band:f0.band, f:f0});
   const full = fertility(pred);
   const cds = [...new Set(full.ev.map(e=>e.cd))].sort((a,b)=>a-b);
   let prevBand = f0.band ? f0.band.join('-') : '';
   for (const cd of cds){
     const f = fertility(pred, cd);
-    const evs = full.ev.filter(e=>e.cd===cd).map(e=>e.type==='shift'?'shift':e.type);
-    const lbl = [...new Set(evs.map(t=>name[t]))].join(' + ');
+    const lbl = [...new Set(full.ev.filter(e=>e.cd===cd).map(e=>t('ev_'+e.type)))].join(' + ');
     const b = f.band ? f.band.join('-') : '';
     out.push({label:`${lbl} · ${md(full.dateOf(cd))}`, band:f.band, f, changed:b!==prevBand});
     prevBand=b;
@@ -582,7 +701,7 @@ function trail(pred){
   return out;
 }
 
-/* ============ derived view model ============ */
+/* ============ view model ============ */
 function vm(){
   const pred = predict();
   const paused = !!S.episode;
@@ -592,9 +711,8 @@ function vm(){
   v.inPeriod = periodDays(pred.last).includes(TODAY) || (isBleed(S.logs.get(TODAY)) && TODAY-pred.last<8);
   if (v.inPeriod){ const pd = periodDays(pred.last); v.periodDay = pd.indexOf(TODAY)+1 || v.cd; }
   v.status = paused ? 'paused' : v.inPeriod ? 'inPeriod' : TODAY < pred.lo-7 ? 'between' : TODAY < pred.lo ? 'pre' : TODAY <= pred.hi ? 'expected' : 'later';
-  const fertOn = !paused && (S.mode==='conceive' || S.showFertTrack);
-  v.fertOn = fertOn;
-  if (fertOn) v.fert = fertility(pred);
+  v.fertOn = !paused && (S.mode==='conceive' || S.showFertTrack);
+  if (v.fertOn) v.fert = fertility(pred);
   return v;
 }
 
@@ -607,25 +725,23 @@ const I = {
   ins:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M5 20V11M12 20V5M19 20v-7"/></svg>',
   plus:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>',
   back:'<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 5l-7 7 7 7"/></svg>',
-  chev:'<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg>',
+  chev:'<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex:0 0 auto"><path d="M9 6l6 6-6 6"/></svg>',
   left:'<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 6l-6 6 6 6"/></svg>',
   right:'<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg>',
-  lock:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg>',
   phone:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="7" y="3" width="10" height="18" rx="2.5"/><path d="M11 18h2"/></svg>',
   heart:'<svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 20s-7-4.4-7-10a4 4 0 0 1 7-2.6A4 4 0 0 1 19 10c0 5.6-7 10-7 10z"/></svg>',
   cloud:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M7 18h10a4 4 0 0 0 .5-8A6 6 0 0 0 6 9.5 4.3 4.3 0 0 0 7 18z"/></svg>',
   doc:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M7 3h7l5 5v13H7z"/><path d="M14 3v5h5M10 13h6M10 17h6"/></svg>',
   bell:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 16V11a6 6 0 0 1 12 0v5l1.5 2h-15z"/><path d="M10 20a2 2 0 0 0 4 0"/></svg>',
   trash:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 7h16M9 7V4h6v3M6 7l1 13h10l1-13"/></svg>',
-  eye:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></svg>',
+  globe:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c3 3.5 3 14.5 0 18M12 3c-3 3.5-3 14.5 0 18"/></svg>',
   ring:'<svg viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="5" stroke-linecap="round"><path d="M13 37a15 15 0 1 1 22 0"/><circle cx="24" cy="9" r="3" fill="currentColor" stroke="none"/></svg>',
-  user:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/></svg>',
   faceid:'<svg viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round"><path d="M6 20V12a6 6 0 0 1 6-6h8M44 6h8a6 6 0 0 1 6 6v8M58 44v8a6 6 0 0 1-6 6h-8M20 58h-8a6 6 0 0 1-6-6v-8M22 24v4M42 24v4M32 24v12h-3M24 44a12 10 0 0 0 16 0"/></svg>',
 };
+let dropId = 0;
 const drop = (lvl, color) => {
   const fills = {none:0, spotting:0, light:.33, medium:.62, heavy:1};
-  const f = fills[lvl]; const y = 28 - 22*f;
-  const id = 'd'+lvl+Math.random().toString(36).slice(2,6);
+  const f = fills[lvl]; const y = 28 - 22*f; const id = 'dc' + (++dropId);
   return `<svg viewBox="0 0 24 30" aria-hidden="true"><defs><clipPath id="${id}"><path d="M12 2C12 2 3 13 3 19a9 9 0 0 0 18 0C21 13 12 2 12 2z"/></clipPath></defs>
   <path d="M12 2C12 2 3 13 3 19a9 9 0 0 0 18 0C21 13 12 2 12 2z" fill="none" stroke="${color}" stroke-width="2" ${lvl==='spotting'?'stroke-dasharray="2.5 2.5"':''}/>
   ${f?`<rect x="0" y="${y}" width="24" height="30" fill="${color}" clip-path="url(#${id})"/>`:''}
@@ -637,251 +753,237 @@ function ringSVG(v){
   const C=150, R=118, R2=137;
   const pol = (r,a) => [C + r*Math.cos(a*Math.PI/180), C + r*Math.sin(a*Math.PI/180)];
   const arc = (r,a0,a1) => { const [x0,y0]=pol(r,a0),[x1,y1]=pol(r,a1); return `M${x0.toFixed(2)} ${y0.toFixed(2)} A${r} ${r} 0 ${a1-a0>180?1:0} 1 ${x1.toFixed(2)} ${y1.toFixed(2)}`; };
-
-  let segs='', outer='', knob='';
-  if (!v.pred){
-    segs = `<path d="${arc(R,135,405)}" stroke="var(--mid)" stroke-opacity=".3" stroke-width="18" fill="none" stroke-linecap="round"/>`;
-    return wrapRing(segs,'');
-  }
+  if (!v.pred) return `<svg viewBox="0 0 300 300" aria-hidden="true"><path d="${arc(R,135,405)}" stroke="var(--mid)" stroke-opacity=".3" stroke-width="18" fill="none" stroke-linecap="round"/></svg>`;
   const p = v.pred;
-  const hiCd = p.hi - p.last + 1;
-  const N = Math.max(hiCd, v.cd + 2, 28);
+  const N = Math.max(p.hi - p.last + 1, v.cd + 2, 28);
   const per = 270/N;
   const bleed = new Set(periodDays(p.last));
+  let segs='', outer='';
   for (let cd=1; cd<=N; cd++){
     const day = p.last+cd-1;
     const a0 = 135 + (cd-1)*per + 0.7, a1 = 135 + cd*per - 0.7;
     let col='var(--mid)', op=.32, dash='';
     if (bleed.has(day)) { col='var(--period)'; op=1; }
     else if (!v.paused && day>=p.lo-7 && day<p.lo) { col='var(--pre)'; op=.85; dash='stroke-dasharray="2 3.2"'; }
-    if (v.fertOn && v.fert){
-      const fd = v.fert.days[cd-1];
-      if (fd && fd.tier>0 && !bleed.has(day)) { col='var(--fertile)'; op=[0,.35,.65,1][fd.tier]; dash=''; }
-    }
+    const fd = v.fertOn && v.fert ? v.fert.days[cd-1] : null;
+    if (fd && fd.tier>0 && !bleed.has(day)) { col='var(--fertile)'; op=[0,.35,.65,1][fd.tier]; dash=''; }
     segs += `<path d="${arc(R,a0,a1)}" stroke="${col}" stroke-opacity="${op}" stroke-width="18" fill="none" ${dash}/>`;
-    if (v.fertOn && v.fert && v.fert.days[cd-1] && v.fert.days[cd-1].tier===3 && !bleed.has(day)){
-      const [sx,sy]=pol(R-26,(a0+a1)/2); segs+=`<text x="${sx}" y="${sy+4}" text-anchor="middle" font-size="12" fill="var(--fertile)">✦</text>`;
-    }
   }
   if (!v.paused){
     const a0 = 135 + (p.lo-p.last)*per, a1 = 135 + (p.hi-p.last+1)*per;
     outer = `<path d="${arc(R2,a0,Math.min(a1,405))}" stroke="var(--period)" stroke-width="3" fill="none" stroke-dasharray="5 4" stroke-linecap="round"/>`;
     if (v.fertOn && v.fert){
-      const o = v.fert.mapD; const ao = 135 + (o-0.5)*per; const [ox,oy]=pol(R2,ao);
+      const ao = 135 + (v.fert.mapD-0.5)*per; const [ox,oy]=pol(R2,ao);
       const solid = v.fert.status!=='predicted';
       outer += `<circle cx="${ox}" cy="${oy}" r="7" fill="var(--bg)" stroke="var(--fertile)" stroke-width="2" ${solid?'':'stroke-dasharray="2.5 2"'}/><circle cx="${ox}" cy="${oy}" r="2.6" fill="var(--fertile)"/>`;
     }
   }
-  const at = 135 + (v.cd-0.5)*per; const [kx,ky]=pol(R,Math.min(at,404));
-  knob = `<circle cx="${kx}" cy="${ky}" r="13" fill="var(--ink)" stroke="var(--bg)" stroke-width="4"/>`;
-  return wrapRing(segs+outer, knob);
+  const [kx,ky]=pol(R,Math.min(135 + (v.cd-0.5)*per,404));
+  return `<svg viewBox="0 0 300 300" aria-hidden="true">${segs}${outer}<circle cx="${kx}" cy="${ky}" r="13" fill="var(--ink)" stroke="var(--bg)" stroke-width="4"/></svg>`;
 }
-function wrapRing(inner, knob){
-  return `<svg viewBox="0 0 300 300" aria-hidden="true">${inner}${knob}</svg>`;
+// Ring text never wraps the big line: shrink to fit (min 18px), sub lines clamp at two.
+function fitRing(){
+  const big = app.querySelector('.ringcenter .big'); if (!big) return;
+  const box = big.parentElement; let size = parseFloat(big.dataset.max || 40);
+  big.style.fontSize = size+'px';
+  while (size>18 && (big.scrollWidth > box.clientWidth || box.scrollHeight > box.clientHeight)){ size -= 1; big.style.fontSize = size+'px'; }
 }
 
 /* ============ screens ============ */
 function header(title){
-  return `<div class="navrow"><div><div class="date">${fWMD.format(asDate(TODAY))}</div><h2>${title}</h2></div>
-  <div class="navicons"><button class="iconbtn" data-act="push" data-v="privacy" aria-label="Privacy Center">${I.shield}</button>
-  <button class="iconbtn" data-act="push" data-v="settings" aria-label="Settings">${I.gear}</button></div></div>`;
+  return `<div class="navrow"><div><div class="date">${wmd(TODAY)}</div><h2>${title}</h2></div>
+  <div class="navicons"><button class="iconbtn" data-act="push" data-v="privacy" aria-label="${t('aPrivacy')}">${I.shield}</button>
+  <button class="iconbtn" data-act="push" data-v="settings" aria-label="${t('aSettings')}">${I.gear}</button></div></div>`;
 }
+const lhL = k => t('lh_'+k);
 function todayLogSummary(){
   const l = S.logs.get(TODAY);
-  if (!l || (!l.flow && !l.symptoms.length && !l.mood && !l.lh && !l.mucus && typeof l.bbt!=='number')) return `<p>Nothing logged yet today.</p>`;
+  if (!l || (!l.flow && !l.symptoms.length && !l.mood && !l.lh && !l.mucus && typeof l.bbt!=='number')) return `<p>${t('nothingYet')}</p>`;
   const bits=[];
-  if (l.flow && l.flow!=='none') bits.push(`<b style="color:var(--period)">${FLOWS.find(f=>f[0]===l.flow)[1]} flow</b>`);
-  if (l.symptoms.length) bits.push(l.symptoms.slice(0,3).join(' · ')+(l.symptoms.length>3?` +${l.symptoms.length-3}`:''));
-  if (l.mood) bits.push(`Mood ${l.mood}/5`);
-  if (l.lh) bits.push(`LH ${l.lh==='pos'?'positive':l.lh==='neg'?'negative':'surge'}`);
-  if (l.mucus) bits.push(MUCUS.find(m=>m[0]===l.mucus)[1]+' mucus');
-  if (typeof l.bbt==='number') bits.push(`${l.bbt.toFixed(2)} °C`);
+  if (l.flow && l.flow!=='none') bits.push(`<b style="color:var(--period)">${t('flowWord',flowL(l.flow).replace('­',''))}</b>`);
+  if (l.symptoms.length) bits.push(l.symptoms.slice(0,3).map(sym).join(' · ')+(l.symptoms.length>3?` +${l.symptoms.length-3}`:''));
+  if (l.mood) bits.push(t('moodN',l.mood));
+  if (l.lh) bits.push(t('lhWord',lhL(l.lh)));
+  if (l.mucus) bits.push(mucL(l.mucus));
+  if (typeof l.bbt==='number') bits.push(`${fmtT(l.bbt)} °C`);
   return `<p style="color:var(--ink)">${bits.join(' · ')}</p>`;
 }
+const fmtT = x => S.lang==='de' ? x.toFixed(2).replace('.',',') : x.toFixed(2);
 function insightPreview(v){
   const starts = v.starts.slice(0,-1); if (starts.length<3) return '';
   let hit=0; starts.forEach(s => { const a=S.logs.get(s), b=S.logs.get(s+1); if ((a&&a.symptoms.includes('Cramps'))||(b&&b.symptoms.includes('Cramps'))) hit++; });
-  const tier = hit/starts.length>=0.75 && starts.length>=4 ? 'Consistent pattern' : 'Early signal';
-  return `<div class="card"><div class="row between"><h3>Cramps on day 1–2</h3><span class="badge">${tier}</span></div>
-  <p>In ${hit} of your last ${starts.length} periods you logged cramps on the first two days.</p>
-  <span class="tiny muted">Pattern insights arrive in v1.5 · shown here as a preview</span></div>`;
+  const tier = hit/starts.length>=0.75 && starts.length>=4 ? t('consistent') : t('early');
+  return `<div class="card"><div class="row between" style="align-items:flex-start"><h3>${t('insCramps')}</h3><span class="badge">${tier}</span></div>
+  <p>${t('insCrampsBody',hit,starts.length)}</p><span class="tiny muted">${t('previewV15')}</span></div>`;
 }
 function renderToday(){
   const v = vm();
-  let center='', under='', cards='';
+  let kicker='', big='', bigMax=40, sub='', extra='', under='', cards='';
   if (!v.pred){
-    center = `<div class="kicker">Welcome</div><div class="big md">Log your period to begin</div><div class="sub">Predictions start after your first period</div>`;
-    under = `<button class="btn primary" data-act="periodStart">Period started today</button>
-      <button class="btn secondary small" data-act="openLog">Log an earlier date</button>`;
+    kicker=t('welcome'); big=t('letsStart'); bigMax=30; sub=t('startSub');
+    under = `<button class="btn primary" data-act="periodStart">${t('periodStarted')}</button><button class="btn secondary small" data-act="openLog">${t('logEarlier')}</button>`;
   } else if (v.paused){
-    center = `<div class="kicker">Cycle day ${v.cd}</div><div class="big md">Predictions paused</div><div class="sub">While using ${S.episode.label.toLowerCase()}</div>`;
-    under = `<span class="badge">Bleeding is still logged</span><button class="linkrow" data-act="push" data-v="settings" style="padding:4px">Change life stage ${I.chev}</button>`;
+    kicker=t('cycleDayN',v.cd); big=t('paused'); bigMax=32; sub=t('pausedSub',t('ep_'+S.episode.kind));
+    under = `<span class="badge">${t('stillLogged')}</span><button class="linkrow" data-act="push" data-v="settings" style="padding:4px;width:auto">${t('changeStage')} ${I.chev}</button>`;
   } else if (v.inPeriod){
-    center = `<div class="kicker">Cycle day ${v.cd}</div><div class="big">Period day ${v.periodDay}</div><div class="sub">How heavy is it today?</div>`;
+    kicker=t('period'); big=t('dayN',v.periodDay); sub=t('howHeavy');
     const cur = (S.logs.get(TODAY)||{}).flow;
-    under = `<div class="flow" style="width:100%">${FLOWS.slice(1).map(([k,lbl])=>`<button class="drop" data-act="quickFlow" data-v="${k}" aria-pressed="${cur===k}">${drop(k,'var(--period)')}${lbl}</button>`).join('')}<button class="drop" data-act="quickFlow" data-v="none" aria-pressed="false">${drop('none','var(--ink2)')}Ended</button></div>`;
+    under = `<div class="flow" style="width:100%">${FLOWS.slice(2).map(k=>`<button class="drop" data-act="quickFlow" data-v="${k}" aria-pressed="${cur===k}">${drop(k,'var(--period)')}${flowL(k)}</button>`).join('')}<button class="drop" data-act="quickFlow" data-v="spotting" aria-pressed="${cur==='spotting'}">${drop('spotting','var(--period)')}${flowL('spotting')}</button><button class="drop" data-act="quickFlow" data-v="none" aria-pressed="false">${drop('none','var(--ink2)')}${t('ended')}</button></div>`;
   } else if (v.fertOn && S.mode==='conceive'){
     const f = v.fert, td = f.days[f.todayCd-1];
     if (f.status==='occurred'){
       const dpo = f.todayCd - f.mapD; const test = Math.max(f.dateOf(f.mapD)+14, v.pred.lo);
-      center = `<div class="kicker">Cycle day ${v.cd}</div><div class="big md">Day ${dpo} after ovulation</div><div class="sub">Ovulation likely occurred around ${md(f.dateOf(f.mapD))}</div>`;
-      cards += `<div class="card"><h3>Earliest reliable pregnancy test</h3><p><b style="color:var(--ink)">${fWMD.format(asDate(test))}</b>. Testing earlier often gives a negative result even if you are pregnant.</p></div>`;
+      kicker=t('afterOv'); big=t('dayN',dpo); sub=t('cycleDayN',v.cd);
+      extra = `<div class="ovl">${t('ovOccurred',md(f.dateOf(f.mapD)))}</div>`;
+      cards += `<div class="card"><h3>${t('testTitle')}</h3><p>${t('testBody',wmd(test))}</p></div>`;
     } else {
-      const label = ['Lower chance','Possible today','High chance today','✦ Peak day'][td.tier];
-      let sub = '';
-      if (td.tier===0 && f.band){ const n = f.band[0]-f.todayCd; sub = n>0 ? `Window opens in about ${n} day${n>1?'s':''}` : 'Window has likely passed'; }
-      const ovTxt = f.status==='soon' ? (f.hpd[0]<=f.todayCd ? 'Ovulation likely today or tomorrow' : `Ovulation likely ${range(f.dateOf(f.hpd[0]),f.dateOf(f.hpd[1]))}`) : `Ovulation estimated ${range(f.dateOf(f.hpd[0]),f.dateOf(f.hpd[1]))}`;
-      center = `<div class="kicker">Cycle day ${v.cd}</div><div class="big md" style="color:${td.tier?'var(--fertile)':'var(--ink)'}">${label}</div><div class="sub">${sub || ovTxt}</div>`;
+      kicker=t('fertToday'); big=t('ft'+td.tier); bigMax=36; sub=t('cycleDayN',v.cd);
+      if (td.tier===0 && f.band){ const n = f.band[0]-f.todayCd; sub = n>0 ? t('windowOpens',n) : t('windowPassed'); }
+      const ov = f.status==='soon' ? (f.hpd[0]<=f.todayCd ? t('ovSoonTT') : t('ovSoon',range(f.dateOf(f.hpd[0]),f.dateOf(f.hpd[1])))) : t('ovEst',range(f.dateOf(f.hpd[0]),f.dateOf(f.hpd[1])));
+      extra = `<div class="ovl">${ov}</div>`;
       const best = f.days.filter(x=>x.cd>=f.todayCd && x.pf>=0.15).sort((a,b)=>b.c-a.c).slice(0,3).sort((a,b)=>a.cd-b.cd);
-      if (best.length) cards += `<div class="card"><h3>Best days</h3><p><b style="color:var(--ink)">${best.map(x=>x.cd===f.todayCd?'Today':x.cd===f.todayCd+1?'Tomorrow':fW.format(asDate(f.dateOf(x.cd)))+' '+md(f.dateOf(x.cd))).join(' · ')}</b></p><p>Sex every 1–2 days during High and Peak days gives the best chance.</p></div>`;
-      const lhPos = f.ev.some(e=>e.type==='lhpos');
-      const startDate = f.dateOf(f.planStart);
-      const tl = (S.logs.get(TODAY)||{}).lh;
+      if (best.length) cards += `<div class="card"><h3>${t('bestDays')}</h3><p><b style="color:var(--ink)">${best.map(x=>x.cd===f.todayCd?t('today'):x.cd===f.todayCd+1?t('tomorrow'):wmd(f.dateOf(x.cd))).join(' · ')}</b></p><p>${t('bestTip')}</p></div>`;
+      const lhPos = f.ev.some(e=>e.type==='lhpos'); const tl = (S.logs.get(TODAY)||{}).lh; const startDate = f.dateOf(f.planStart);
       if (!lhPos || tl==='pos'){
-        if (TODAY < startDate) cards += `<div class="card"><h3>LH tests</h3><p>Start testing on <b style="color:var(--ink)">${fWMD.format(asDate(startDate))}</b>. Based on your last ${v.pred.used.length} cycles, you will likely need 4–6 tests.</p></div>`;
-        else {
-          const negs = f.ev.filter(e=>e.type==='lhneg').length;
-          cards += `<div class="card"><div class="row between"><h3>LH test · today</h3><span class="tiny muted">${negs} negative so far</span></div>
-          <div class="chips">${[['neg','Negative'],['pos','Positive'],['surge','Estrogen surge']].map(([k,l])=>`<button class="chip lh" data-act="lh" data-v="${k}" aria-pressed="${tl===k}">${l}</button>`).join('')}</div></div>`;
-        }
+        if (TODAY < startDate) cards += `<div class="card"><h3>${t('lhTests')}</h3><p>${t('lhPlan',wmd(startDate),v.pred.used.length)}</p></div>`;
+        else { const negs = f.ev.filter(e=>e.type==='lhneg').length;
+          cards += `<div class="card"><div class="row between"><h3>${t('lhToday')}</h3><span class="tiny muted">${t('lhNegSoFar',negs)}</span></div>
+          <div class="chips">${['neg','pos','surge'].map(k=>`<button class="chip lh" data-act="lh" data-v="${k}" aria-pressed="${tl===k}">${lhL(k)}</button>`).join('')}</div></div>`; }
       }
     }
-    under = `<span class="badge fert"><span class="dot"></span>${f.chip}</span>`;
-    cards += `<button class="linkrow" data-act="sheet" data-v="why">Why this window? ${I.chev}</button>`;
+    under = `${extra}<span class="badge fert"><span class="dot"></span>${t(f.chip)}</span>`;
+    cards += `<button class="linkrow" data-act="sheet" data-v="why">${t('whyLink')} ${I.chev}</button>`;
   } else {
     const p = v.pred;
-    const lead = {between:'Next period', pre:'Period expected in', expected:'Period expected now', later:'Later than your usual range'}[v.status];
-    let rng = range(p.lo,p.hi);
-    if (v.status==='pre') rng = `${p.lo-TODAY}–${p.hi-TODAY} days`;
-    center = `<div class="kicker">Cycle day</div><div class="big">${v.cd}</div><div class="sub">${lead}</div>${v.status!=='later'?`<div class="range">${rng}</div>`:`<div class="sub">Expected ${range(p.lo,p.hi)}</div>`}`;
-    under = `<span class="badge"><span class="dot" style="color:${p.neff<2?'var(--warning)':'var(--success)'}"></span>${p.tier}</span>`;
-    if (['pre','expected','later'].includes(v.status) && p.lo-TODAY<=3) under += `<button class="btn primary" data-act="periodStart">Period started today</button>`;
-    if (v.status==='between' && S.showFertTrack && v.fert && v.fert.band){ cards += `<div class="card"><h3>Fertile window (estimate)</h3><p>${range(v.fert.dateOf(v.fert.band[0]),v.fert.dateOf(v.fert.band[1]))}. Not for birth control.</p></div>`; }
-    if (v.status==='between'){ cards += `<div class="card"><h3>Pre-period window starts ${fW.format(asDate(p.lo-7))}, ${md(p.lo-7)}</h3><p>The 7 days before your period, when many people notice bloating or mood changes.</p></div>`; }
+    kicker=t('cycleDay'); big=String(v.cd); bigMax=46;
+    if (v.status==='between'){ sub=t('nextPeriod'); extra=`<div class="range">${range(p.lo,p.hi)}</div>`; }
+    if (v.status==='pre'){ sub=t('periodIn'); extra=`<div class="range">${t('daysRange',p.lo-TODAY,p.hi-TODAY)}</div>`; }
+    if (v.status==='expected'){ sub=t('expectedNow'); extra=`<div class="range">${range(p.lo,p.hi)}</div>`; }
+    if (v.status==='later'){ sub=t('later'); extra=`<div class="sub">${t('expectedOn',range(p.lo,p.hi))}</div>`; }
+    under = `<span class="badge"><span class="dot" style="color:${p.neff<2?'var(--warning)':'var(--success)'}"></span>${t('tier_'+p.tier)}</span>`;
+    if (['pre','expected','later'].includes(v.status) && p.lo-TODAY<=3) under += `<button class="btn primary" data-act="periodStart">${t('periodStarted')}</button>`;
+    if (S.showFertTrack && v.fert && v.fert.band) cards += `<div class="card"><h3>${t('fertWinTrack')}</h3><p>${range(v.fert.dateOf(v.fert.band[0]),v.fert.dateOf(v.fert.band[1]))}. ${t('notBC')}</p></div>`;
+    if (v.status==='between') cards += `<div class="card"><h3>${t('preTitle',wmd(p.lo-7))}</h3><p>${t('preBody')}</p></div>`;
     cards += insightPreview(v);
   }
-  const fertFoot = v.fertOn ? `<div class="foot">Not for birth control.</div>` : '';
-  return `${header('Today')}
+  const center = `<div class="kicker">${kicker}</div><div class="big" data-max="${bigMax}" style="font-size:${bigMax}px${v.fertOn&&S.mode==='conceive'&&!v.paused&&!v.inPeriod&&v.fert&&v.fert.status!=='occurred'&&v.fert.days[v.fert.todayCd-1].tier?';color:var(--fertile)':''}">${big}</div>${sub?`<div class="sub">${sub}</div>`:''}${S.mode!=='conceive'||!v.fertOn?extra:''}`;
+  return `${header(t('tabToday'))}
   <div class="ringwrap" role="img" aria-label="${ringLabel(v)}">${ringSVG(v)}<div class="ringcenter">${center}</div></div>
   <div class="under">${under}</div>
   <div class="stack">
-    <button class="card" data-act="openLog" style="text-align:left"><div class="row between"><h3>Today's log</h3><span class="muted">${I.chev}</span></div>${todayLogSummary()}</button>
+    <button class="card" data-act="openLog" style="text-align:left"><div class="row between"><h3>${t('todaysLog')}</h3><span class="muted">${I.chev}</span></div>${todayLogSummary()}</button>
     ${cards}
-  </div>${fertFoot}`;
+  </div>${v.fertOn?`<div class="foot">${t('notBC')}</div>`:''}`;
 }
 function ringLabel(v){
-  if (!v.pred) return 'No cycle data yet.';
-  if (v.paused) return `Cycle day ${v.cd}. Predictions paused.`;
-  let s = `Cycle day ${v.cd}. Next period expected between ${md(v.pred.lo)} and ${md(v.pred.hi)}.`;
-  if (v.fertOn && v.fert && v.fert.band) s += ` Estimated fertile window ${md(v.fert.dateOf(v.fert.band[0]))} to ${md(v.fert.dateOf(v.fert.band[1]))}.`;
+  if (!v.pred) return t('ringNone');
+  if (v.paused) return `${t('cycleDayN',v.cd)}. ${t('pausedSub',t('ep_'+S.episode.kind))}.`;
+  let s = t('ringA',v.cd,md(v.pred.lo),md(v.pred.hi));
+  if (v.fertOn && v.fert && v.fert.band) s += t('ringF',md(v.fert.dateOf(v.fert.band[0])),md(v.fert.dateOf(v.fert.band[1])));
   return s;
 }
 
 function renderCalendar(){
   const v = vm(); const [y,m] = S.calMonth;
-  const first = D(y,m,1); const dim = new Date(Date.UTC(y,m,0)).getUTCDate();
-  const wd = (asDate(first).getUTCDay()+6)%7; // Monday first
+  const first = D(y,m,1);
+  const wd = (asDate(first).getUTCDay()+6)%7;
   const bleed = new Set(); v.starts.forEach(s=>periodDays(s).forEach(d=>bleed.add(d)));
   const cells=[];
   for (let i=0;i<42;i++){
     const day = first - wd + i; const dt = asDate(day); const inMonth = dt.getUTCMonth()===m-1;
-    if (i>=35 && !inMonth && (asDate(first-wd+35).getUTCMonth()!==m-1)) break;
+    if (i>=35 && asDate(first-wd+35).getUTCMonth()!==m-1) break;
     const l = S.logs.get(day); const cls=['day']; let extra='';
     if (!inMonth) cls.push('out');
     if (bleed.has(day)) cls.push('bleed'); else if (l && l.flow==='spotting') cls.push('spot');
-    if (v.pred && !v.paused && day>=v.pred.lo && day<=v.pred.hi && day>TODAY && !bleed.has(day)) cls.push('pred');
+    const isPred = v.pred && !v.paused && day>=v.pred.lo && day<=v.pred.hi && day>TODAY && !bleed.has(day);
+    if (isPred) cls.push('pred');
     if (v.pred && !v.paused && day>=v.pred.lo-7 && day<v.pred.lo && day>=TODAY) extra += '<span class="pp"></span>';
     if (v.fertOn && v.fert){
-      const cd = day - v.fert.cs + 1; const fd = v.fert.days[cd-1];
-      if (fd && cd>=1 && fd.tier>0 && !bleed.has(day)) extra += `<span class="f t${fd.tier}"></span>${fd.tier>=2?'<span class="fx"></span>':''}`;
-      if (cd===v.fert.mapD) extra += `<span class="mk" title="Ovulation">◎</span>`;
-      else if (fd && fd.tier===3) extra += `<span class="mk">✦</span>`;
+      const cd = day - v.fert.cs + 1; const fd = cd>=1 ? v.fert.days[cd-1] : null;
+      if (fd && fd.tier>0 && !bleed.has(day)) extra += `<span class="f t${fd.tier}"></span>${fd.tier>=2?'<span class="fx"></span>':''}`;
+      if (cd===v.fert.mapD) extra += `<span class="mk">◎</span>`; else if (fd && fd.tier===3) extra += `<span class="mk">✦</span>`;
     }
     if (day===TODAY) cls.push('today');
     const logged = l && (l.symptoms.length || l.mood || l.lh || l.mucus || l.note);
-    const lbl = `${fLong.format(dt)}${bleed.has(day)?', period':''}${cls.includes('pred')?', predicted period':''}${logged?', logged':''}`;
+    const lbl = `${F.long.format(dt)}${bleed.has(day)?t('aPeriod'):''}${isPred?t('aPred'):''}${logged?t('aLogged'):''}`;
     cells.push(`<button class="${cls.join(' ')}" data-act="day" data-v="${day}" aria-label="${lbl}">${extra}<span class="n">${dt.getUTCDate()}</span>${logged?'<span class="lg"></span>':''}</button>`);
   }
   const legend = `<div class="legend">
-    <span><i class="sw" style="background:var(--period)"></i>Period</span>
-    <span><i class="sw" style="border:2px dashed var(--period)"></i>Predicted period</span>
-    <span><i class="sw" style="border-bottom:2px dotted var(--pre);border-radius:0;height:10px"></i>Pre-period window</span>
-    <span><i class="sw" style="background:var(--ink2);width:5px;height:5px"></i>Something logged</span>
-    ${v.fertOn?`<span><i class="sw" style="background:var(--fertile);opacity:.45;border-radius:6px"></i>Fertile window (estimate)</span><span><b style="color:var(--fertile)">◎ ✦</b>&nbsp;Ovulation · peak day</span>`:''}
+    <span><i class="sw" style="background:var(--period)"></i>${t('lgPeriod')}</span>
+    <span><i class="sw" style="border:2px dashed var(--period)"></i>${t('lgPred')}</span>
+    <span><i class="sw" style="border-bottom:2px dotted var(--pre);border-radius:0;height:10px"></i>${t('lgPre')}</span>
+    <span><i class="sw" style="background:var(--ink2);width:5px;height:5px"></i>${t('lgLogged')}</span>
+    ${v.fertOn?`<span><i class="sw" style="background:var(--fertile);opacity:.45;border-radius:6px"></i>${t('lgFert')}</span><span><b style="color:var(--fertile);flex:0 0 auto">◎ ✦</b>${t('lgOv')}</span>`:''}
   </div>`;
-  return `${header('Calendar')}
-  <div class="calhead"><button class="iconbtn" data-act="mon" data-v="-1" aria-label="Previous month">${I.left}</button><h3>${fMY.format(asDate(first))}</h3><button class="iconbtn" data-act="mon" data-v="1" aria-label="Next month">${I.right}</button></div>
-  <div class="wk"><span>Mo</span><span>Tu</span><span>We</span><span>Th</span><span>Fr</span><span>Sa</span><span>Su</span></div>
+  return `${header(t('tabCal'))}
+  <div class="calhead"><button class="iconbtn" data-act="mon" data-v="-1" aria-label="${t('prevMonth')}">${I.left}</button><h3>${F.my.format(asDate(first))}</h3><button class="iconbtn" data-act="mon" data-v="1" aria-label="${t('nextMonth')}">${I.right}</button></div>
+  <div class="wk">${t('wk').map(x=>`<span>${x}</span>`).join('')}</div>
   <div class="grid">${cells.join('')}</div>
-  <p class="tiny muted" style="margin:10px 4px">Tap a day for details. Long-press in the app to mark a period start.</p>
+  <p class="tiny muted" style="margin:10px 4px">${t('calTip')}</p>
   ${legend}`;
 }
 
 function renderInsights(){
   const v = vm();
-  if (!v.pred || v.pred.used.length<1) return `${header('Insights')}<div class="card"><h3>Insights need a little history</h3><p>After your first full cycle you'll see your cycle length here. Patterns appear after 2–3 cycles.</p></div>`;
+  if (!v.pred || v.pred.used.length<1) return `${header(t('tabIns'))}<div class="card"><h3>${t('insEmptyT')}</h3><p>${t('insEmptyB')}</p></div>`;
   const p = v.pred;
   const plens = v.starts.slice(0,-1).map(s=>periodDays(s).length).sort((a,b)=>a-b);
   const pmed = plens.length? plens[Math.floor(plens.length/2)] : '–';
-  const spread = Math.round((p.hiL-p.loL)/2);
-  // cycle length chart
+  const spread = Math.max(1, Math.round((p.hiL-p.loL)/2));
   const W=320,H=150,L0=20,L1=36, x0=28, x1=W-8, y0=12, y1=H-22;
   const sy = L => y1 - (L-L0)/(L1-L0)*(y1-y0);
   const bars = p.lens.slice(-8); const bw = (x1-x0)/bars.length;
-  let svg = `<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Cycle lengths over ${bars.length} cycles, typically ${p.typLo} to ${p.typHi} days, shortest ${Math.min(...bars)}, longest ${Math.max(...bars)}.">`;
+  const startsUsed = v.starts.slice(-bars.length-1);
+  let svg = `<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="${t('cycAria',bars.length,p.typLo,p.typHi,Math.min(...bars),Math.max(...bars))}">`;
   svg += `<rect x="${x0}" y="${sy(p.typHi)}" width="${x1-x0}" height="${sy(p.typLo)-sy(p.typHi)}" fill="var(--period)" fill-opacity=".09"/>`;
   [20,24,28,32,36].forEach(L=>{ svg+=`<line x1="${x0}" x2="${x1}" y1="${sy(L)}" y2="${sy(L)}" stroke="var(--line)" stroke-width="1"/><text x="${x0-6}" y="${sy(L)+3}" text-anchor="end">${L}</text>`; });
-  const startsUsed = v.starts.slice(-bars.length-1);
-  bars.forEach((L,i)=>{ const x=x0+i*bw+bw*0.22, w=bw*0.56; svg+=`<rect x="${x}" y="${sy(L)}" width="${w}" height="${y1-sy(L)}" rx="4" fill="var(--period)" fill-opacity="${i===bars.length-1?1:.6}"/><text x="${x+w/2}" y="${sy(L)-4}" text-anchor="middle" style="fill:var(--ink);font-weight:600">${L}</text><text x="${x+w/2}" y="${H-8}" text-anchor="middle">${fMD.format(asDate(startsUsed[i])).split(' ')[0]}</text>`; });
+  bars.forEach((L,i)=>{ const x=x0+i*bw+bw*0.22, w=bw*0.56; svg+=`<rect x="${x}" y="${sy(L)}" width="${w}" height="${y1-sy(L)}" rx="4" fill="var(--period)" fill-opacity="${i===bars.length-1?1:.6}"/><text x="${x+w/2}" y="${sy(L)-4}" text-anchor="middle" style="fill:var(--ink);font-weight:600">${L}</text><text x="${x+w/2}" y="${H-8}" text-anchor="middle">${F.mon.format(asDate(startsUsed[i])).replace('.','')}</text>`; });
   svg += `</svg>`;
-  // heatmap
   const syms=['Cramps','Headache','Bloating','Tired','Breast tenderness','Acne','Back pain'];
   const rel=[-7,-6,-5,-4,-3,-2,-1,0,1,2,3,4];
   const pastStarts = v.starts.slice(1);
-  const heat = syms.map(sym => rel.map(r => { let h=0,n=0; pastStarts.forEach(s=>{ const l=S.logs.get(s+r); if (l && (l.nothingElse || l.symptoms.length || l.flow)) { n++; if (l.symptoms.includes(sym)) h++; } }); return n? h/n : 0; }));
-  const hm = `<div class="heat" style="grid-template-columns:96px repeat(${rel.length},1fr)" role="img" aria-label="Symptom heatmap by day relative to period start">
+  const heat = syms.map(s => rel.map(r => { let h=0,n=0; pastStarts.forEach(st=>{ const l=S.logs.get(st+r); if (l && (l.nothingElse || l.symptoms.length || l.flow)) { n++; if (l.symptoms.includes(s)) h++; } }); return n? h/n : 0; }));
+  const hm = `<div class="heat" style="grid-template-columns:104px repeat(${rel.length},minmax(0,1fr))" role="img" aria-label="${t('heatT')}">
     <span></span>${rel.map(r=>`<span class="h">${r===0?'P1':r>0?'+'+r:r}</span>`).join('')}
-    ${syms.map((s,i)=>`<span class="r">${s}</span>${heat[i].map(x=>`<span class="c" style="opacity:${(0.06+x*0.94).toFixed(2)}" title="${Math.round(x*100)}%"></span>`).join('')}`).join('')}
+    ${syms.map((s,i)=>`<span class="r" title="${sym(s)}">${sym(s)}</span>${heat[i].map(x=>`<span class="c" style="opacity:${(0.06+x*0.94).toFixed(2)}" title="${Math.round(x*100)}%"></span>`).join('')}`).join('')}
   </div>`;
   let conceive='';
   if (v.fertOn && v.fert){
     const f=v.fert, b=f.bbt;
     if (b.length>=3){
       const Wt=320,Ht=150,tx0=34,tx1=Wt-8,ty0=14,ty1=Ht-22, T0=36.1,T1=36.9, n=Math.max(28,f.todayCd);
-      const sx=cd=>tx0+(cd-1)/(n-1)*(tx1-tx0), syT=t=>ty1-(t-T0)/(T1-T0)*(ty1-ty0);
-      let t=`<svg viewBox="0 0 ${Wt} ${Ht}" role="img" aria-label="Basal temperature this cycle${f.shift?', temperature rise from cycle day '+f.shift.cd:''}.">`;
-      [36.2,36.4,36.6,36.8].forEach(T=>{ t+=`<line x1="${tx0}" x2="${tx1}" y1="${syT(T)}" y2="${syT(T)}" stroke="var(--line)"/><text x="${tx0-5}" y="${syT(T)+3}" text-anchor="end">${T.toFixed(1)}</text>`; });
-      if (f.shift) t+=`<line x1="${tx0}" x2="${tx1}" y1="${syT(f.shift.cover)}" y2="${syT(f.shift.cover)}" stroke="var(--fertile)" stroke-dasharray="4 3"/><text x="${tx1}" y="${syT(f.shift.cover)-4}" text-anchor="end" style="fill:var(--fertile)">coverline</text>`;
-      t+=`<polyline fill="none" stroke="var(--ink)" stroke-width="1.6" points="${b.map(x=>`${sx(x.cd)},${syT(x.v)}`).join(' ')}"/>`;
-      b.forEach(x=>{ const hi=f.shift&&x.cd>=f.shift.cd; t+=`<circle cx="${sx(x.cd)}" cy="${syT(x.v)}" r="3" fill="${hi?'var(--fertile)':'var(--surface)'}" stroke="${hi?'var(--fertile)':'var(--ink)'}" stroke-width="1.5"/>`; });
-      [1,7,14,21,28].filter(c=>c<=n).forEach(c=>{ t+=`<text x="${sx(c)}" y="${Ht-8}" text-anchor="middle">CD ${c}</text>`; });
-      t+=`</svg>`;
-      conceive += `<div class="card chart"><h3>Temperature this cycle</h3>${t}<p class="tiny">${f.shift?`Three higher readings from cycle day ${f.shift.cd}. Ovulation likely occurred around ${md(f.dateOf(f.mapD))}.`:'No temperature rise yet. Keep measuring before getting up.'}</p></div>`;
+      const sx=cd=>tx0+(cd-1)/(n-1)*(tx1-tx0), syT=x=>ty1-(x-T0)/(T1-T0)*(ty1-ty0);
+      let g=`<svg viewBox="0 0 ${Wt} ${Ht}" role="img" aria-label="${t('tempT')}">`;
+      [36.2,36.4,36.6,36.8].forEach(T=>{ g+=`<line x1="${tx0}" x2="${tx1}" y1="${syT(T)}" y2="${syT(T)}" stroke="var(--line)"/><text x="${tx0-5}" y="${syT(T)+3}" text-anchor="end">${S.lang==='de'?T.toFixed(1).replace('.',','):T.toFixed(1)}</text>`; });
+      if (f.shift) g+=`<line x1="${tx0}" x2="${tx1}" y1="${syT(f.shift.cover)}" y2="${syT(f.shift.cover)}" stroke="var(--fertile)" stroke-dasharray="4 3"/><text x="${tx1}" y="${syT(f.shift.cover)-4}" text-anchor="end" style="fill:var(--fertile)">${t('coverline')}</text>`;
+      g+=`<polyline fill="none" stroke="var(--ink)" stroke-width="1.6" points="${b.map(x=>`${sx(x.cd)},${syT(x.v)}`).join(' ')}"/>`;
+      b.forEach(x=>{ const hi=f.shift&&x.cd>=f.shift.cd; g+=`<circle cx="${sx(x.cd)}" cy="${syT(x.v)}" r="3" fill="${hi?'var(--fertile)':'var(--surface)'}" stroke="${hi?'var(--fertile)':'var(--ink)'}" stroke-width="1.5"/>`; });
+      [1,7,14,21,28].filter(c=>c<=n).forEach(c=>{ g+=`<text x="${sx(c)}" y="${Ht-8}" text-anchor="middle">${S.lang==='de'?'ZT':'CD'} ${c}</text>`; });
+      g+=`</svg>`;
+      conceive += `<div class="card chart"><h3>${t('tempT')}</h3>${g}<p class="tiny">${f.shift?t('tempShift',f.shift.cd,md(f.dateOf(f.mapD))):t('tempNo')}</p></div>`;
     }
-    conceive += `<div class="card"><h3>Your learned timing</h3><p>About <b style="color:var(--ink)">${LUT.mean} days</b> from ovulation to your period (from ${LUT.learned} cycles with a clear estimate). Your LH surge usually comes 1 day before ovulation.</p></div>`;
+    conceive += `<div class="card"><h3>${t('learnedT')}</h3><p>${t('learnedB',S.lang==='de'?'13':'13',LUT.learned)}</p></div>`;
   }
-  const hist = v.starts.slice(-7,-1).reverse().map(s=>{ const nx = v.starts[v.starts.indexOf(s)+1]; return `<div class="li"><div class="t"><b>${md(s)} – ${md(nx-1)}</b><span>${nx-s} days · period ${periodDays(s).length} days</span></div>${I.chev}</div>`; }).join('');
-  return `${header('Insights')}
+  const hist = v.starts.slice(-7,-1).reverse().map(s=>{ const nx = v.starts[v.starts.indexOf(s)+1]; return `<div class="li"><div class="t"><b class="num" style="font-weight:700">${range(s,nx-1)}</b><span>${t('histRow',nx-s,periodDays(s).length)}</span></div>${I.chev}</div>`; }).join('');
+  return `${header(t('tabIns'))}
   <div class="stack">
     <div class="statgrid">
-      <div class="stat"><div class="v">${p.typLo}–${p.typHi}</div><div class="k">days, your typical cycle</div></div>
-      <div class="stat"><div class="v">${pmed}</div><div class="k">days, typical period</div></div>
+      <div class="stat"><div class="v">${p.typLo}–${p.typHi}</div><div class="k">${t('statCycle')}</div></div>
+      <div class="stat"><div class="v">${pmed}</div><div class="k">${t('statPeriod')}</div></div>
     </div>
-    <div class="card"><div class="row between"><h3>Your cycles vary by about ${spread} days</h3><span class="badge">${p.tier}</span></div><p>Based on ${p.used.length} cycles. Recent cycles count more. <button class="small" style="color:var(--period);font-weight:600" data-act="sheet" data-v="method">How this works</button></p></div>
-    <div class="card chart"><h3>Cycle length</h3>${svg}<p class="tiny">Shaded band: your typical range.</p></div>
+    <div class="card"><h3>${t('varyT',spread)}</h3><div><span class="badge">${t('tier_'+p.tier)}</span></div><p>${t('varyB',p.used.length)} <button class="small" style="color:var(--period);font-weight:600" data-act="sheet" data-v="method">${t('howWorks')}</button></p></div>
+    <div class="card chart"><h3>${t('cycleLen')}</h3>${svg}<p class="tiny">${t('bandNote')}</p></div>
     ${conceive}
-    <div class="card"><h3>Symptoms around your period</h3><p class="tiny" style="margin-bottom:6px">How often you logged each symptom, on days you logged.</p>${hm}</div>
-    <button class="card" data-act="push" data-v="report" style="text-align:left"><div class="row between"><h3>Doctor Visit Pack</h3>${I.chev}</div><p>A clear summary for your gynecologist or midwife, as a PDF you choose what goes into.</p></button>
-    <div class="sec"><div class="lbl">Cycle history</div><div class="list hist">${hist}</div></div>
+    <div class="card"><h3>${t('heatT')}</h3><p class="tiny" style="margin-bottom:6px">${t('heatB')}</p>${hm}</div>
+    <button class="card" data-act="push" data-v="report" style="text-align:left"><div class="row between"><h3>${t('reportT')}</h3>${I.chev}</div><p>${t('reportB')}</p></button>
+    <div class="sec"><div class="lbl">${t('history')}</div><div class="list">${hist}</div></div>
   </div>`;
 }
 
 /* ============ sheets ============ */
 function renderLogSheet(){
   const d = S.logDate, l = getLog(d), v = vm();
-  const sym = s => l.symptoms.includes(s);
-  const rel = v.pred ? (v.pred.lo - d) : null;
-  // suggested: symptoms you often log at this point (not pinned)
+  const has = s => l.symptoms.includes(s);
   let sugg = [];
   if (v.pred && v.starts.length>2){
     const cand = {}; const off = d - v.pred.last;
@@ -889,181 +991,179 @@ function renderLogSheet(){
     sugg = Object.entries(cand).sort((a,b)=>b[1]-a[1]).slice(0,3).filter(e=>e[1]>=2).map(e=>e[0]);
   }
   const conceive = S.mode==='conceive' && !S.episode;
-  const scale = (key,lo,hi) => `<div class="scale">${[1,2,3,4,5].map(n=>`<button data-act="scale" data-k="${key}" data-v="${n}" aria-pressed="${l[key]===n}" aria-label="${key} ${n} of 5">${n}</button>`).join('')}</div><div class="scaleends"><span>${lo}</span><span>${hi}</span></div>`;
+  const scale = (key,lo,hi) => `<div class="scale">${[1,2,3,4,5].map(n=>`<button data-act="scale" data-k="${key}" data-v="${n}" aria-pressed="${l[key]===n}" aria-label="${t(key)} ${n}/5">${n}</button>`).join('')}</div><div class="scaleends"><span>${lo}</span><span>${hi}</span></div>`;
   const others = SYMPTOMS.filter(s=>!PINNED.includes(s) && !sugg.includes(s));
-  const painSel = REGIONS.find(r=>r.id===S.painSel);
-  const lhBlock = `<div class="lgroup"><div class="lbl">LH test</div><div class="chips">${[['neg','Negative'],['pos','Positive'],['surge','Estrogen surge']].map(([k,t])=>`<button class="chip lh" data-act="logLh" data-v="${k}" aria-pressed="${l.lh===k}">${t}</button>`).join('')}</div></div>`;
-  const bbtRow = `<div class="bbt"><button class="iconbtn" data-act="bbt" data-v="-0.05" aria-label="Lower">−</button><input id="bbt" inputmode="decimal" value="${typeof l.bbt==='number'?l.bbt.toFixed(2):''}" placeholder="36.40" aria-label="Basal temperature in degrees Celsius"><button class="iconbtn" data-act="bbt" data-v="0.05" aria-label="Higher">+</button><span class="muted">°C</span></div>`;
-  const bbtBlock = (label, hint) => `<div class="lgroup"><div class="lbl">${label} <span>${hint}</span></div>${bbtRow}</div>`;
-  const mucusBlock = `<div class="lgroup"><div class="lbl">Discharge</div><div class="chips">${MUCUS.map(([k,t])=>`<button class="chip" data-act="mucus" data-v="${k}" aria-pressed="${l.mucus===k}">${t}</button>`).join('')}</div></div>`;
+  const lhBlock = `<div class="lgroup"><div class="lbl">${t('lhTest')}</div><div class="chips">${['neg','pos','surge'].map(k=>`<button class="chip lh" data-act="logLh" data-v="${k}" aria-pressed="${l.lh===k}">${lhL(k)}</button>`).join('')}</div></div>`;
+  const bbtRow = `<div class="bbt"><button class="iconbtn" data-act="bbt" data-v="-0.05" aria-label="${t('lower')}">−</button><input id="bbt" inputmode="decimal" value="${typeof l.bbt==='number'?fmtT(l.bbt):''}" placeholder="${fmtT(36.4)}" aria-label="${t('bbtAria')}"><button class="iconbtn" data-act="bbt" data-v="0.05" aria-label="${t('higher')}">+</button><span class="muted">°C</span></div>`;
+  const bbtBlock = (label, hint) => `<div class="lgroup"><div class="lbl"><span>${label}</span><span>${hint}</span></div>${bbtRow}</div>`;
+  const mucusBlock = `<div class="lgroup"><div class="lbl">${t('discharge')}</div><div class="chips">${MUCUS.map(k=>`<button class="chip" data-act="mucus" data-v="${k}" aria-pressed="${l.mucus===k}">${mucL(k)}</button>`).join('')}</div></div>`;
+  const painList = Object.entries(l.pain).filter(e=>e[1]).map(([k,x])=>`${regL(k)} ${x}`).join(' · ') || t('noPain');
   return `<div class="grab"></div>
-  <div class="sheethead"><button class="iconbtn" data-act="logDay" data-v="-1" aria-label="Previous day">${I.left}</button>
-    <h3>${d===TODAY?'Today':fWMD.format(asDate(d))}</h3>
-    <div class="row"><button class="iconbtn" data-act="logDay" data-v="1" aria-label="Next day" ${d>=TODAY?'disabled style="opacity:.3"':''}>${I.right}</button></div></div>
+  <div class="sheethead"><button class="iconbtn" data-act="logDay" data-v="-1" aria-label="${t('prevDay')}">${I.left}</button>
+    <h3>${d===TODAY?t('today'):wmd(d)}</h3>
+    <button class="iconbtn" data-act="logDay" data-v="1" aria-label="${t('nextDay')}" ${d>=TODAY?'disabled style="opacity:.3"':''}>${I.right}</button></div>
   <div class="sheetbody">
-    <div class="lgroup"><div class="lbl">Flow</div><div class="flow">${FLOWS.map(([k,t])=>`<button class="drop" data-act="flow" data-v="${k}" aria-pressed="${(l.flow||'')===k}">${drop(k,k==='none'?'var(--ink2)':'var(--period)')}${t}</button>`).join('')}</div></div>
+    <div class="lgroup"><div class="lbl">${t('flowL')}</div><div class="flow">${FLOWS.map(k=>`<button class="drop" data-act="flow" data-v="${k}" aria-pressed="${(l.flow||'')===k}">${drop(k,k==='none'?'var(--ink2)':'var(--period)')}<span>${flowL(k)}</span></button>`).join('')}</div></div>
     ${conceive ? lhBlock : ''}
-    <div class="lgroup"><div class="lbl">Pinned <button class="tiny" style="color:var(--period);font-weight:600">Edit</button></div><div class="chips">${PINNED.map(s=>`<button class="chip" data-act="sym" data-v="${s}" aria-pressed="${sym(s)}">${s}</button>`).join('')}${conceive?`<button class="chip" data-act="sex" aria-pressed="${!!l.sex}">Sex</button>`:''}</div></div>
-    ${sugg.length?`<div class="lgroup"><div class="lbl">Often logged around this time</div><div class="chips">${sugg.map(s=>`<button class="chip sugg" data-act="sym" data-v="${s}" aria-pressed="${sym(s)}">${s}</button>`).join('')}</div></div>`:''}
-    ${conceive ? mucusBlock + bbtBlock('Basal temperature','before getting up') : ''}
-    <div class="lgroup"><div class="lbl">More symptoms</div><div class="chips">${others.map(s=>`<button class="chip" data-act="sym" data-v="${s}" aria-pressed="${sym(s)}">${s}</button>`).join('')}</div></div>
-    <div class="lgroup"><div class="lbl">Pain <span>tap where it hurts</span></div>
-      <div class="painwrap"><svg viewBox="0 0 120 190" role="group" aria-label="Body map">${REGIONS.map(r=>r.el.replace('/>',` class="region ${l.pain[r.id]?'on':''} ${S.painSel===r.id?'sel':''}" data-act="region" data-v="${r.id}" role="button" tabindex="0" aria-label="${r.label}, pain ${l.pain[r.id]||0}"/>`)).join('')}</svg>
-      <div class="stack" style="gap:6px;min-width:0"><b>${painSel.label}</b><div class="row between"><span class="tiny muted">0 none</span><span class="num" style="font-size:22px;font-weight:800;color:var(--period)">${l.pain[S.painSel]||0}</span><span class="tiny muted">10 worst</span></div><input type="range" id="pain" min="0" max="10" step="1" value="${l.pain[S.painSel]||0}" aria-label="Pain for ${painSel.label}"><span class="tiny muted">${Object.entries(l.pain).filter(e=>e[1]).map(([k,x])=>REGIONS.find(r=>r.id===k).label+' '+x).join(' · ')||'No pain logged'}</span></div></div></div>
-    <div class="lgroup"><div class="lbl">Mood</div>${scale('mood','Low','Great')}</div>
-    <div class="lgroup"><div class="lbl">Energy</div>${scale('energy','Exhausted','Energetic')}</div>
-    <div class="lgroup"><div class="lbl">Sleep quality</div>${scale('sleep','Poor','Restful')}</div>
-    ${conceive ? '' : mucusBlock}
-    ${conceive ? '' : bbtBlock('Temperature','optional')}
-    <div class="lgroup"><div class="lbl">Tags</div><div class="chips">${TAGS.map(t=>`<button class="chip" data-act="tag" data-v="${t}" aria-pressed="${l.tags.includes(t)}">${t}</button>`).join('')}<button class="chip sugg">+ New tag</button></div></div>
-    <div class="lgroup"><div class="lbl">Note</div><textarea id="note" rows="2" placeholder="Anything else worth remembering">${l.note||''}</textarea></div>
-    <button class="nothing" data-act="nothing" aria-pressed="${!!l.nothingElse}">${l.nothingElse?'✓ Marked: nothing else today':'Nothing else today'}</button>
-    <p class="tiny muted" style="margin:-8px 4px 0">Helps Cyclus tell "no symptoms" apart from "not logged".</p>
-    <button class="btn primary block" data-act="close">Done</button>
+    <div class="lgroup"><div class="lbl"><span>${t('pinned')}</span><button class="tiny" style="color:var(--period);font-weight:600">${t('edit')}</button></div><div class="chips">${PINNED.map(s=>`<button class="chip" data-act="sym" data-v="${s}" aria-pressed="${has(s)}">${sym(s)}</button>`).join('')}${conceive?`<button class="chip" data-act="sex" aria-pressed="${!!l.sex}">${t('sex')}</button>`:''}</div></div>
+    ${sugg.length?`<div class="lgroup"><div class="lbl">${t('often')}</div><div class="chips">${sugg.map(s=>`<button class="chip sugg" data-act="sym" data-v="${s}" aria-pressed="${has(s)}">${sym(s)}</button>`).join('')}</div></div>`:''}
+    ${conceive ? mucusBlock + bbtBlock(t('bbtL'),t('bbtHint')) : ''}
+    <div class="lgroup"><div class="lbl">${t('moreSym')}</div><div class="chips">${others.map(s=>`<button class="chip" data-act="sym" data-v="${s}" aria-pressed="${has(s)}">${sym(s)}</button>`).join('')}</div></div>
+    <div class="lgroup"><div class="lbl"><span>${t('painL')}</span><span>${t('painHint')}</span></div>
+      <div class="painwrap"><svg viewBox="0 0 120 190" role="group" aria-label="${t('bodyMap')}">${REGIONS.map(r=>r.el.replace('/>',` class="region ${l.pain[r.id]?'on':''} ${S.painSel===r.id?'sel':''}" data-act="region" data-v="${r.id}" role="button" tabindex="0" aria-label="${regL(r.id)}: ${l.pain[r.id]||0}"/>`)).join('')}</svg>
+      <div class="stack" style="gap:6px;min-width:0"><b>${regL(S.painSel)}</b><div class="row between"><span class="tiny muted">${t('painNone')}</span><span class="num" style="font-size:22px;font-weight:800;color:var(--period)">${l.pain[S.painSel]||0}</span><span class="tiny muted">${t('painMax')}</span></div><input type="range" id="pain" min="0" max="10" step="1" value="${l.pain[S.painSel]||0}" aria-label="${t('painL')}: ${regL(S.painSel)}"><span class="tiny muted">${painList}</span></div></div></div>
+    <div class="lgroup"><div class="lbl">${t('mood')}</div>${scale('mood',t('moodLo'),t('moodHi'))}</div>
+    <div class="lgroup"><div class="lbl">${t('energy')}</div>${scale('energy',t('enLo'),t('enHi'))}</div>
+    <div class="lgroup"><div class="lbl">${t('sleep')}</div>${scale('sleep',t('slLo'),t('slHi'))}</div>
+    ${conceive ? '' : mucusBlock + bbtBlock(t('tempL'),t('optional'))}
+    <div class="lgroup"><div class="lbl">${t('tags')}</div><div class="chips">${TAGS.map(x=>`<button class="chip" data-act="tag" data-v="${x}" aria-pressed="${l.tags.includes(x)}">${tagL(x)}</button>`).join('')}<button class="chip sugg">${t('newTag')}</button></div></div>
+    <div class="lgroup"><div class="lbl">${t('note')}</div><textarea id="note" rows="2" placeholder="${t('notePh')}">${l.note||''}</textarea></div>
+    <button class="nothing" data-act="nothing" aria-pressed="${!!l.nothingElse}">${l.nothingElse?t('nothingOn'):t('nothing')}</button>
+    <p class="tiny muted" style="margin:-8px 4px 0">${t('nothingHint')}</p>
+    <button class="btn primary block" data-act="close">${t('done')}</button>
   </div>`;
 }
 function renderDaySheet(){
   const d = S.dayDetail, l = S.logs.get(d), v = vm();
   const bits=[];
   if (l){
-    if (l.flow) bits.push(['Flow', FLOWS.find(f=>f[0]===l.flow)[1]]);
-    if (l.symptoms.length) bits.push(['Symptoms', l.symptoms.join(', ')]);
-    const pe = Object.entries(l.pain||{}).filter(e=>e[1]); if (pe.length) bits.push(['Pain', pe.map(([k,x])=>REGIONS.find(r=>r.id===k).label+' '+x+'/10').join(', ')]);
-    if (l.mood) bits.push(['Mood', l.mood+' / 5']); if (l.energy) bits.push(['Energy', l.energy+' / 5']); if (l.sleep) bits.push(['Sleep', l.sleep+' / 5']);
-    if (l.mucus) bits.push(['Discharge', MUCUS.find(m=>m[0]===l.mucus)[1]]);
-    if (l.lh) bits.push(['LH test', {pos:'Positive',neg:'Negative',surge:'Estrogen surge'}[l.lh]]);
-    if (typeof l.bbt==='number') bits.push(['Temperature', l.bbt.toFixed(2)+' °C']);
-    if (l.tags.length) bits.push(['Tags', l.tags.join(', ')]);
-    if (l.note) bits.push(['Note', l.note]);
+    if (l.flow) bits.push([t('flowL'), flowL(l.flow)]);
+    if (l.symptoms.length) bits.push([t('symptoms'), l.symptoms.map(sym).join(', ')]);
+    const pe = Object.entries(l.pain||{}).filter(e=>e[1]); if (pe.length) bits.push([t('painL'), pe.map(([k,x])=>`${regL(k)} ${x}/10`).join(', ')]);
+    if (l.mood) bits.push([t('mood'), l.mood+' / 5']); if (l.energy) bits.push([t('energy'), l.energy+' / 5']); if (l.sleep) bits.push([t('sleep'), l.sleep+' / 5']);
+    if (l.mucus) bits.push([t('discharge'), mucL(l.mucus)]);
+    if (l.lh) bits.push([t('lhTest'), lhL(l.lh)]);
+    if (typeof l.bbt==='number') bits.push([t('tempL'), fmtT(l.bbt)+' °C']);
+    if (l.tags.length) bits.push([t('tags'), l.tags.map(tagL).join(', ')]);
+    if (l.note) bits.push([t('note'), l.note]);
   }
   let ctx='';
-  if (v.pred && d>TODAY && !v.paused && d>=v.pred.lo && d<=v.pred.hi) ctx = `<span class="badge">Predicted period</span>`;
-  if (v.fertOn && v.fert){ const cd=d-v.fert.cs+1; const fd=v.fert.days[cd-1]; if (fd && cd>=1 && fd.tier>0) ctx += ` <span class="badge fert">${['','Possible','High','Peak'][fd.tier]} fertility (estimate)</span>`; }
-  return `<div class="grab"></div><div class="sheethead"><h3>${fLong.format(asDate(d))}</h3><button data-act="close" style="color:var(--period);font-weight:600">Close</button></div>
+  if (v.pred && d>TODAY && !v.paused && d>=v.pred.lo && d<=v.pred.hi) ctx = `<span class="badge">${t('predPeriod')}</span>`;
+  if (v.fertOn && v.fert){ const cd=d-v.fert.cs+1; const fd=cd>=1?v.fert.days[cd-1]:null; if (fd && fd.tier>0) ctx += ` <span class="badge fert">${t('fertBadge',t('ftAdj'+fd.tier))}</span>`; }
+  return `<div class="grab"></div><div class="sheethead"><h3 style="text-align:left">${F.long.format(asDate(d))}</h3><button class="x" data-act="close">${t('close')}</button></div>
   <div class="sheetbody">${ctx?`<div class="row" style="flex-wrap:wrap">${ctx}</div>`:''}
-    ${bits.length?`<div class="list">${bits.map(([k,x])=>`<div class="li"><div class="t"><span>${k}</span><b>${x}</b></div></div>`).join('')}</div>`:`<div class="card"><p>Nothing logged on this day.</p></div>`}
-    ${l && l.flow ? '<p class="tiny muted">Source: logged in Cyclus</p>':''}
-    ${d<=TODAY?`<div class="row"><button class="btn primary" style="flex:1" data-act="editDay" data-v="${d}">${bits.length?'Edit':'Log this day'}</button><button class="btn secondary" data-act="markStart" data-v="${d}">Period start</button></div>`:''}
+    ${bits.length?`<div class="list">${bits.map(([k,x])=>`<div class="li"><div class="t"><span>${k}</span><b>${x}</b></div></div>`).join('')}</div>`:`<div class="card"><p>${t('dsNothing')}</p></div>`}
+    ${l && l.flow ? `<p class="tiny muted">${t('dsSource')}</p>`:''}
+    ${d<=TODAY?`<div class="row"><button class="btn primary" style="flex:1" data-act="editDay" data-v="${d}">${bits.length?t('edit'):t('logThisDay')}</button><button class="btn secondary" data-act="markStart" data-v="${d}">${t('markStart')}</button></div>`:''}
   </div>`;
 }
 function renderWhySheet(){
   const v = vm(); if (!v.fert) return '';
   const tr = trail(v.pred); const f = v.fert;
-  const steps = tr.map((s,i)=>`<div class="step"><span class="b">${i+1}</span><div><b>${s.label}</b>${s.sub?`<span class="tiny muted">${s.sub}</span><br>`:''}<span class="w">${s.band?`Window ${range(s.f.dateOf(s.band[0]),s.f.dateOf(s.band[1]))}`:'Window unclear'}</span>${i>0&&!s.changed?' <span class="tiny muted">(confirmed the estimate)</span>':''}</div></div>`).join('');
-  const conclusion = f.status==='occurred' ? `Ovulation likely occurred around ${md(f.dateOf(f.mapD))} (${range(f.dateOf(f.hpd[0]),f.dateOf(f.hpd[1]))}).` : `Ovulation most likely ${range(f.dateOf(f.hpd[0]),f.dateOf(f.hpd[1]))}.`;
-  return `<div class="grab"></div><div class="sheethead"><h3>Why this window?</h3><button data-act="close" style="color:var(--period);font-weight:600">Done</button></div>
-  <div class="sheetbody">
-    <div class="trail">${steps}</div>
-    <div class="card"><h3>${conclusion}</h3><p>Each signal you log updates the estimate. LH tests and temperature narrow it the most. Cyclus learns your personal timing from every cycle.</p></div>
-    <p class="tiny muted">Estimates combine your cycle history, LH tests, discharge and temperature. They can be wrong, especially with irregular cycles. Not for birth control.</p>
-  </div>`;
+  const steps = tr.map((s,i)=>`<div class="step"><span class="b">${i+1}</span><div><b>${s.label}</b>${s.sub?`<span class="tiny muted">${s.sub}</span><br>`:''}<span class="w">${s.band?t('windowR',range(s.f.dateOf(s.band[0]),s.f.dateOf(s.band[1]))):t('windowUnclear')}</span>${i>0&&!s.changed?` <span class="tiny muted">${t('confirmed')}</span>`:''}</div></div>`).join('');
+  const conc = f.status==='occurred' ? t('concOcc',md(f.dateOf(f.mapD)),range(f.dateOf(f.hpd[0]),f.dateOf(f.hpd[1]))) : t('concSoon',range(f.dateOf(f.hpd[0]),f.dateOf(f.hpd[1])));
+  return `<div class="grab"></div><div class="sheethead"><h3 style="text-align:left">${t('whyT')}</h3><button class="x" data-act="close">${t('done')}</button></div>
+  <div class="sheetbody"><div>${steps}</div>
+    <div class="card"><h3>${conc}</h3><p>${t('whyBody')}</p></div>
+    <p class="tiny muted">${t('whyFoot')}</p></div>`;
 }
 function renderMethodSheet(){
-  return `<div class="grab"></div><div class="sheethead"><h3>How predictions work</h3><button data-act="close" style="color:var(--period);font-weight:600">Done</button></div>
-  <div class="sheetbody"><div class="card"><p style="color:var(--ink)">Cyclus looks at the length of your recent cycles, counting the newest ones more. It shows a range where your next period is likely to start, about 8 times out of 10.</p></div>
-  <div class="card"><p style="color:var(--ink)">With few cycles the range is wide on purpose. It narrows as you log more. Unusually long cycles, for example from a missed log, are asked about instead of silently counted.</p></div>
-  <div class="card"><p style="color:var(--ink)">Everything is calculated on your iPhone. Cyclus never receives your data.</p></div></div>`;
+  return `<div class="grab"></div><div class="sheethead"><h3 style="text-align:left">${t('methodT')}</h3><button class="x" data-act="close">${t('done')}</button></div>
+  <div class="sheetbody">${t('method').map(x=>`<div class="card"><p style="color:var(--ink)">${x}</p></div>`).join('')}</div>`;
 }
 function renderEraseSheet(){
-  const ok = S.eraseText.trim().toUpperCase()==='ERASE';
-  return `<div class="grab"></div><div class="sheethead"><h3>Erase everything</h3><button data-act="close" style="color:var(--period);font-weight:600">Cancel</button></div>
+  const ok = S.eraseText.trim().toUpperCase()===t('eraseWord');
+  return `<div class="grab"></div><div class="sheethead"><h3 style="text-align:left">${t('eraseT')}</h3><button class="x" data-act="close">${t('cancel')}</button></div>
   <div class="sheetbody">
-    <div class="list"><div class="li"><div class="t"><b>✓ All Cyclus data on this iPhone</b></div></div>
-    <div class="li"><div class="t"><b>✓ Data Cyclus wrote to Apple Health</b><span>Can be switched off in the app</span></div></div>
-    <div class="li"><div class="t"><b>✗ Can't erase</b><span>Older iCloud or computer backups, exports and PDFs you shared, Health entries from other apps</span></div></div></div>
-    <label class="small" for="erase">Type ERASE to confirm</label>
-    <input class="field" id="erase" autocomplete="off" value="${S.eraseText}" placeholder="ERASE">
-    <button class="btn primary block" data-act="doErase" ${ok?'':'disabled style="opacity:.4"'}>Erase everything</button>
+    <div class="list"><div class="li"><div class="t"><b>${t('er1')}</b></div></div><div class="li"><div class="t"><b>${t('er2')}</b><span>${t('er2s')}</span></div></div><div class="li"><div class="t"><b>${t('er3')}</b><span>${t('er3s')}</span></div></div></div>
+    <label class="small" for="erase">${t('typeToConfirm',t('eraseWord'))}</label>
+    <input class="field" id="erase" autocomplete="off" value="${S.eraseText}" placeholder="${t('eraseWord')}">
+    <button class="btn primary block" data-act="doErase" ${ok?'':'disabled style="opacity:.4"'}>${t('eraseT')}</button>
   </div>`;
 }
 
 /* ============ pushed screens ============ */
-function sw(path, on, label){ return `<button class="switch" role="switch" aria-checked="${on}" aria-label="${label}" data-act="toggle" data-v="${path}"></button>`; }
+const sw = (path,on,label) => `<button class="switch" role="switch" aria-checked="${on}" aria-label="${label}" data-act="toggle" data-v="${path}"></button>`;
 function renderPrivacy(){
   const P = S.privacy, hk = P.hk;
-  const inHealth = Object.entries({flow:'Flow',spotting:'Spotting',symptoms:'Symptoms',bbt:'Temperature',mood:'Mood',mucus:'Discharge',lh:'LH tests',sex:'Sexual activity',contra:'Contraception'}).filter(([k])=>hk[k]).map(e=>e[1]);
-  const hkRow = (k,label,warn) => `<div class="li"><div class="t"><b>${label}</b>${warn?`<span>${warn}</span>`:''}</div>${sw('hk.'+k, hk[k], label+' in Apple Health')}</div>`;
-  return `<div class="pushhead"><button data-act="pop">${I.back}Today</button></div>
-  <div class="pushbody"><h2>Privacy</h2>
-    <div class="sec"><div class="lbl">Where your data is</div><div class="list">
-      <div class="li"><span class="ic" style="background:var(--success)">${I.phone}</span><div class="t"><b>On this iPhone</b><span>Encrypted while your phone is locked</span></div></div>
-      <div class="li"><span class="ic" style="background:var(--period)">${I.heart}</span><div class="t"><b>In Apple Health</b><span>${inHealth.join(', ')||'Nothing'}</span></div></div>
-      <div class="li"><span class="ic" style="background:#4A6FA5">${I.cloud}</span><div class="t"><b>In backups</b><span>${P.deviceOnly?'Device only. Not in any backup.':'Included. With iCloud Backup, Apple holds the keys unless Advanced Data Protection is on.'}</span></div></div>
-      <div class="li"><span class="ic" style="background:var(--mid)">${I.doc}</span><div class="t"><b>Exports you've made</b><span>2, last on Nov 3. We can't delete copies you shared.</span></div></div>
-    </div><p class="tiny muted" style="padding:0 4px">We never receive your data. There are no Cyclus servers.</p></div>
-    <div class="sec"><div class="lbl">Protection</div><div class="list">
-      <div class="li"><div class="t"><b>Lock with Face ID</b></div>${sw('appLock',P.appLock,'Lock with Face ID')}</div>
-      <div class="li"><div class="t"><b>Cyclus PIN</b><span>A code only for this app, separate from your phone passcode</span></div>${sw('pin',P.pin,'Cyclus PIN')}</div>
-      ${P.pin?`<div class="li"><div class="t"><b>PIN only, no Face ID</b><span>Useful if someone else knows your phone passcode</span></div>${sw('pinOnly',P.pinOnly,'PIN only')}</div>`:''}
+  const names = {flow:'hkFlow',spotting:'hkSpot',symptoms:'hkSym',bbt:'hkTemp',mood:'hkMood',mucus:'hkMucus',lh:'hkLh',sex:'hkSex',contra:'hkContra'};
+  const inHealth = Object.keys(names).filter(k=>hk[k]).map(k=>t(names[k]));
+  const hkRow = (k,warn) => `<div class="li"><div class="t"><b>${t(names[k])}</b>${warn?`<span>${t(warn)}</span>`:''}</div>${sw('hk.'+k, hk[k], t(names[k]))}</div>`;
+  return `<div class="pushhead"><button data-act="pop">${I.back}${t('back')}</button></div>
+  <div class="pushbody"><h2>${t('privT')}</h2>
+    <div class="sec"><div class="lbl">${t('whereData')}</div><div class="list">
+      <div class="li"><span class="ic" style="background:var(--success)">${I.phone}</span><div class="t"><b>${t('onPhone')}</b><span>${t('onPhoneS')}</span></div></div>
+      <div class="li"><span class="ic" style="background:#B3264E">${I.heart}</span><div class="t"><b>${t('inHealth')}</b><span>${inHealth.join(', ')||t('nothingW')}</span></div></div>
+      <div class="li"><span class="ic" style="background:#4A6FA5">${I.cloud}</span><div class="t"><b>${t('inBackups')}</b><span>${P.deviceOnly?t('bkDevice'):t('bkIncl')}</span></div></div>
+      <div class="li"><span class="ic" style="background:#8A7F76">${I.doc}</span><div class="t"><b>${t('exportsT')}</b><span>${t('exportsS')}</span></div></div>
+    </div><p class="tiny muted" style="padding:0 4px;margin:0">${t('noServers')}</p></div>
+    <div class="sec"><div class="lbl">${t('protection')}</div><div class="list">
+      <div class="li"><div class="t"><b>${t('faceLock')}</b></div>${sw('appLock',P.appLock,t('faceLock'))}</div>
+      <div class="li"><div class="t"><b>${t('pinT')}</b><span>${t('pinS')}</span></div>${sw('pin',P.pin,t('pinT'))}</div>
+      ${P.pin?`<div class="li"><div class="t"><b>${t('pinOnlyT')}</b><span>${t('pinOnlyS')}</span></div>${sw('pinOnly',P.pinOnly,t('pinOnlyT'))}</div>`:''}
     </div></div>
-    <div class="sec"><div class="lbl">Visibility</div><div class="list">
-      <div class="li"><div class="t"><b>Discreet notifications</b><span>${P.discreet?'Shows "Cyclus · Check-in"':'Shows details like "Your period may start soon"'}</span></div>${sw('discreet',P.discreet,'Discreet notifications')}</div>
-      <div class="li"><div class="t"><b>Details on Lock Screen widget</b><span>${P.lockWidget?'Shows cycle day and next period':'Hidden. Shows only an abstract ring.'}</span></div>${sw('lockWidget',P.lockWidget,'Details on Lock Screen widget')}</div>
+    <div class="sec"><div class="lbl">${t('visibility')}</div><div class="list">
+      <div class="li"><div class="t"><b>${t('discreetT')}</b><span>${P.discreet?t('discreetOn'):t('discreetOff')}</span></div>${sw('discreet',P.discreet,t('discreetT'))}</div>
+      <div class="li"><div class="t"><b>${t('lockWT')}</b><span>${P.lockWidget?t('lockWOn'):t('lockWOff')}</span></div>${sw('lockWidget',P.lockWidget,t('lockWT'))}</div>
     </div></div>
     <div class="sec"><div class="lbl">Apple Health</div><div class="list">
-      ${hkRow('flow','Flow')}${hkRow('symptoms','Symptoms')}${hkRow('bbt','Temperature')}${hkRow('mucus','Discharge')}${hkRow('lh','LH tests','Apple Health has no separate lock')}${hkRow('sex','Sexual activity','People you share Health data with may see this')}${hkRow('contra','Contraception','People you share Health data with may see this')}
+      ${hkRow('flow')}${hkRow('symptoms')}${hkRow('bbt')}${hkRow('mucus')}${hkRow('lh','hkNoLock')}${hkRow('sex','hkShared')}${hkRow('contra','hkShared')}
     </div></div>
-    <div class="sec"><div class="lbl">Backups</div><div class="list">
-      <div class="li"><div class="t"><b>Device only</b><span>Exclude Cyclus from iPhone backups. If you lose this phone, data not in Apple Health or an export is gone.</span></div>${sw('deviceOnly',P.deviceOnly,'Device only')}</div>
-      <button class="li" data-act="toast" data-v="Encrypted backup saved (prototype)"><div class="t"><b style="color:var(--period)">Create encrypted backup</b><span>Last backup 34 days ago</span></div>${I.chev}</button>
+    <div class="sec"><div class="lbl">${t('backups')}</div><div class="list">
+      <div class="li"><div class="t"><b>${t('devOnlyT')}</b><span>${t('devOnlyS')}</span></div>${sw('deviceOnly',P.deviceOnly,t('devOnlyT'))}</div>
+      <button class="li" data-act="toast" data-v="tBackup"><div class="t"><b style="color:var(--period)">${t('encBk')}</b><span>${t('encBkS')}</span></div>${I.chev}</button>
     </div></div>
-    <div class="list"><button class="li" data-act="sheet" data-v="erase"><span class="ic" style="background:var(--period)">${I.trash}</span><div class="t"><b style="color:var(--period)">Erase everything</b></div></button></div>
+    <div class="list"><button class="li" data-act="sheet" data-v="erase"><span class="ic" style="background:#B3264E">${I.trash}</span><div class="t"><b style="color:var(--period)">${t('eraseT')}</b></div></button></div>
   </div>`;
 }
 function renderSettings(){
   const ep = S.episode ? S.episode.kind : 'none';
-  const eps = [['none','None of these'],['hbc','Hormonal birth control'],['preg','Pregnant'],['pp','Postpartum or breastfeeding'],['peri','Perimenopause'],['pcos','PCOS'],['endo','Endometriosis'],['t','Testosterone']];
-  return `<div class="pushhead"><button data-act="pop">${I.back}Today</button></div>
-  <div class="pushbody"><h2>Settings</h2>
-    <div class="sec"><div class="lbl">Goal</div><div class="seg" role="group" aria-label="Goal">
-      <button data-act="mode" data-v="track" aria-pressed="${S.mode==='track'}">Track my cycle</button>
-      <button data-act="mode" data-v="conceive" aria-pressed="${S.mode==='conceive'}">Trying to get pregnant</button></div>
-      ${S.mode==='track'?`<div class="list"><div class="li"><div class="t"><b>Show fertile window</b><span>An estimate on Today and in the calendar. Not for birth control.</span></div>${sw('showFert',S.showFertTrack,'Show fertile window')}</div></div>`:''}
+  return `<div class="pushhead"><button data-act="pop">${I.back}${t('back')}</button></div>
+  <div class="pushbody"><h2>${t('setT')}</h2>
+    <div class="sec"><div class="lbl">${t('langT')}</div><div class="seg" role="group" aria-label="${t('langT')}">
+      <button data-act="lang" data-v="de" aria-pressed="${S.lang==='de'}">Deutsch</button><button data-act="lang" data-v="en" aria-pressed="${S.lang==='en'}">English</button></div></div>
+    <div class="sec"><div class="lbl">${t('goal')}</div><div class="seg" role="group" aria-label="${t('goal')}">
+      <button data-act="mode" data-v="track" aria-pressed="${S.mode==='track'}">${t('goalTrack')}</button>
+      <button data-act="mode" data-v="conceive" aria-pressed="${S.mode==='conceive'}">${t('goalConceive')}</button></div>
+      ${S.mode==='track'?`<div class="list"><div class="li"><div class="t"><b>${t('showFertT')}</b><span>${t('showFertS')}</span></div>${sw('showFert',S.showFertTrack,t('showFertT'))}</div></div>`:''}
     </div>
-    <div class="sec"><div class="lbl">Anything affecting your cycle?</div><div class="list">
-      ${eps.map(([k,l])=>`<button class="li" data-act="episode" data-v="${k}"><div class="t"><b>${l}</b></div>${ep===k||(k==='none'&&!S.episode)?'<span style="color:var(--period);font-weight:700">✓</span>':''}</button>`).join('')}
-    </div><p class="tiny muted" style="padding:0 4px">Some of these pause predictions or widen the ranges, so the app never says "late" when it isn't.</p></div>
-    <div class="sec"><div class="lbl">More</div><div class="list">
-      <button class="li" data-act="toast" data-v="Notification settings (prototype)"><span class="ic" style="background:var(--warning)">${I.bell}</span><div class="t"><b>Notifications</b><span>Period soon · discreet</span></div>${I.chev}</button>
-      <button class="li" data-act="push" data-v="privacy"><span class="ic" style="background:var(--success)">${I.shield}</span><div class="t"><b>Privacy</b></div>${I.chev}</button>
-      <button class="li" data-act="toast" data-v="Language: English, Deutsch (prototype)"><span class="ic" style="background:#4A6FA5">${I.user}</span><div class="t"><b>Language</b><span>English</span></div>${I.chev}</button>
+    <div class="sec"><div class="lbl">${t('affecting')}</div><div class="list">
+      ${['none','hbc','preg','pp','peri','pcos','endo','t'].map(k=>`<button class="li" data-act="episode" data-v="${k}"><div class="t"><b>${t('ep_'+k)}</b></div>${ep===k?'<span style="color:var(--period);font-weight:700">✓</span>':''}</button>`).join('')}
+    </div><p class="tiny muted" style="padding:0 4px;margin:0">${t('epNote')}</p></div>
+    <div class="sec"><div class="lbl">${t('more')}</div><div class="list">
+      <button class="li" data-act="toast" data-v="tNotif"><span class="ic" style="background:#8F5600">${I.bell}</span><div class="t"><b>${t('notifT')}</b><span>${t('notifS')}</span></div>${I.chev}</button>
+      <button class="li" data-act="push" data-v="privacy"><span class="ic" style="background:#2E7D5B">${I.shield}</span><div class="t"><b>${t('privT')}</b></div>${I.chev}</button>
     </div></div>
-    <p class="tiny muted" style="padding:0 4px">Cyclus helps you record periods, symptoms and wellbeing, see patterns, estimate fertile days as an aid to conception, and share a summary with your healthcare provider. Not intended for contraception. Does not diagnose any condition.</p>
+    <p class="tiny muted" style="padding:0 4px;margin:0">${t('purpose')}</p>
   </div>`;
 }
 function renderReport(){
   const R = S.report, v = vm();
-  const inc = [['bleed','Bleeding calendar'],['lengths','Cycle and period lengths'],['sym','Symptoms'],['pain','Pain'],['mood','Mood and energy'],['temp','Temperature'],['notes','Notes'],['contra','Contraception'],['sex','Sexual activity']];
+  const inc = ['bleed','lengths','sym','pain','mood','temp','notes','contra','sex'];
+  const qs = R.questions ?? t('qDefault');
   let preview='';
   if (R.preview && v.pred){
-    const p=v.pred; const lens=p.lens.slice(-R.range); const pl = v.starts.slice(-R.range-1,-1).map(s=>periodDays(s).length);
+    const lens=v.pred.lens.slice(-R.range); const pl = v.starts.slice(-R.range-1,-1).map(s=>periodDays(s).length);
     const de = R.lang==='DE';
-    const t = de ? {title:'Zyklusbericht',cyc:'Zyklen',len:'Zykluslänge (Median, Spanne)',per:'Periodendauer (Median, Spanne)',top:'Häufigste Symptome',pain:'Max. Schmerz (Median)',ref:'Referenz FIGO 2018: Häufigkeit 24–38 Tage, Dauer ≤ 8 Tage, Schwankung ≤ 7–9 Tage.',q:'Fragen',foot:'Vertrauliche Gesundheitsinformation · Selbst erfasste Daten aus Cyclus · Keine Diagnose',d:'Tage'}
-                 : {title:'Cycle summary',cyc:'Cycles',len:'Cycle length (median, range)',per:'Period length (median, range)',top:'Most frequent symptoms',pain:'Max pain per period (median)',ref:'Reference FIGO 2018: frequency 24–38 days, duration ≤ 8 days, variation ≤ 7–9 days.',q:'Questions',foot:'Confidential health information · Self-reported records from Cyclus · Not a diagnosis',d:'days'};
+    const T = de ? {title:'Zyklusbericht',name:'Name',cyc:'Zyklen',len:'Zykluslänge (Median, Spanne)',per:'Periodendauer (Median, Spanne)',top:'Häufigste Symptome',pain:'Max. Schmerz pro Periode (Median)',ref:'Referenz FIGO 2018: Häufigkeit 24–38 Tage, Dauer ≤ 8 Tage, Schwankung ≤ 7–9 Tage.',q:'Fragen',foot:'Vertrauliche Gesundheitsinformation · Selbst erfasste Daten aus Cyclus · Keine Diagnose',d:'Tage',loc:'de-DE',sym:0}
+                 : {title:'Cycle summary',name:'Name',cyc:'Cycles',len:'Cycle length (median, range)',per:'Period length (median, range)',top:'Most frequent symptoms',pain:'Max pain per period (median)',ref:'Reference FIGO 2018: frequency 24–38 days, duration ≤ 8 days, variation ≤ 7–9 days.',q:'Questions',foot:'Confidential health information · Self-reported records from Cyclus · Not a diagnosis',d:'days',loc:'en-US',sym:1};
+    const pmd = n => new Intl.DateTimeFormat(T.loc,{day:'numeric',month:'short',year:'numeric',timeZone:'UTC'}).format(asDate(n));
+    const pmy = n => new Intl.DateTimeFormat(T.loc,{month:'long',year:'numeric',timeZone:'UTC'}).format(asDate(n));
     const med = a => { const s=[...a].sort((x,y)=>x-y); return s[Math.floor(s.length/2)]; };
-    const counts={}; S.logs.forEach((l,d)=>{ if (d>=v.starts[Math.max(0,v.starts.length-R.range-1)]) l.symptoms.forEach(s=>counts[s]=(counts[s]||0)+1); });
-    const top = Object.entries(counts).sort((a,b)=>b[1]-a[1]).slice(0,4).map(e=>`${e[0]} (${e[1]})`).join(', ');
+    const from = v.starts[Math.max(0,v.starts.length-R.range-1)];
+    const counts={}; S.logs.forEach((l,d)=>{ if (d>=from) l.symptoms.forEach(s=>counts[s]=(counts[s]||0)+1); });
+    const top = Object.entries(counts).sort((a,b)=>b[1]-a[1]).slice(0,4).map(e=>`${SYM[e[0]][T.sym]} (${e[1]})`).join(', ');
     const months=[]; const lastM = asDate(TODAY).getUTCMonth()+1;
-    for (let k=2;k>=0;k--){ let mm=lastM-k, yy=2026; if (mm<1){mm+=12;yy--;} const f=D(yy,mm,1); const dim=new Date(Date.UTC(yy,mm,0)).getUTCDate(); let cells=''; for (let i=0;i<31;i++){ const l=S.logs.get(f+i); const b = i<dim && l && isBleed(l) ? (l.flow==='heavy'?3:l.flow==='medium'?2:1) : 0; cells+=`<i class="${b?'b'+b:''}"></i>`; } months.push(`<div><div style="margin-bottom:2px">${fMY.format(asDate(f))}</div><div class="mini">${cells}</div></div>`); }
-    preview = `<div class="sec"><div class="lbl">Preview · page 1 of 3</div><div class="paper" aria-label="PDF preview">
-      <div style="display:flex;justify-content:space-between"><h4>${t.title}</h4><span>${md(v.starts[Math.max(0,v.starts.length-R.range-1)])} – ${md(TODAY)}</span></div>
-      <div>Name: ______________________</div>
-      <table>${R.inc.lengths?`<tr><td>${t.cyc}</td><td>${lens.length}</td></tr><tr><td>${t.len}</td><td>${med(lens)} ${t.d} (${Math.min(...lens)}–${Math.max(...lens)})</td></tr><tr><td>${t.per}</td><td>${med(pl)} ${t.d} (${Math.min(...pl)}–${Math.max(...pl)})</td></tr>`:''}
-      ${R.inc.sym?`<tr><td>${t.top}</td><td>${top}</td></tr>`:''}${R.inc.pain?`<tr><td>${t.pain}</td><td>6 / 10</td></tr>`:''}</table>
-      <div class="ref">${t.ref}</div>
+    for (let k=2;k>=0;k--){ let mm=lastM-k, yy=2026; if (mm<1){mm+=12;yy--;} const f=D(yy,mm,1); const dim=new Date(Date.UTC(yy,mm,0)).getUTCDate(); let cells=''; for (let i=0;i<31;i++){ const l=S.logs.get(f+i); const b = i<dim && l && isBleed(l) ? (l.flow==='heavy'?3:l.flow==='medium'?2:1) : 0; cells+=`<i class="${b?'b'+b:''}"></i>`; } months.push(`<div><div style="margin-bottom:2px">${pmy(f)}</div><div class="mini">${cells}</div></div>`); }
+    preview = `<div class="sec"><div class="lbl">${t('prevLbl')}</div><div class="paper" lang="${de?'de':'en'}">
+      <div style="display:flex;justify-content:space-between;gap:8px"><h4>${T.title}</h4><span>${pmd(from)} – ${pmd(TODAY)}</span></div>
+      <div>${T.name}: ______________________</div>
+      <table>${R.inc.lengths?`<tr><td>${T.cyc}</td><td>${lens.length}</td></tr><tr><td>${T.len}</td><td>${med(lens)} ${T.d} (${Math.min(...lens)}–${Math.max(...lens)})</td></tr><tr><td>${T.per}</td><td>${med(pl)} ${T.d} (${Math.min(...pl)}–${Math.max(...pl)})</td></tr>`:''}
+      ${R.inc.sym?`<tr><td>${T.top}</td><td>${top}</td></tr>`:''}${R.inc.pain?`<tr><td>${T.pain}</td><td>6 / 10</td></tr>`:''}</table>
+      <div class="ref">${T.ref}</div>
       ${R.inc.bleed?months.join(''):''}
-      ${R.questions?`<div><b>${t.q}</b><br>${R.questions.replace(/</g,'&lt;')}</div>`:''}
-      <div class="pf">${t.foot} · 1/3</div></div></div>
-      <button class="btn primary block" data-act="toast" data-v="Opens the iOS share sheet in the app">Share PDF</button>`;
+      ${qs?`<div><b>${T.q}</b><br>${qs.replace(/</g,'&lt;')}</div>`:''}
+      <div class="pf">${T.foot} · 1/3</div></div></div>
+      <button class="btn primary block" data-act="toast" data-v="tShare">${t('sharePdf')}</button>`;
   }
-  return `<div class="pushhead"><button data-act="pop">${I.back}Insights</button></div>
-  <div class="pushbody"><h2>Doctor Visit Pack</h2>
-    <p class="muted" style="margin:0">A summary for your appointment. You choose what's included. Nothing is uploaded.</p>
-    <div class="sec"><div class="lbl">Time span</div><div class="seg">${[3,6,12].map(n=>`<button data-act="rRange" data-v="${n}" aria-pressed="${R.range===n}">Last ${n} cycles</button>`).join('')}</div></div>
-    <div class="sec"><div class="lbl">Include</div><div class="list">${inc.map(([k,l])=>`<div class="li"><div class="t"><b>${l}</b>${['sex','contra','notes'].includes(k)?'<span>Off by default</span>':''}</div>${sw('rinc.'+k,R.inc[k],l)}</div>`).join('')}</div></div>
-    <div class="sec"><div class="lbl">Questions for my appointment</div><textarea id="rq" rows="2">${R.questions}</textarea></div>
-    <div class="sec"><div class="lbl">PDF language</div><div class="seg"><button data-act="rLang" data-v="EN" aria-pressed="${R.lang==='EN'}">English</button><button data-act="rLang" data-v="DE" aria-pressed="${R.lang==='DE'}">Deutsch</button></div></div>
-    <button class="btn ${R.preview?'secondary':'primary'} block" data-act="rPreview">${R.preview?'Update preview':'Preview PDF'}</button>
+  return `<div class="pushhead"><button data-act="pop">${I.back}${t('back')}</button></div>
+  <div class="pushbody"><h2>${t('reportT')}</h2>
+    <p class="muted" style="margin:0">${t('repIntro')}</p>
+    <div class="sec"><div class="lbl">${t('timeSpan')} · ${t('cyclesW')}</div><div class="seg">${[3,6,12].map(n=>`<button data-act="rRange" data-v="${n}" aria-pressed="${R.range===n}">${t('lastN',n)}</button>`).join('')}</div></div>
+    <div class="sec"><div class="lbl">${t('include')}</div><div class="list">${inc.map(k=>`<div class="li"><div class="t"><b>${t('inc_'+k)}</b>${['sex','contra','notes'].includes(k)?`<span>${t('offDefault')}</span>`:''}</div>${sw('rinc.'+k,R.inc[k],t('inc_'+k))}</div>`).join('')}</div></div>
+    <div class="sec"><div class="lbl">${t('questions')}</div><textarea id="rq" rows="2">${qs}</textarea></div>
+    <div class="sec"><div class="lbl">${t('pdfLang')}</div><div class="seg"><button data-act="rLang" data-v="DE" aria-pressed="${R.lang==='DE'}">Deutsch</button><button data-act="rLang" data-v="EN" aria-pressed="${R.lang==='EN'}">English</button></div></div>
+    <button class="btn ${R.preview?'secondary':'primary'} block" data-act="rPreview">${R.preview?t('updatePrev'):t('previewBtn')}</button>
     ${preview}
   </div>`;
 }
@@ -1072,51 +1172,72 @@ function renderReport(){
 function renderOnb(){
   const st = S.onb; const step = st.step;
   const dots = `<div class="dots">${[0,1,2,3,4,5].map(i=>`<i class="${i===Math.min(step,5)?'on':''}"></i>`).join('')}</div>`;
-  const skip = `<button class="btn secondary block" data-act="onbNext">Skip</button>`;
   let body='';
-  if (step===0) body = `<div class="grow"></div><div class="glyph" style="color:#fff">${I.ring}</div><h2>Your cycle, understood. Never uploaded.</h2><p>A private cycle and symptom diary for iPhone.</p><div class="grow"></div><button class="btn primary block" data-act="onbNext">Get started</button>`;
-  if (step===1) body = `<h2>Private by design</h2><div class="promise">
-     <div>${I.phone}<span><b>No account. No servers.</b><br><span class="muted">Your data stays on your iPhone.</span></span></div>
-     <div>${I.shield}<span><b>We never see your data.</b><br><span class="muted">No ads, no trackers, no analytics.</span></span></div>
-     <div>${I.heart}<span><b>You decide what goes into Apple Health.</b><br><span class="muted">Sensitive items stay out unless you turn them on.</span></span></div></div>
-     <p class="small">Your iPhone backup includes Cyclus. You can change that in Privacy.</p><div class="grow"></div>${dots}<button class="btn primary block" data-act="onbNext">Continue</button>`;
-  if (step===2) body = st.importing ? `<h2>Importing from Apple Health</h2><p>Reading periods, symptoms and temperature.</p><div class="bar"><i id="ibar"></i></div><p class="small" id="imsg">Looking for periods…</p><div class="grow"></div>${dots}`
-     : `<h2>Bring your history</h2><p>Import from Apple Health so predictions work from day one. Cyclus only reads. You choose later what it writes.</p><div class="grow"></div>${dots}<button class="btn primary block" data-act="onbImport">Import from Apple Health</button>${skip}`;
-  if (step===3) body = `<h2>When did your last period start?</h2><input type="date" class="field" id="lastp" value="2026-11-11" max="2026-11-22" aria-label="Last period start"><p class="small">An estimate is fine. You can change it anytime.</p><div class="grow"></div>${dots}<button class="btn primary block" data-act="onbNext">Continue</button><button class="btn secondary block" data-act="onbNext" data-v="unknown">I don't remember</button>`;
-  if (step===4) body = `<h2>Anything affecting your cycle?</h2><p>This changes how Cyclus predicts. Choose all that apply.</p><div class="chips">${['Trying to get pregnant','Hormonal birth control','Pregnant','Postpartum or breastfeeding','Perimenopause','PCOS','Endometriosis','Testosterone','None of these'].map(x=>`<button class="chip" data-act="onbFactor" data-v="${x}" aria-pressed="${st.factors.includes(x)}">${x}</button>`).join('')}</div>
-     <p class="small">Birth year (optional, stays on your iPhone)</p><select class="field" id="byear" aria-label="Birth year"><option>Prefer not to say</option>${Array.from({length:50},(_,i)=>`<option>${2013-i}</option>`).join('')}</select><div class="grow"></div>${dots}<button class="btn primary block" data-act="onbNext">Continue</button>`;
-  if (step===5) body = `<div class="grow"></div><div class="faceid">${I.faceid}</div><h2>Lock Cyclus with Face ID?</h2><p>Anyone using your phone would need your face or a Cyclus PIN to open it.</p><div class="grow"></div>${dots}<button class="btn primary block" data-act="onbDone" data-v="lock">Turn on</button><button class="btn secondary block" data-act="onbDone">Not now</button>`;
-  return `<div class="onb" role="dialog" aria-label="Welcome">${body}</div>`;
+  if (step===0) body = `<div class="grow"></div><div class="glyph">${I.ring}</div><h2>${t('onb0T')}</h2><p>${t('onb0B')}</p><div class="grow"></div><button class="btn primary block" data-act="onbNext">${t('getStarted')}</button>`;
+  if (step===1) body = `<h2>${t('onb1T')}</h2><div class="promise">
+     <div>${I.phone}<span><b>${t('pr1')}</b><br><span class="muted">${t('pr1s')}</span></span></div>
+     <div>${I.shield}<span><b>${t('pr2')}</b><br><span class="muted">${t('pr2s')}</span></span></div>
+     <div>${I.heart}<span><b>${t('pr3')}</b><br><span class="muted">${t('pr3s')}</span></span></div></div>
+     <p class="small">${t('onb1N')}</p><div class="grow"></div>${dots}<button class="btn primary block" data-act="onbNext">${t('cont')}</button>`;
+  if (step===2) body = st.importing ? `<h2>${t('importing')}</h2><p>${t('importingB')}</p><div class="bar"><i id="ibar"></i></div><p class="small" id="imsg">${t('lookFor')}</p><div class="grow"></div>${dots}`
+     : `<h2>${t('onb2T')}</h2><p>${t('onb2B')}</p><div class="grow"></div>${dots}<button class="btn primary block" data-act="onbImport">${t('importBtn')}</button><button class="btn secondary block" data-act="onbNext">${t('skip')}</button>`;
+  if (step===3) body = `<h2>${t('onb3T')}</h2><input type="date" class="field" id="lastp" value="2026-11-11" max="2026-11-22" aria-label="${t('lastPAria')}"><p class="small">${t('onb3B')}</p><div class="grow"></div>${dots}<button class="btn primary block" data-act="onbNext">${t('cont')}</button><button class="btn secondary block" data-act="onbNext" data-v="unknown">${t('dontRemember')}</button>`;
+  if (step===4) body = `<h2>${t('onb4T')}</h2><p>${t('onb4B')}</p><div class="chips">${['f_conceive','ep_hbc','ep_preg','ep_pp','ep_peri','ep_pcos','ep_endo','ep_t','ep_none'].map(x=>`<button class="chip" data-act="onbFactor" data-v="${x}" aria-pressed="${st.factors.includes(x)}">${t(x)}</button>`).join('')}</div>
+     <label class="small" for="byear">${t('byear')}</label><select class="field" id="byear"><option>${t('noSay')}</option>${Array.from({length:50},(_,i)=>`<option>${2013-i}</option>`).join('')}</select><div class="grow"></div>${dots}<button class="btn primary block" data-act="onbNext">${t('cont')}</button>`;
+  if (step===5) body = `<div class="grow"></div><div class="faceid">${I.faceid}</div><h2>${t('onb5T')}</h2><p>${t('onb5B')}</p><div class="grow"></div>${dots}<button class="btn primary block" data-act="onbDone" data-v="lock">${t('turnOn')}</button><button class="btn secondary block" data-act="onbDone">${t('notNow')}</button>`;
+  return `<div class="onb" role="dialog" aria-label="${t('welcomeDlg')}">${body}</div>`;
 }
-function renderLock(){
-  return `<div class="lock" role="dialog" aria-label="Cyclus is locked"><div class="glyph" style="color:#fff">${I.ring}</div><h2 style="margin:0;font-size:22px">Cyclus is locked</h2><p class="muted" style="margin:0">Your data stays hidden until you unlock.</p><button class="btn primary" data-act="unlock" id="unlockBtn">Unlock with Face ID</button></div>`;
+const renderLock = () => `<div class="lock" role="dialog" aria-label="${t('lockedT')}"><div class="glyph">${I.ring}</div><h2 style="margin:0;font-size:22px">${t('lockedT')}</h2><p class="muted" style="margin:0">${t('lockedB')}</p><button class="btn primary" data-act="unlock" id="unlockBtn">${t('unlockBtn')}</button></div>`;
+
+/* ============ panel ============ */
+const panel = document.getElementById('panel');
+function renderPanel(){
+  const pb = (attr,val,label,on) => `<button class="pbtn" ${attr}="${val}" aria-pressed="${on}">${label}</button>`;
+  panel.innerHTML = `
+    <div class="pgroup"><h1>${t('pTitle')}</h1><p>${t('pIntro')}</p></div>
+    <div class="pgroup"><div class="plabel">${t('pLang')}</div><div class="pbtns">${pb('data-lang','de','Deutsch',S.lang==='de')}${pb('data-lang','en','English',S.lang==='en')}</div></div>
+    <div class="pgroup"><div class="plabel">${t('pScen')}</div>
+      <div class="pbtns">${['day12','expected','period','hbc','empty'].map(k=>pb('data-scen',k,t('sc_'+k),S.scen===k)).join('')}</div>
+      <div class="pbtns">${['conceive','conceive2ww'].map(k=>pb('data-scen',k,t('sc_'+k),S.scen===k)).join('')}</div></div>
+    <div class="pgroup"><div class="plabel">${t('pSim')}</div><div class="pbtns"><button class="pbtn" data-sim="onboarding">${t('simOnb')}</button><button class="pbtn" data-sim="lock">${t('simLock')}</button></div></div>
+    <div class="pgroup"><div class="plabel">${t('pLook')}</div><div class="pbtns">${['system','light','dark'].map(k=>pb('data-theme-set',k,t('th'+k[0].toUpperCase()+k.slice(1)),S.theme===k)).join('')}</div></div>
+    <div class="pgroup"><div class="plabel">${t('pTasks')}</div><ol class="tasks">${t('tasks').map(x=>`<li>${x}</li>`).join('')}</ol></div>
+    <p class="pnote">${t('pNote')}</p>`;
 }
+panel.addEventListener('click', e => {
+  const b = e.target.closest('button'); if (!b) return;
+  if (b.dataset.lang){ S.lang=b.dataset.lang; S.report.lang = S.lang==='de'?'DE':'EN'; setLocale(); }
+  if (b.dataset.scen){ genScenario(b.dataset.scen); S.onb=null; S.lock=false; S.calMonth=[2026,11]; S.report.preview=false; }
+  if (b.dataset.sim==='onboarding'){ genScenario('empty'); S.scen=null; S.onb={step:0,factors:[]}; }
+  if (b.dataset.sim==='lock') S.lock=true;
+  if (b.dataset.themeSet){ S.theme=b.dataset.themeSet; if (S.theme==='system') delete document.documentElement.dataset.theme; else document.documentElement.dataset.theme=S.theme; }
+  render(false);
+});
 
 /* ============ render ============ */
 const app = document.getElementById('app');
 function render(keepScroll=true){
-  const main = app.querySelector('.main'); const st = main ? main.scrollTop : 0;
-  const sheetBody = app.querySelector('.sheet .sheetbody'); const sst = sheetBody ? sheetBody.scrollTop : 0;
-  const pushBody = app.querySelector('.push .pushbody'); const pst = pushBody ? pushBody.scrollTop : 0;
+  const keep = sel => { const el = app.querySelector(sel); return el ? el.scrollTop : 0; };
+  const st = keep('.main'), sst = keep('.sheet .sheetbody'), pst = keep('.push .pushbody');
   const view = S.tab==='today'?renderToday():S.tab==='calendar'?renderCalendar():renderInsights();
-  const sheet = S.layer==='log'?renderLogSheet():S.layer==='day'?renderDaySheet():S.layer==='why'?renderWhySheet():S.layer==='method'?renderMethodSheet():S.layer==='erase'?renderEraseSheet():'';
-  const push = S.push==='privacy'?renderPrivacy():S.push==='settings'?renderSettings():S.push==='report'?renderReport():'';
+  const sheet = {log:renderLogSheet, day:renderDaySheet, why:renderWhySheet, method:renderMethodSheet, erase:renderEraseSheet}[S.layer];
+  const push = {privacy:renderPrivacy, settings:renderSettings, report:renderReport}[S.push];
   app.innerHTML = `
   <div class="statusbar"><span class="num">9:41</span><span class="sb-icons" aria-hidden="true">
     <svg width="18" height="12" viewBox="0 0 18 12" fill="currentColor"><rect x="0" y="8" width="3" height="4" rx="1"/><rect x="5" y="5.5" width="3" height="6.5" rx="1"/><rect x="10" y="3" width="3" height="9" rx="1"/><rect x="15" y="0" width="3" height="12" rx="1"/></svg>
     <svg width="26" height="12" viewBox="0 0 26 12" fill="none"><rect x=".5" y=".5" width="22" height="11" rx="3.5" stroke="currentColor" opacity=".4"/><rect x="2" y="2" width="17" height="8" rx="2" fill="currentColor"/><rect x="24" y="4" width="1.6" height="4" rx=".8" fill="currentColor" opacity=".4"/></svg></span></div>
   <div class="main">${view}</div>
   <nav class="tabbar" aria-label="Tabs">
-    ${[['today','Today',I.today],['calendar','Calendar',I.cal],['insights','Insights',I.ins]].map(([k,l,ic])=>`<button class="tab" data-act="tab" data-v="${k}" ${S.tab===k?'aria-current="page"':''}>${ic}<span>${l}</span></button>`).join('')}
+    ${[['today','tabToday',I.today],['calendar','tabCal',I.cal],['insights','tabIns',I.ins]].map(([k,l,ic])=>`<button class="tab" data-act="tab" data-v="${k}" ${S.tab===k?'aria-current="page"':''}>${ic}<span>${t(l)}</span></button>`).join('')}
   </nav>
-  <button class="fab" data-act="openLog" aria-label="Log today">${I.plus}Log</button>
-  <div class="push ${S.push?'open':''}" ${S.push?'':'aria-hidden="true"'}>${push}</div>
-  <div class="layer ${S.layer?'open':''}"><div class="scrim" data-act="close"></div><div class="sheet" role="dialog" aria-modal="true">${sheet}</div></div>
-  <div class="toast ${S.toast?'show':''}" role="status">${S.toast?`<span>${S.toast.msg}</span>${S.toast.undo?'<button data-act="undo">Undo</button>':''}`:''}</div>
+  <button class="fab" data-act="openLog">${I.plus}${t('fab')}</button>
+  <div class="push ${S.push?'open':''}" ${S.push?'':'aria-hidden="true"'}>${push?push():''}</div>
+  <div class="layer ${S.layer?'open':''}"><div class="scrim" data-act="close"></div><div class="sheet" role="dialog" aria-modal="true">${sheet?sheet():''}</div></div>
+  <div class="toast ${S.toast?'show':''}" role="status">${S.toast?`<span>${t(S.toast.msg)}</span>${S.toast.undo?`<button data-act="undo">${t('undo')}</button>`:''}`:''}</div>
   ${S.onb?renderOnb():''}${S.lock?renderLock():''}`;
   if (keepScroll){ const m=app.querySelector('.main'); if (m) m.scrollTop=st; const sb=app.querySelector('.sheet .sheetbody'); if (sb) sb.scrollTop=sst; const pb=app.querySelector('.push .pushbody'); if (pb) pb.scrollTop=pst; }
-  // ring animation on fresh today render
-  syncPanel();
+  fitRing();
+  renderPanel();
 }
 
 /* ============ toast ============ */
@@ -1124,32 +1245,34 @@ let toastTimer=null;
 function toast(msg, undo){ S.toast={msg, undo}; render(); clearTimeout(toastTimer); toastTimer=setTimeout(()=>{ S.toast=null; render(); }, undo?5000:2400); }
 
 /* ============ actions ============ */
-function snapshot(){ return {logs:new Map([...S.logs].map(([k,v])=>[k,structuredClone(v)])), overrides:new Map(S.overrides)}; }
+const snapshot = () => ({logs:new Map([...S.logs].map(([k,v])=>[k,structuredClone(v)])), overrides:new Map(S.overrides)});
+const restore = s => () => { S.logs=s.logs; S.overrides=s.overrides; };
 app.addEventListener('click', e => {
   const el = e.target.closest('[data-act]'); if (!el || el.disabled) return;
   const a = el.dataset.act, v = el.dataset.v;
+  const edit = fn => { setLog(S.logDate, fn); S.lastChange=true; render(); };
   switch(a){
-    case 'tab': S.tab=v; S.layer=null; render(false); try{ history.replaceState(null,'','#'+v); }catch(_){}; break;
+    case 'tab': S.tab=v; S.layer=null; render(false); try{ history.replaceState(null,'','#'+v); }catch(_){} break;
     case 'openLog': S.logDate=TODAY; S.layer='log'; render(); break;
-    case 'close': S.layer=null; if (S.lastChange){ S.lastChange=null; toast('Saved'); } else render(); break;
+    case 'close': S.layer=null; if (S.lastChange){ S.lastChange=null; toast('tSaved'); } else render(); break;
     case 'logDay': S.logDate=Math.min(TODAY, S.logDate+Number(v)); render(); break;
-    case 'flow': setLog(S.logDate, l=>{ l.flow = l.flow===v?undefined:v; }); S.lastChange=true; render(); break;
-    case 'sym': setLog(S.logDate, l=>{ l.symptoms = l.symptoms.includes(v)? l.symptoms.filter(x=>x!==v) : [...l.symptoms, v]; }); S.lastChange=true; render(); break;
-    case 'tag': setLog(S.logDate, l=>{ l.tags = l.tags.includes(v)? l.tags.filter(x=>x!==v) : [...l.tags, v]; }); S.lastChange=true; render(); break;
-    case 'scale': setLog(S.logDate, l=>{ const k=el.dataset.k, n=Number(v); l[k] = l[k]===n?undefined:n; }); S.lastChange=true; render(); break;
-    case 'mucus': setLog(S.logDate, l=>{ l.mucus = l.mucus===v?undefined:v; }); S.lastChange=true; render(); break;
-    case 'logLh': setLog(S.logDate, l=>{ l.lh = l.lh===v?undefined:v; }); S.lastChange=true; render(); break;
-    case 'sex': setLog(S.logDate, l=>{ l.sex = !l.sex; }); S.lastChange=true; render(); break;
-    case 'nothing': setLog(S.logDate, l=>{ l.nothingElse = !l.nothingElse; }); S.lastChange=true; render(); break;
+    case 'flow': edit(l=>{ l.flow = l.flow===v?undefined:v; }); break;
+    case 'sym': edit(l=>{ l.symptoms = l.symptoms.includes(v)? l.symptoms.filter(x=>x!==v) : [...l.symptoms, v]; }); break;
+    case 'tag': edit(l=>{ l.tags = l.tags.includes(v)? l.tags.filter(x=>x!==v) : [...l.tags, v]; }); break;
+    case 'scale': edit(l=>{ const k=el.dataset.k, n=Number(v); l[k] = l[k]===n?undefined:n; }); break;
+    case 'mucus': edit(l=>{ l.mucus = l.mucus===v?undefined:v; }); break;
+    case 'logLh': edit(l=>{ l.lh = l.lh===v?undefined:v; }); break;
+    case 'sex': edit(l=>{ l.sex = !l.sex; }); break;
+    case 'nothing': edit(l=>{ l.nothingElse = !l.nothingElse; }); break;
     case 'region': S.painSel=v; render(); break;
-    case 'bbt': setLog(S.logDate, l=>{ const base = typeof l.bbt==='number'? l.bbt : 36.40; l.bbt = Math.round((base+Number(v))*100)/100; }); S.lastChange=true; render(); break;
-    case 'quickFlow': { const snap=snapshot(); setLog(TODAY, l=>{ l.flow=v; }); toast(v==='none'?'Marked period as ended':'Flow logged', ()=>{ S.logs=snap.logs; }); break; }
-    case 'periodStart': { const snap=snapshot(); setLog(TODAY, l=>{ l.flow='medium'; }); if (!cycleStarts().includes(TODAY)) S.overrides.set(TODAY,'start'); toast('Period start logged', ()=>{ S.logs=snap.logs; S.overrides=snap.overrides; }); break; }
-    case 'lh': { const snap=snapshot(); setLog(TODAY, l=>{ l.lh = l.lh===v?undefined:v; }); toast(v==='pos'?'Positive LH test logged':'LH test logged', ()=>{ S.logs=snap.logs; }); break; }
-    case 'undo': if (S.toast && S.toast.undo){ S.toast.undo(); } S.toast=null; clearTimeout(toastTimer); render(); break;
+    case 'bbt': edit(l=>{ const base = typeof l.bbt==='number'? l.bbt : 36.40; l.bbt = Math.round((base+Number(v))*100)/100; }); break;
+    case 'quickFlow': { const s=snapshot(); setLog(TODAY, l=>{ l.flow=v; }); toast(v==='none'?'tEnded':'tFlow', restore(s)); break; }
+    case 'periodStart': { const s=snapshot(); setLog(TODAY, l=>{ l.flow='medium'; }); if (!cycleStarts().includes(TODAY)) S.overrides.set(TODAY,'start'); toast('tPeriod', restore(s)); break; }
+    case 'lh': { const s=snapshot(); setLog(TODAY, l=>{ l.lh = l.lh===v?undefined:v; }); toast(v==='pos'?'tLhPos':'tLh', restore(s)); break; }
+    case 'undo': if (S.toast && S.toast.undo) S.toast.undo(); S.toast=null; clearTimeout(toastTimer); render(); break;
     case 'day': S.dayDetail=Number(v); S.layer='day'; render(); break;
     case 'editDay': S.logDate=Number(v); S.layer='log'; render(); break;
-    case 'markStart': { const d=Number(v); const snap=snapshot(); setLog(d, l=>{ if(!isBleed(l)) l.flow='medium'; }); S.overrides.set(d,'start'); S.layer=null; toast('Marked as period start', ()=>{ S.logs=snap.logs; S.overrides=snap.overrides; }); break; }
+    case 'markStart': { const d=Number(v); const s=snapshot(); setLog(d, l=>{ if(!isBleed(l)) l.flow='medium'; }); S.overrides.set(d,'start'); S.layer=null; toast('tMarked', restore(s)); break; }
     case 'mon': { let [y,m]=S.calMonth; m+=Number(v); if (m<1){m=12;y--;} if (m>12){m=1;y++;} S.calMonth=[y,m]; render(false); break; }
     case 'sheet': S.layer=v; if (v==='erase') S.eraseText=''; render(); break;
     case 'push': S.push=v; S.layer=null; render(false); break;
@@ -1162,66 +1285,53 @@ app.addEventListener('click', e => {
       else P[v] = !P[v];
       render(); break; }
     case 'mode': S.mode=v; render(); break;
-    case 'episode': { const map={hbc:'Hormonal birth control',preg:'Pregnancy',pp:'Postpartum or breastfeeding'}; S.episode = map[v] ? {kind:v,label:map[v],start:TODAY} : null; render(); if (['peri','pcos','endo','t'].includes(v)) toast('Saved. Ranges widen for this condition.'); break; }
+    case 'lang': S.lang=v; S.report.lang = v==='de'?'DE':'EN'; setLocale(); render(); break;
+    case 'episode': S.episode = ['hbc','preg','pp'].includes(v) ? {kind:v,start:TODAY} : null; if (['peri','pcos','endo','t'].includes(v)) toast('tCond'); else render(); break;
     case 'rRange': S.report.range=Number(v); render(); break;
     case 'rLang': S.report.lang=v; render(); break;
     case 'rPreview': S.report.preview=true; render(); break;
     case 'toast': toast(v); break;
-    case 'doErase': genScenario('empty'); S.onb={step:0,factors:[]}; render(false); break;
-    case 'unlock': { const b=document.getElementById('unlockBtn'); if (b){ b.textContent='Recognizing…'; } setTimeout(()=>{ S.lock=false; render(); }, 650); break; }
-    case 'onbNext': S.onb.step = S.onb.step===2 && !S.onb.imported ? 3 : S.onb.step===2 ? 4 : S.onb.step+1;
-      if (S.onb.step===4 && !S.onb.imported){ // seed from last-period date
-        const val = (document.getElementById('lastp')||{}).value; if (v!=='unknown' && val){ const [yy,mm,dd]=val.split('-').map(Number); const d0=D(yy,mm,dd); for(let k=0;k<5;k++) if (d0+k<=TODAY) setLog(d0+k, l=>{ l.flow=['medium','heavy','medium','light','light'][k]; }); }
-      }
-      render(false); break;
-    case 'onbImport': S.onb.importing=true; render(false);
-      requestAnimationFrame(()=>{ const b=document.getElementById('ibar'); if (b) b.style.width='100%'; });
-      setTimeout(()=>{ const m=document.getElementById('imsg'); if (m) m.textContent='Found 8 periods since March 2026.'; }, 700);
-      setTimeout(()=>{ genScenario('day12'); S.onb={step:4, factors:S.onb.factors, imported:true}; render(false); }, 1500);
+    case 'doErase': genScenario('empty'); S.scen=null; S.onb={step:0,factors:[]}; render(false); break;
+    case 'unlock': { const b=document.getElementById('unlockBtn'); if (b) b.textContent=t('recognizing'); setTimeout(()=>{ S.lock=false; render(); }, 650); break; }
+    case 'onbNext': {
+      const from = S.onb.step;
+      if (from===3 && v!=='unknown'){ const val=(document.getElementById('lastp')||{}).value; if (val){ const [yy,mm,dd]=val.split('-').map(Number); const d0=D(yy,mm,dd); for (let k=0;k<5;k++) if (d0+k<=TODAY) setLog(d0+k, l=>{ l.flow=['medium','heavy','medium','light','light'][k]; }); } }
+      S.onb.step = from===2 ? 3 : from+1; render(false); break; }
+    case 'onbImport':
+      S.onb.importing=true; render(false);
+      requestAnimationFrame(()=>requestAnimationFrame(()=>{ const b=document.getElementById('ibar'); if (b) b.style.width='100%'; }));
+      setTimeout(()=>{ const m=document.getElementById('imsg'); if (m) m.textContent=t('found'); }, 700);
+      setTimeout(()=>{ const f=S.onb.factors; genScenario('day12'); S.scen=null; S.onb={step:4, factors:f, imported:true}; render(false); }, 1500);
       break;
-    case 'onbFactor': { const f=S.onb.factors; if (v==='None of these') S.onb.factors = f.includes(v)?[]:[v]; else S.onb.factors = f.includes(v)? f.filter(x=>x!==v) : [...f.filter(x=>x!=='None of these'), v]; render(false); break; }
+    case 'onbFactor': { const f=S.onb.factors; S.onb.factors = v==='ep_none' ? (f.includes(v)?[]:[v]) : (f.includes(v)? f.filter(x=>x!==v) : [...f.filter(x=>x!=='ep_none'), v]); render(false); break; }
     case 'onbDone': { const f=S.onb.factors; S.privacy.appLock = v==='lock';
-      if (f.includes('Trying to get pregnant')) S.mode='conceive';
-      if (f.includes('Hormonal birth control')) S.episode={kind:'hbc',label:'Hormonal birth control',start:TODAY};
+      if (f.includes('f_conceive')) S.mode='conceive';
+      const epk = ['hbc','preg','pp'].find(k=>f.includes('ep_'+k)); if (epk) S.episode={kind:epk,start:TODAY};
       S.onb=null; S.tab='today'; render(false); break; }
   }
 });
 app.addEventListener('input', e => {
-  const t = e.target;
-  if (t.id==='pain'){ setLog(S.logDate, l=>{ l.pain[S.painSel]=Number(t.value); if(!l.pain[S.painSel]) delete l.pain[S.painSel]; }); S.lastChange=true; render(); const n=document.getElementById('pain'); if(n) n.focus(); }
-  if (t.id==='note'){ setLog(S.logDate, l=>{ l.note=t.value; }); S.lastChange=true; }
-  if (t.id==='rq'){ S.report.questions=t.value; }
-  if (t.id==='erase'){ S.eraseText=t.value; const b=app.querySelector('[data-act="doErase"]'); const ok=t.value.trim().toUpperCase()==='ERASE'; if (b){ b.disabled=!ok; b.style.opacity=ok?1:.4; } }
+  const x = e.target;
+  if (x.id==='pain'){ setLog(S.logDate, l=>{ l.pain[S.painSel]=Number(x.value); if(!l.pain[S.painSel]) delete l.pain[S.painSel]; }); S.lastChange=true; render(); const n=document.getElementById('pain'); if(n) n.focus(); }
+  if (x.id==='note'){ setLog(S.logDate, l=>{ l.note=x.value; }); S.lastChange=true; }
+  if (x.id==='rq'){ S.report.questions=x.value; }
+  if (x.id==='erase'){ S.eraseText=x.value; const b=app.querySelector('[data-act="doErase"]'); const ok=x.value.trim().toUpperCase()===t('eraseWord'); if (b){ b.disabled=!ok; b.style.opacity=ok?1:.4; } }
 });
 app.addEventListener('change', e => {
-  const t = e.target;
-  if (t.id==='bbt'){ const x=parseFloat(t.value.replace(',','.')); setLog(S.logDate, l=>{ if (isNaN(x)) delete l.bbt; else l.bbt=Math.round(x*100)/100; }); S.lastChange=true; render(); }
+  const x = e.target;
+  if (x.id==='bbt'){ const n=parseFloat(x.value.replace(',','.')); setLog(S.logDate, l=>{ if (isNaN(n)) delete l.bbt; else l.bbt=Math.round(n*100)/100; }); S.lastChange=true; render(); }
 });
 app.addEventListener('keydown', e => {
   if ((e.key==='Enter'||e.key===' ') && e.target.classList && e.target.classList.contains('region')){ e.preventDefault(); S.painSel=e.target.dataset.v; render(); }
   if (e.key==='Escape' && S.layer){ S.layer=null; render(); }
 });
-
-/* ============ panel ============ */
-const panel = document.getElementById('panel');
-function syncPanel(){
-  panel.querySelectorAll('[data-scen]').forEach(b=>b.setAttribute('aria-pressed', String(b.dataset.scen===S.scen)));
-}
-panel.addEventListener('click', e => {
-  const b = e.target.closest('button'); if (!b) return;
-  if (b.dataset.scen){ genScenario(b.dataset.scen); S.onb=null; S.lock=false; S.calMonth=[2026,11]; S.report.preview=false; render(false); }
-  if (b.dataset.sim==='onboarding'){ genScenario('empty'); S.onb={step:0,factors:[]}; render(false); }
-  if (b.dataset.sim==='lock'){ S.lock=true; render(); }
-  if (b.dataset.themeSet){
-    const t=b.dataset.themeSet; if (t==='system') delete document.documentElement.dataset.theme; else document.documentElement.dataset.theme=t;
-    panel.querySelectorAll('[data-theme-set]').forEach(x=>x.setAttribute('aria-pressed', String(x===b)));
-    render();
-  }
-});
+window.addEventListener('resize', fitRing);
+if (document.fonts && document.fonts.ready) document.fonts.ready.then(fitRing);
 
 /* ============ boot ============ */
+setLocale();
 genScenario('day12');
-try { window.__cyclus = {S, vm, predict, fertility, trail, genScenario, render}; } catch(_){}
+try { window.__cyclus = {S, vm, predict, fertility, trail, genScenario, render, t}; } catch(_){}
 const h = (location.hash||'').slice(1);
 if (['today','calendar','insights'].includes(h)) S.tab=h;
 render(false);

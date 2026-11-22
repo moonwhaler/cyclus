@@ -20,7 +20,7 @@ Defaults are marked ✅. The rest of this spec is written against them. Changing
 | **D5** | Backup | ✅ Store **included** in device backups (so phone migration just works), with honest disclosure plus a "Device only" toggle that sets `isExcludedFromBackup`, plus **encrypted export**. | Exclude by default (max privacy, real data-loss risk) |
 | **D6** | Money | ✅ Strictly free. **No tip jar in v1** (it would make the developer a DSA trader, whose address is published). | Tip jar via IAP after the entity exists |
 | **D7** | Platform baseline | ✅ **Deployment target iOS 26.0, built with the iOS 27 SDK.** Use iOS 27 APIs behind `if #available`. | iOS 27 minimum (smaller audience, simpler code) |
-| **D8** | Markets & languages | ✅ EU + US. EN + DE at launch | — |
+| **D8** | Markets & languages | ✅ **German first** (owner decision 2026-11-22): DACH is the primary market, all copy is authored in German (source language), App Store primary locale `de-DE`, German screenshots first, in-app language selector (Deutsch / English). English second. EU + US. | — (decided) |
 
 ### 0.2 What changed vs. PLAN.md (summary)
 - **Removed from v1:** anomaly/deviation nudges, Siri/App Shortcuts, Control Center control, LLM features.
@@ -142,7 +142,7 @@ Contraception or conception support, diagnosis, community/social features, conte
 **v1.0 (≈ week 44 at 20 h/week; see D4)**
 - Onboarding with Apple Health import.
 - Today, Log sheet (incl. pain map, tags, "nothing else today"), Calendar + Day detail, Insights (stats & charts, no pattern engine).
-- Period prediction (§11.5). Temperature *display* (BBT logged + wrist temp read).
+- Period prediction (§11.5). Temperature *display*: BBT (logged) in v1. Wrist temperature (Apple Watch) is **read and displayed only if present, behind a flag, and not used by the fertility engine** until it has been tested on a real device (§14, owner has no Apple Watch). The fertility engine runs on cycle history + LH + mucus + BBT.
 - HealthKit: import of all history, plus write-own for user-selected categories.
 - Doctor Visit Pack (PDF).
 - Privacy Center, app lock + optional PIN, discreet notifications, encrypted export/import, erase.
@@ -321,7 +321,13 @@ SF Symbols (hierarchical rendering). Custom symbols (SF Symbols template format)
 
 | Component | Spec |
 |---|---|
-| **CycleRing** | 270° arc (gap at bottom for the label). Segments: period (solid `period`), mid (`midCycle`, 40% opacity), pre-period (`prePeriod`, dotted). Today marker = 12-pt knob with 2-pt `bg` stroke. Predicted period = dashed outer arc spanning the 80% range. Centre: "Day 12" + subtitle. Size: min(80% width, 320 pt). VoiceOver: one element, label "Cycle day 12. Next period expected between November 28 and December 2." Custom actions: "Log period", "Open calendar". |
+| **CycleRing** | 270° arc (gap at bottom for the label). Segments: period (solid `period`), mid (`midCycle`, 40% opacity), pre-period (`prePeriod`, dotted). Today marker = 12-pt knob with 2-pt `bg` stroke. Predicted period = dashed outer arc spanning the 80% range. Centre: max **three short lines** (kicker · big value · subtitle). Rules:
+  - the big value never wraps: it shrinks to fit, down to 18 pt (SwiftUI `minimumScaleFactor`), and DE is the length reference;
+  - kicker and range are single-line;
+  - the subtitle is at most 2 lines;
+  - anything longer (ovulation estimate, explanations) goes **below** the ring, never inside it.
+
+  Copy budget for the big value: ≤ 12 characters (e.g. "Hoch", "Tag 3", "Pausiert"). Size: min(80% width, 320 pt). VoiceOver: one element, label "Cycle day 12. Next period expected between November 28 and December 2." Custom actions: "Log period", "Open calendar". |
 | **RangeText** | Formats an interval with locale-aware `Date.IntervalFormatStyle` ("28. Nov. – 2. Dez." in DE). If the range > 10 days, append "(wide range — cycles vary)". |
 | **ConfidenceBadge** | Tiers: *Rough estimate* (prior-dominated, n_eff < 2) · *Getting there* (2–5 cycles) · *Based on your history* (≥ 6). Text label, never a percentage in v1. |
 | **FlowPicker** | 5 droplets: None · Spotting · Light · Medium · Heavy. 56-pt targets in an HStack (wraps to a 2-row grid at AX sizes). Spotting shows a dotted outline. |
@@ -565,7 +571,8 @@ Warm, plain, direct; second person; short sentences. Say "period", "bleeding", "
 ### 9.3 Banned / restricted terms (v1, all surfaces incl. App Store)
 | Term | Rule |
 |---|---|
-| safe days, infertile days, unsafe days, "can't get pregnant", "low risk", protection, birth control (as a claim) | **Banned everywhere.** Only allowed: "Not for birth control." |
+| safe days, infertile days, unsafe days, "can't get pregnant", "low risk", protection, birth control (as a claim) — DE: *sichere Tage, unfruchtbare Tage, „kann nicht schwanger werden“, geringes Risiko, Schutz, Verhütung (als Aussage)* | **Banned everywhere.** Only allowed: "Not for birth control." / „Nicht zur Verhütung geeignet.“ |
+| DE: *Diagnose, diagnostizieren, erkennen (bei Erkrankungen), bestätigter Eisprung* | Banned (same rules as EN) |
 | fertile, fertile window, ovulation, conceive | Allowed **only** when the fertility flag is on (Conceive mode or Track with "Show fertile window"), always with uncertainty ("likely", "estimated") |
 | "confirmed ovulation", "you ovulated" | Banned. Use "ovulation likely occurred around …" |
 | % chance of pregnancy | Banned (age-dependent, a claim). Use tiers: Lower chance / Possible / High / Peak |
@@ -578,7 +585,8 @@ Warm, plain, direct; second person; short sentences. Say "period", "bleeding", "
 
 A CI lint scans `Localizable.xcstrings` and App Store metadata for banned terms (§12.1).
 
-### 9.4 Glossary (EN → DE), to be reviewed by a DE-speaking clinician
+### 9.4 Glossary (DE is the source language; EN translation), to be reviewed by a DE-speaking clinician
+Address the user with informal **„du“** throughout (gender-neutral, standard for consumer health apps in DACH). Avoid gendered nouns for the user; for clinicians use both forms („deine Gynäkologin oder dein Gynäkologe“).
 | EN | DE |
 |---|---|
 | Period | Periode |
@@ -592,6 +600,14 @@ A CI lint scans `Localizable.xcstrings` and App Store metadata for banned terms 
 | Perimenopause | Perimenopause (Wechseljahre-Übergang) |
 | Hormonal birth control | Hormonelle Verhütung |
 | Doctor Visit Pack | Arztbericht |
+| Trying to conceive (mode) | Kinderwunsch |
+| Egg-white mucus | Spinnbarer Zervixschleim (chip: „Spinnbar“) |
+| Fertility tiers: Lower / Possible / High / Peak | Geringer / Möglich / Hoch / Am höchsten |
+| Fertile window (estimate) | Fruchtbares Fenster (Schätzung) |
+| Ovulation likely occurred | Eisprung wahrscheinlich um den … |
+| Tags | Stichworte |
+| Nothing else today | Sonst nichts heute |
+| Not for birth control. | Nicht zur Verhütung geeignet. |
 
 ---
 
@@ -1057,7 +1073,10 @@ Apple Developer (Organization) €99/yr · FDA establishment registration fee if
 ## 14. Open questions
 1. D1–D8 sign-off (§0.1).
 2. Weekly hours available (finalises the §13.1 cut list).
-3. Apple Watch Series 8+ / Ultra for wrist-temperature testing? (v1 needs it only for the display chart.)
+3. ~~Apple Watch for testing?~~ **Answered 2026-11-22: no Apple Watch.** Consequences:
+   - wrist temperature is not used by the fertility engine in v1 (it is display-only and flag-gated);
+   - the wrist likelihood (§11.11.3) and the Watch app (v1.5) need a test device, meaning a used Series 8+ / Ultra (~€250–400; SE models have no temperature sensor), or ≥ 3 TestFlight testers with one using the on-device back-test;
+   - decide before v1.1.
 4. Name & brand: needs trademark search EU/US before assets are made.
 5. Clinician reviewer: candidate names (gynaecologist + midwife, DE-speaking).
 6. Ask App Review in writing about guideline 5.1.3(ii) for (a) CloudKit `encryptedValues` and (b) the store in iCloud Backup. Keep the response; it decides sync in v2.
