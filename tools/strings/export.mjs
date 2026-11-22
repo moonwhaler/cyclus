@@ -28,6 +28,31 @@ const PLURALS = {
   flhT: { de: { one: 'Eisprung meist %1$d Tag nach dem ersten positiven LH-Test', other: 'Eisprung meist %1$d Tage nach dem ersten positiven LH-Test' }, en: { one: 'Ovulation usually %1$d day after your first positive LH test', other: 'Ovulation usually %1$d days after your first positive LH test' } },
   nPatterns: { de: { one: '%1$d Muster gefunden', other: '%1$d Muster gefunden' }, en: { one: '%1$d pattern found', other: '%1$d patterns found' } },
 };
+// Android overrides: prototype copy that is iOS-specific or not (yet) true on Android. Trust rule: never claim
+// something the app doesn't do. Extend when a screen with such copy is built (Privacy, onboarding: A3).
+const ANDROID_OVERRIDES = {
+  calTip: {
+    de: 'Tippe auf einen Tag für Details. Lange drücken, um einen Periodenbeginn zu markieren.',
+    en: 'Tap a day for details. Long-press to mark a period start.',
+  },
+  method: {
+    de: [
+      TX.method.de[0],
+      'Mit wenigen Zyklen ist der Bereich absichtlich breit. Er wird enger, je mehr du einträgst.',
+      'Alles wird auf deinem Gerät berechnet. Cyclus erhält deine Daten nie.',
+    ],
+    en: [
+      TX.method.en[0],
+      'With few cycles the range is wide on purpose. It narrows as you log more.',
+      'Everything is calculated on your device. Cyclus never receives your data.',
+    ],
+  },
+};
+for (const [k, v] of Object.entries(ANDROID_OVERRIDES)) TX[k] = v;
+
+// inline bold (<b …>x</b>) → {b}x{/b} markers, rendered bold by Fmt.rich()
+const boldMarkers = (s) => s.replace(/<b[^>]*>/g, '{b}').replace(/<\/b>/g, '{/b}');
+
 // arguments the caller passes already lowercased
 const LOWERCASED_ARG = new Set(['flowWord', 'lhWord']);
 
@@ -43,7 +68,7 @@ function fromFunction(key, fn) {
   const params = src.slice(0, arrow).replace(/[()\s]/g, '').split(',').filter(Boolean);
   let body = src.slice(arrow + 2).trim();
   if (!/^`[^`]*`$/.test(body)) throw new Error(`unsupported template for ${key}: ${src}`);
-  body = body.slice(1, -1);
+  body = boldMarkers(body.slice(1, -1));
   let out = '', last = 0;
   for (const m of body.matchAll(/\$\{([^}]*)\}/g)) {
     out += esc(body.slice(last, m.index)).replace(/%/g, '%%');
@@ -72,7 +97,7 @@ for (const [key, v] of Object.entries(TX)) {
   }
   for (const L of ['de', 'en']) {
     const x = v[L];
-    const text = typeof x === 'function' ? fromFunction(key, x) : esc(String(x));
+    const text = typeof x === 'function' ? fromFunction(key, x) : esc(boldMarkers(String(x)));
     const noFormat = typeof x !== 'function' && text.includes('%') ? ' formatted="false"' : '';
     out[L].push(`    <string name="${resName('tx_', key)}"${noFormat}>${text}</string>`);
   }

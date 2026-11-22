@@ -52,11 +52,11 @@
     <string name="tx_afterOv">Nach dem Eisprung</string>
     <string name="tx_ovOccurred">Eisprung wahrscheinlich um den %1$s</string>
     <string name="tx_testTitle">Frühester zuverlässiger Schwangerschaftstest</string>
-    <string name="tx_testBody">&lt;b style=\"color:var(--ink)\"&gt;%1$s&lt;/b&gt;. Wer früher testet, sieht oft ein negatives Ergebnis, auch bei einer Schwangerschaft.</string>
+    <string name="tx_testBody">{b}%1$s{/b}. Wer früher testet, sieht oft ein negatives Ergebnis, auch bei einer Schwangerschaft.</string>
     <string name="tx_bestDays">Beste Tage</string>
     <string name="tx_bestTip">Sex alle 1–2 Tage an Tagen mit hoher oder höchster Chance gibt die besten Aussichten.</string>
     <string name="tx_lhTests">LH-Tests</string>
-    <string name="tx_lhPlan">Starte am &lt;b style=\"color:var(--ink)\"&gt;%1$s&lt;/b&gt; mit dem Testen. Nach deinen letzten %2$s Zyklen brauchst du wahrscheinlich 4–6 Tests.</string>
+    <string name="tx_lhPlan">Starte am {b}%1$s{/b} mit dem Testen. Nach deinen letzten %2$s Zyklen brauchst du wahrscheinlich 4–6 Tests.</string>
     <string name="tx_lhToday">LH-Test · heute</string>
     <string name="tx_lhNegSoFar">%1$s negativ bisher</string>
     <string name="tx_lh_neg">Negativ</string>
@@ -87,7 +87,7 @@
     <string name="tx_ringF"> Geschätztes fruchtbares Fenster %1$s bis %2$s.</string>
     <string name="tx_prevMonth">Vorheriger Monat</string>
     <string name="tx_nextMonth">Nächster Monat</string>
-    <string name="tx_calTip">Tippe auf einen Tag für Details. In der App: lange drücken, um einen Periodenbeginn zu markieren.</string>
+    <string name="tx_calTip">Tippe auf einen Tag für Details. Lange drücken, um einen Periodenbeginn zu markieren.</string>
     <string name="tx_lgPeriod">Periode</string>
     <string name="tx_lgPred">Erwartete Periode</string>
     <string name="tx_lgPre">Tage vor der Periode</string>
@@ -478,7 +478,7 @@
     </string-array>
     <string-array name="tx_method">
         <item>Cyclus schaut auf die Länge deiner letzten Zyklen, neuere zählen mehr. Es zeigt einen Bereich, in dem deine nächste Periode etwa 8 von 10 Mal beginnt.</item>
-        <item>Mit wenigen Zyklen ist der Bereich absichtlich breit. Er wird enger, je mehr du einträgst. Ungewöhnlich lange Zyklen, etwa durch einen vergessenen Eintrag, fragt Cyclus nach, statt sie still mitzuzählen.</item>
-        <item>Alles wird auf deinem iPhone berechnet. Cyclus erhält deine Daten nie.</item>
+        <item>Mit wenigen Zyklen ist der Bereich absichtlich breit. Er wird enger, je mehr du einträgst.</item>
+        <item>Alles wird auf deinem Gerät berechnet. Cyclus erhält deine Daten nie.</item>
     </string-array>
 </resources>

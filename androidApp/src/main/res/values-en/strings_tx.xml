@@ -52,11 +52,11 @@
     <string name="tx_afterOv">After ovulation</string>
     <string name="tx_ovOccurred">Ovulation likely occurred around %1$s</string>
     <string name="tx_testTitle">Earliest reliable pregnancy test</string>
-    <string name="tx_testBody">&lt;b style=\"color:var(--ink)\"&gt;%1$s&lt;/b&gt;. Testing earlier often shows a negative result even if you are pregnant.</string>
+    <string name="tx_testBody">{b}%1$s{/b}. Testing earlier often shows a negative result even if you are pregnant.</string>
     <string name="tx_bestDays">Best days</string>
     <string name="tx_bestTip">Sex every 1–2 days during High and Peak days gives the best chance.</string>
     <string name="tx_lhTests">LH tests</string>
-    <string name="tx_lhPlan">Start testing on &lt;b style=\"color:var(--ink)\"&gt;%1$s&lt;/b&gt;. Based on your last %2$s cycles, you will likely need 4–6 tests.</string>
+    <string name="tx_lhPlan">Start testing on {b}%1$s{/b}. Based on your last %2$s cycles, you will likely need 4–6 tests.</string>
     <string name="tx_lhToday">LH test · today</string>
     <string name="tx_lhNegSoFar">%1$s negative so far</string>
     <string name="tx_lh_neg">Negative</string>
@@ -87,7 +87,7 @@
     <string name="tx_ringF"> Estimated fertile window %1$s to %2$s.</string>
     <string name="tx_prevMonth">Previous month</string>
     <string name="tx_nextMonth">Next month</string>
-    <string name="tx_calTip">Tap a day for details. In the app: long-press to mark a period start.</string>
+    <string name="tx_calTip">Tap a day for details. Long-press to mark a period start.</string>
     <string name="tx_lgPeriod">Period</string>
     <string name="tx_lgPred">Predicted period</string>
     <string name="tx_lgPre">Pre-period window</string>
@@ -478,7 +478,7 @@
     </string-array>
     <string-array name="tx_method">
         <item>Cyclus looks at the length of your recent cycles, counting the newest ones more. It shows a range where your next period is likely to start, about 8 times out of 10.</item>
-        <item>With few cycles the range is wide on purpose. It narrows as you log more. Unusually long cycles, for example from a missed log, are asked about instead of silently counted.</item>
-        <item>Everything is calculated on your iPhone. Cyclus never receives your data.</item>
+        <item>With few cycles the range is wide on purpose. It narrows as you log more.</item>
+        <item>Everything is calculated on your device. Cyclus never receives your data.</item>
     </string-array>
 </resources>
