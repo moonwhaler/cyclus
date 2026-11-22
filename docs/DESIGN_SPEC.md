@@ -21,6 +21,7 @@ Defaults are marked ✅. The rest of this spec is written against them. Changing
 | **D6** | Money | ✅ Strictly free. **No tip jar in v1** (it would make the developer a DSA trader, whose address is published). | Tip jar via IAP after the entity exists |
 | **D7** | Platform baseline | ✅ **Deployment target iOS 26.0, built with the iOS 27 SDK.** Use iOS 27 APIs behind `if #available`. | iOS 27 minimum (smaller audience, simpler code) |
 | **D9** | Patterns & outlook | ✅ **In v1 (owner decision 2026-11-22).** „Deine Muster“ (§11.12) watches body, mood & feelings, lifestyle, fertility and cycle health. „Ausblick“ (§11.13) turns patterns into a 7-day outlook. Fertility and cycle-health watchers follow the same regulatory gate as fertility (§1.4). | — (decided) |
+| **D10** | Platforms & code sharing | ⏳ **Proposed 2026-11-22 (owner to confirm):** Android with 100% feature parity. **Kotlin Multiplatform shared core** (model, store schema, all engines, patterns, outlook, report model, backup, strings) + native UI (SwiftUI / Compose M3 Expressive). Changes §11.1–11.3 and §12.1 as listed in `ANDROID_PLAN.md` §2.5. | Fully native twice, or Compose Multiplatform UI (see ANDROID_PLAN §0) |
 | **D8** | Markets & languages | ✅ **German first** (owner decision 2026-11-22): DACH is the primary market, all copy is authored in German (source language), App Store primary locale `de-DE`, German screenshots first, in-app language selector (Deutsch / English). English second. EU + US. | — (decided) |
 
 ### 0.2 What changed vs. PLAN.md (summary)
@@ -459,7 +460,7 @@ Sections:
    - "In Apple Health: Flow, Spotting, Symptoms, BBT" (tap → category toggles, each with a one-line consequence, e.g. "Anyone you share Health data with may see this.");
    - "In backups: Included. With iCloud Backup, Apple holds the keys unless Advanced Data Protection is on." with buttons [Learn about ADP] and toggle "Device only (exclude from backups)" — warning: "If you lose this phone, data not in Apple Health or an export is gone.";
    - "Exports you've made: 2 (last Nov 3). We can't delete copies you've shared."
-2. **Protection:** App lock (Face ID / passcode) · **Cyclus PIN** (6 digits, independent of device passcode) · "Require PIN, don't allow Face ID" · Lock after: immediately / 1 min / 5 min · Blur in app switcher (always on, shown as info).
+2. **Protection:** Tip row: „App ausblenden“ → explains iOS 18 *Hide and Require Face ID* (Android: Private Space, see ANDROID_PLAN §1.1). App lock (Face ID / passcode) · **Cyclus PIN** (6 digits, independent of device passcode) · "Require PIN, don't allow Face ID" · Lock after: immediately / 1 min / 5 min · Blur in app switcher (always on, shown as info).
 3. **Visibility:** Notification style: Discreet ✓ / Detailed · Lock Screen widget: Hidden details ✓ / Show · StandBy (v1.1).
 4. **Erase everything** (§7.9).
 
