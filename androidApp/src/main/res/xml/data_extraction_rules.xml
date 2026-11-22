@@ -1,19 +1,14 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- No cloud backup and no device-to-device transfer until ANDROID_PLAN §6.4 is decided.
-     The database is encrypted with a Keystore key that never leaves the device, so a copied DB would be unreadable. -->
+<!-- Device backup (ANDROID_PLAN §6.4). The custom CyclusBackupAgent decides what is sent: the encrypted snapshot and
+     its key, only over end-to-end encrypted backup or device-to-device transfer. These rules mirror that (they include
+     exactly those two files) as defence in depth; the database, its key and preferences are never backed up. -->
 <data-extraction-rules>
-    <cloud-backup>
-        <exclude domain="root" path="." />
-        <exclude domain="file" path="." />
-        <exclude domain="database" path="." />
-        <exclude domain="sharedpref" path="." />
-        <exclude domain="external" path="." />
+    <cloud-backup disableIfNoEncryptionCapabilities="true">
+    <include domain="file" path="backup/snapshot.cyclus" />
+    <include domain="file" path="backup/key.plain" />
     </cloud-backup>
     <device-transfer>
-        <exclude domain="root" path="." />
-        <exclude domain="file" path="." />
-        <exclude domain="database" path="." />
-        <exclude domain="sharedpref" path="." />
-        <exclude domain="external" path="." />
+    <include domain="file" path="backup/snapshot.cyclus" />
+    <include domain="file" path="backup/key.plain" />
     </device-transfer>
 </data-extraction-rules>

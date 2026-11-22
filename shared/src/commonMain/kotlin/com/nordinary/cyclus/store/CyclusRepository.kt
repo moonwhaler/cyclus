@@ -30,8 +30,12 @@ import kotlinx.coroutines.withContext
 class CyclusRepository(
     private val db: CyclusDatabase,
     private val io: CoroutineDispatcher,
+    private val onClose: () -> Unit = {},
     private val nowMillis: () -> Long,
 ) {
+    /** Closes the underlying driver. Stop all collectors first. */
+    fun close() = onClose()
+
     private val q get() = db.cyclusQueries
 
     /** All day logs; re-emits after every committed change. */

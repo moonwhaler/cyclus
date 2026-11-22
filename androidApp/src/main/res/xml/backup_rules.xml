@@ -1,9 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- API 29–30 (allowBackup=false already disables it; belt and braces). -->
+<!-- API 29–30 (see data_extraction_rules.xml): only the encrypted snapshot and its key, only with client-side encryption. -->
 <full-backup-content>
-    <exclude domain="root" path="." />
-    <exclude domain="file" path="." />
-    <exclude domain="database" path="." />
-    <exclude domain="sharedpref" path="." />
-    <exclude domain="external" path="." />
+    <include domain="file" path="backup/snapshot.cyclus" requireFlags="clientSideEncryption" />
+    <include domain="file" path="backup/key.plain" requireFlags="clientSideEncryption" />
 </full-backup-content>

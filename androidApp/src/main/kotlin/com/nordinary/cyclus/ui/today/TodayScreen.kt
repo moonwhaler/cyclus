@@ -354,10 +354,10 @@ private fun CardTitle(text: String) = Text(text, fontSize = 15.sp, fontWeight = 
 private fun CardBody(text: String) = Text(text, fontSize = 14.sp, color = Cyclus.colors.ink2)
 
 @Composable
-fun PrimaryButton(text: String, onClick: () -> Unit, modifier: Modifier = Modifier) {
+fun PrimaryButton(text: String, onClick: () -> Unit, modifier: Modifier = Modifier, enabled: Boolean = true) {
     val c = Cyclus.colors
     Button(
-        onClick, modifier.heightIn(min = 50.dp), shape = RoundedCornerShape(25.dp),
+        onClick, modifier.heightIn(min = 50.dp), enabled = enabled, shape = RoundedCornerShape(25.dp),
         colors = ButtonDefaults.buttonColors(containerColor = c.period, contentColor = c.onAccent),
         contentPadding = PaddingValues(horizontal = 22.dp, vertical = 8.dp),
     ) { Text(text, fontWeight = FontWeight.Bold, fontSize = 16.sp, textAlign = TextAlign.Center) }

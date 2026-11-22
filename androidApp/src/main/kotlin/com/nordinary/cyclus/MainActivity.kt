@@ -3,17 +3,21 @@ package com.nordinary.cyclus
 import android.os.Build
 import android.os.Bundle
 import android.view.WindowManager
-import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.biometric.BiometricPrompt
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
+import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
+import androidx.compose.material3.LinearWavyProgressIndicator
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
@@ -21,8 +25,15 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.core.content.ContextCompat
+import androidx.fragment.app.FragmentActivity
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.nordinary.cyclus.i18n.TxRes
+import com.nordinary.cyclus.i18n.rememberFmt
+import com.nordinary.cyclus.lock.Authn
+import com.nordinary.cyclus.lock.LockConfig
+import com.nordinary.cyclus.lock.LockScreen
 import com.nordinary.cyclus.store.DbKeyException
 import com.nordinary.cyclus.store.StoreState
 import com.nordinary.cyclus.ui.AppViewModel
@@ -30,28 +41,28 @@ import com.nordinary.cyclus.ui.CyclusApp
 import com.nordinary.cyclus.ui.theme.Cyclus
 import com.nordinary.cyclus.ui.theme.CyclusTheme
 import com.nordinary.cyclus.ui.today.PrimaryButton
+import com.nordinary.cyclus.ui.today.SecondaryButton
 
-class MainActivity : ComponentActivity() {
-    private val store get() = (application as CyclusApplication).store
+class MainActivity : FragmentActivity() {
+    private val app get() = application as CyclusApplication
 
     override fun onCreate(savedInstanceState: Bundle?) {
         enableEdgeToEdge()
         super.onCreate(savedInstanceState)
-        // Recents thumbnail hidden by default (ANDROID_PLAN §2.4); FLAG_SECURE fallback before API 33.
+        // Recents thumbnail hidden (ANDROID_PLAN §2.4). Before Android 13 only FLAG_SECURE can do that, so it is always on there.
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) setRecentsScreenshotEnabled(false)
         else window.setFlags(WindowManager.LayoutParams.FLAG_SECURE, WindowManager.LayoutParams.FLAG_SECURE)
-        store.ensureOpen()
+        app.store.ensureOpen()
         setContent {
             CyclusTheme {
                 Surface(color = Cyclus.colors.bg) {
-                    val state by store.state.collectAsStateWithLifecycle()
+                    val state by app.store.state.collectAsStateWithLifecycle()
                     when (val s = state) {
                         StoreState.Opening -> {}
-                        is StoreState.Failed -> StoreError(s) { store.ensureOpen() }
-                        is StoreState.Ready -> {
-                            val vm = viewModel(key = "app") { AppViewModel(s.repo) }
-                            CyclusApp(vm, debug = BuildConfig.DEBUG)
-                        }
+                        StoreState.Erasing -> Busy(stringResource(R.string.erasing))
+                        is StoreState.RestoreFailed -> RestoreFailed(onRetry = app.store::retryRestore, onFresh = app.store::discardRestore)
+                        is StoreState.Failed -> StoreError(s) { app.store.ensureOpen() }
+                        is StoreState.Ready -> Ready(s)
                     }
                 }
             }
@@ -60,7 +71,70 @@ class MainActivity : ComponentActivity() {
 
     override fun onResume() {
         super.onResume()
-        store.ensureOpen() // retries after "device locked"
+        app.store.ensureOpen() // retries after "device locked"
+    }
+
+    @Composable
+    private fun Ready(s: StoreState.Ready) {
+        val repo = s.repo
+        val vm = viewModel(key = "app-${System.identityHashCode(repo)}") { AppViewModel(repo, app, restored = s.restored) }
+        val settings by remember(repo) { repo.observeSettings() }.collectAsStateWithLifecycle(null)
+        LaunchedEffect(settings) {
+            settings?.let { st ->
+                val cfg = LockConfig.from(st)
+                app.lock.onConfig(cfg, Authn.available(this@MainActivity))
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                    if (cfg.flagSecure) window.addFlags(WindowManager.LayoutParams.FLAG_SECURE)
+                    else window.clearFlags(WindowManager.LayoutParams.FLAG_SECURE)
+                }
+            }
+        }
+        val locked by app.lock.locked.collectAsStateWithLifecycle()
+        val config by app.lock.config.collectAsStateWithLifecycle()
+        val fmt = rememberFmt()
+        when (locked) {
+            null -> {}
+            true -> config?.let { cfg ->
+                LockScreen(
+                    fmt, cfg, biometricAvailable = Authn.available(this), lockoutUntil = app.lock.lockoutUntil,
+                    onBiometric = ::authenticate, onPin = { vm.checkPin(it, cfg).also { ok -> if (ok) app.lock.unlock() } },
+                )
+            }
+            false -> CyclusApp(vm, debug = BuildConfig.DEBUG)
+        }
+    }
+
+    /** Biometrics or device credential; the system screen doesn't count as leaving the app. */
+    fun authenticate() {
+        app.lock.suspendForExternalActivity()
+        val prompt = BiometricPrompt(this, ContextCompat.getMainExecutor(this), object : BiometricPrompt.AuthenticationCallback() {
+            override fun onAuthenticationSucceeded(result: BiometricPrompt.AuthenticationResult) { app.lock.unlock() }
+        })
+        val info = BiometricPrompt.PromptInfo.Builder()
+            .setTitle(getString(TxRes.strings.getValue("lockedT")))
+            .setAllowedAuthenticators(Authn.authenticators)
+            .build()
+        prompt.authenticate(info)
+    }
+}
+
+@OptIn(ExperimentalMaterial3ExpressiveApi::class)
+@Composable
+private fun Busy(text: String) {
+    Column(Modifier.fillMaxSize().padding(32.dp), verticalArrangement = Arrangement.spacedBy(14.dp, Alignment.CenterVertically), horizontalAlignment = Alignment.CenterHorizontally) {
+        Text(text, color = Cyclus.colors.ink, fontWeight = FontWeight.SemiBold)
+        LinearWavyProgressIndicator()
+    }
+}
+
+@Composable
+private fun RestoreFailed(onRetry: () -> Unit, onFresh: () -> Unit) {
+    val c = Cyclus.colors
+    Column(Modifier.fillMaxSize().padding(32.dp), verticalArrangement = Arrangement.spacedBy(14.dp, Alignment.CenterVertically), horizontalAlignment = Alignment.CenterHorizontally) {
+        Text(stringResource(R.string.restore_failed_t), fontSize = 22.sp, fontWeight = FontWeight.Bold, color = c.ink, textAlign = TextAlign.Center)
+        Text(stringResource(R.string.restore_failed_b), color = c.ink2, textAlign = TextAlign.Center)
+        PrimaryButton(stringResource(R.string.store_retry), onRetry)
+        SecondaryButton(stringResource(R.string.restore_fresh), onFresh)
     }
 }
 

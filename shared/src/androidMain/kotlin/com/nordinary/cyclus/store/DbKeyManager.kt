@@ -32,8 +32,11 @@ class DbKeyException(val reason: Reason, cause: Throwable? = null) : Exception(r
  * requires an unlocked device and never leaves secure hardware (StrongBox when available). The wrapped key lives
  * in `noBackupFilesDir`, so it is never part of a backup or device transfer (ANDROID_PLAN §2.4, §0.1).
  */
-internal class DbKeyManager(private val context: Context) {
-    private val keyFile = File(context.noBackupFilesDir, "cyclus-db.key")
+internal class DbKeyManager(private val context: Context, dbName: String = AndroidDatabase.FILE_NAME) {
+    // the app's database uses the original names; other databases (tests) get their own key file and Keystore alias
+    private val isMain = dbName == AndroidDatabase.FILE_NAME
+    private val keyFile = File(context.noBackupFilesDir, if (isMain) "cyclus-db.key" else "$dbName.key")
+    private val ALIAS = if (isMain) "cyclus_db_kek_v1" else "cyclus_db_kek_v1_$dbName"
 
     fun obtainKey(databaseExists: Boolean): ByteArray {
         if (keyFile.exists()) return unwrap(keyFile.readBytes())
@@ -44,6 +47,13 @@ internal class DbKeyManager(private val context: Context) {
         tmp.writeBytes(wrapped)
         if (!tmp.renameTo(keyFile)) throw DbKeyException(DbKeyException.Reason.CRYPTO_FAILURE)
         return dbKey
+    }
+
+    /** Deletes the wrapped key file and the Keystore key (crypto-shred). */
+    fun destroy() {
+        keyFile.delete()
+        File(keyFile.parentFile, keyFile.name + ".tmp").delete()
+        runCatching { KeyStore.getInstance(ANDROID_KEYSTORE).apply { load(null) }.deleteEntry(ALIAS) }
     }
 
     private fun wrap(dbKey: ByteArray): ByteArray = guarded {
@@ -104,7 +114,6 @@ internal class DbKeyManager(private val context: Context) {
 
     private companion object {
         const val ANDROID_KEYSTORE = "AndroidKeyStore"
-        const val ALIAS = "cyclus_db_kek_v1"
         const val TRANSFORMATION = "AES/GCM/NoPadding"
         const val VERSION: Byte = 1
     }

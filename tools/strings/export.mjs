@@ -35,6 +35,26 @@ const ANDROID_OVERRIDES = {
     de: 'Tippe auf einen Tag für Details. Lange drücken, um einen Periodenbeginn zu markieren.',
     en: 'Tap a day for details. Long-press to mark a period start.',
   },
+  // Privacy / erase / lock (slice 3): device, screen lock, biometrics and Google backup instead of iPhone, Face ID, iCloud
+  onPhone: { de: 'Auf diesem Gerät', en: 'On this device' },
+  onPhoneS: {
+    de: 'Verschlüsselt. Der Schlüssel liegt im Hardware-Schlüsselspeicher und funktioniert nur bei entsperrtem Gerät.',
+    en: 'Encrypted. The key lives in the hardware keystore and only works while your phone is unlocked.',
+  },
+  faceLock: { de: 'App-Sperre', en: 'App lock' },
+  pinS: { de: 'Ein Code nur für diese App, getrennt von deiner Displaysperre', en: 'A code only for this app, separate from your screen lock' },
+  pinOnlyT: { de: 'Nur PIN, keine Biometrie', en: 'PIN only, no biometrics' },
+  pinOnlyS: { de: 'Hilfreich, wenn jemand anderes deine Displaysperre kennt', en: 'Useful if someone else knows your screen lock' },
+  devOnlyS: {
+    de: 'Cyclus aus Google-Backups ausschließen. Geht dein Gerät verloren, sind Daten weg, die nicht in einem Export sind.',
+    en: 'Exclude Cyclus from Google backups. If you lose this phone, data not in an export is gone.',
+  },
+  er1: { de: '✓ Alle Cyclus-Daten auf diesem Gerät, samt Schlüsseln', en: '✓ All Cyclus data on this device, including its keys' },
+  er3s: {
+    de: 'Ältere Google-Backups bis zur nächsten Sicherung, geteilte Exporte und PDFs',
+    en: 'Older Google backups until the next backup runs, exports and PDFs you shared',
+  },
+  unlockBtn: { de: 'Entsperren', en: 'Unlock' },
   method: {
     de: [
       TX.method.de[0],

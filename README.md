@@ -29,6 +29,7 @@ Published (private) link: see `prototype/README.md`.
 - Trust rules: no `INTERNET` permission, no third-party services, all intelligence on-device, encrypted at rest (ANDROID_PLAN §0.1).
 - Slice 1 (A0 + A1) done: engines ported and verified against the prototype (138 golden cases, JVM + Android), encrypted store (SQLCipher + Keystore), Today + Log sheet, deploy script.
 - Slice 2 (A2) done: Kalender + Tagesansicht, Einblicke + Deine Muster, Kinderwunsch-Modus, Warum-/Methoden-Sheets, Einstellungen (Sprache, Ziel, Lebensphase). Next (A3): Arztbericht, Datenschutz-Center, Onboarding, App-Sperre, Export. See `docs/PARITY.md`.
+- Slice 3 (A3a, trust core) done: encrypted `.cyclus` export/import, end-to-end-only device backup with restore, Datenschutz-Center, crypto-shred erase, app lock (biometrics + Cyclus PIN). Next (A3b): Arztbericht, onboarding.
 - Open owner decisions:
   - legal entity + organization developer accounts (Apple, Google);
   - regulatory specialist;
@@ -44,6 +45,10 @@ tools/deploy.sh --phone          # same, on the paired phone (wireless adb)
 Debug builds (`com.nordinary.cyclus.debug`) hold **throwaway test data** until export/backup lands.
 
 Engines are checked against golden vectors exported from the prototype (`tools/golden/`). App strings are generated from the prototype's translation table: `node tools/strings/export.mjs`.
+
+**Never run the instrumented tests (`connected…Test`) on your own phone:** they uninstall the app afterwards, which deletes its data.
+
+Backups: `.cyclus` format in `docs/export/FORMAT.md`; reference decoder `tools/export/cyclus_decode.py`.
 
 Debug builds: long-press the screen title („Heute“) for the demo-data menu (prototype scenarios, erase).
 

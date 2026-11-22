@@ -5,7 +5,9 @@
 
     <application
         android:name=".CyclusApplication"
-        android:allowBackup="false"
+        android:allowBackup="true"
+        android:backupAgent=".backup.CyclusBackupAgent"
+        android:fullBackupOnly="true"
         android:fullBackupContent="@xml/backup_rules"
         android:dataExtractionRules="@xml/data_extraction_rules"
         android:label="@string/app_name"

@@ -73,6 +73,7 @@ import kotlinx.serialization.Serializable
 
 @Serializable private data object MainKey : NavKey
 @Serializable private data object SettingsKey : NavKey
+@Serializable private data object PrivacyKey : NavKey
 
 private enum class Tab(val key: String) { TODAY("tabToday"), CALENDAR("tabCal"), INSIGHTS("tabIns") }
 private enum class Sheet { NONE, LOG, DAY, WHY, METHOD }
@@ -92,15 +93,17 @@ fun CyclusApp(vm: AppViewModel, debug: Boolean) {
     var sheetDay by rememberSaveable { mutableStateOf<Int?>(null) }
     var logChanged by rememberSaveable { mutableStateOf(false) }
 
+    val res = androidx.compose.ui.platform.LocalResources.current
+    fun text(msg: UiMessage) = msg.res?.let { res.getString(it) } ?: fmt.s(msg.key)
     LaunchedEffect(vm, fmt) {
         vm.messages.collect { msg ->
             snackbar.currentSnackbarData?.dismiss()
             launch {
                 if (msg.undo != null) {
                     launch { delay(5_000); snackbar.currentSnackbarData?.dismiss() }
-                    val r = snackbar.showSnackbar(fmt.s(msg.key), actionLabel = undoLabel, duration = SnackbarDuration.Indefinite)
+                    val r = snackbar.showSnackbar(text(msg), actionLabel = undoLabel, duration = SnackbarDuration.Indefinite)
                     if (r == SnackbarResult.ActionPerformed) vm.undo(msg)
-                } else snackbar.showSnackbar(fmt.s(msg.key), duration = SnackbarDuration.Short)
+                } else snackbar.showSnackbar(text(msg), duration = SnackbarDuration.Short)
             }
         }
     }
@@ -114,7 +117,7 @@ fun CyclusApp(vm: AppViewModel, debug: Boolean) {
             entry<MainKey> {
                 MainScreen(
                     vm = vm, fmt = fmt, snackbar = snackbar, debug = debug,
-                    onSettings = { backStack.add(SettingsKey) }, onComingSoon = comingSoon,
+                    onSettings = { backStack.add(SettingsKey) }, onPrivacy = { backStack.add(PrivacyKey) }, onComingSoon = comingSoon,
                     onOpenLog = ::openLog,
                     onDay = { sheetDay = it; sheet = Sheet.DAY },
                     onWhy = { sheet = Sheet.WHY }, onMethod = { sheet = Sheet.METHOD },
@@ -128,8 +131,13 @@ fun CyclusApp(vm: AppViewModel, debug: Boolean) {
                     lifeStage = LifeStage.of(m?.activeEpisode?.kind),
                     onBack = { backStack.removeLastOrNull() },
                     onMode = vm::setMode, onShowFertility = vm::setShowFertility, onLifeStage = vm::setLifeStage,
-                    onComingSoon = comingSoon,
+                    onComingSoon = comingSoon, onPrivacy = { backStack.add(PrivacyKey) },
                 )
+            }
+            entry<PrivacyKey> {
+                com.nordinary.cyclus.ui.privacy.PrivacyEntry(vm, fmt, snackbar, onBack = { backStack.removeLastOrNull() }, onErased = {
+                    while (backStack.size > 1) backStack.removeLastOrNull()
+                })
             }
         },
     )
@@ -165,6 +173,7 @@ private fun MainScreen(
     snackbar: SnackbarHostState,
     debug: Boolean,
     onSettings: () -> Unit,
+    onPrivacy: () -> Unit,
     onComingSoon: () -> Unit,
     onOpenLog: (Int) -> Unit,
     onDay: (Int) -> Unit,
@@ -209,7 +218,7 @@ private fun MainScreen(
                     },
                     subtitle = { Text(fmt.wmd(model?.snapshot?.today ?: java.time.LocalDate.now().toEpochDay().toInt()), color = c.ink2) },
                     actions = {
-                        IconButton(onClick = onComingSoon) { Icon(CyclusIcons.Shield, fmt.s("aPrivacy"), tint = c.ink) }
+                        IconButton(onClick = onPrivacy) { Icon(CyclusIcons.Shield, fmt.s("aPrivacy"), tint = c.ink) }
                         IconButton(onClick = onSettings) { Icon(CyclusIcons.Gear, fmt.s("aSettings"), tint = c.ink) }
                     },
                     scrollBehavior = scroll,

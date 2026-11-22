@@ -12,7 +12,7 @@ Status values: `—` not started · `wip` · `done` · `off` (feature-flagged of
 | E-004 | Pattern watch („Deine Muster“) | 11.12 | engine | done | — | n/a | Shared Kotlin, golden vectors |
 | E-005 | Outlook („Ausblick“) | 11.13 | engine | done | — | n/a | Shared Kotlin, golden vectors |
 | S-001 | Encrypted local store | 11.2–11.3 | — | done | — | n/a | Android: SQLCipher + Keystore. iOS: Data Protection `.complete` |
-| S-002 | Backup / encrypted export | 11.9 | Privacy | — | — | | ANDROID_PLAN §6.4 undecided; backup disabled until then |
+| S-002 | Backup / encrypted export | 11.9 | Privacy | done | — | | `.cyclus` v1 export/import (merge/replace) + E2E-only device backup with restore. CSV export pending |
 | F-001 | Today ring | 7.2 | Heute | done | — | | |
 | F-002 | Today states (empty, between, pre, expected, later, in period, paused) | 7.2 | Heute | done | — | | Episodes UI (start/stop a pause) in F-018 |
 | F-003 | „Periode hat heute begonnen“ + undo | 7.2 | Heute | done | — | | |
@@ -25,10 +25,10 @@ Status values: `—` not started · `wip` · `done` · `off` (feature-flagged of
 | F-010 | Why this window? / Method sheets | 7.14 | Sheets | done | — | | Method copy: Android override (no iPhone, no outlier-question claim) |
 | F-011 | Conceive mode UI | 7.14 | Heute (Kinderwunsch) | done | — | | Regulatory feature flag per region still to add before release |
 | F-012 | Onboarding | 7.1 | Onboarding | — | — | | |
-| F-013 | Privacy Center | 7.8 | Datenschutz | — | — | | |
+| F-013 | Privacy Center | 7.8 | Datenschutz | done | — | | Health Connect rows with A4; notification/widget visibility with A4 |
 | F-014 | Settings + in-app language | 4 | Einstellungen | wip | — | | Language (Android 13+), goal, show fertile window, life stage done; notifications row → A4 |
-| F-015 | App lock (biometric + PIN) | 7.12 | Sperre | — | — | | |
-| F-016 | Erase everything | 7.9 | Sheet | — | — | | |
+| F-015 | App lock (biometric + PIN) | 7.12 | Sperre | done | — | | Lock paused (with notice) when nothing could open it |
+| F-016 | Erase everything | 7.9 | Sheet | done | — | | Crypto-shred (DB + keys); Health Connect deletion with A4 |
 | F-017 | Doctor Visit Pack (PDF) | 7.7 | Arztbericht | — | — | | |
 | F-018 | Episodes (pill, pregnancy, …) | 2.2 | Einstellungen | wip | — | | Pill / pregnant / postpartum pause predictions (undoable). Conditions (peri, PCOS, endo, T) hidden until the engine widens ranges for them |
 | P-001 | Health store sync | 11.4 | — | — | — | n/a | Health Connect vs HealthKit |

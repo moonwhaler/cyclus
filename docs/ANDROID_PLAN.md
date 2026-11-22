@@ -273,11 +273,16 @@ Pin exact versions at project start and record them in the SOUP list.
 - Scheduling: shared schedule → `AlarmManager.setAndAllowWhileIdle` (inexact) + WorkManager re-scheduling after boot/time-zone change. **No exact-alarm permission.**
 - "Later than usual" stays **off by default** (spec m9).
 
-### 6.4 Backup & transfer
-- **Android Auto Backup** is end-to-end encrypted with the device screen lock (Android 9+). That is *stronger* than iOS iCloud Backup without ADP. Privacy Center copy differs accordingly (honest per platform).
-- `dataExtractionRules` (Android 12+) define cloud backup vs device-to-device transfer. The „Nur auf dem Gerät“ toggle is implemented with a custom `BackupAgent` that skips the DB when the toggle is on, so the runtime choice is respected.
-- **Note:** the SQLCipher key is wrapped by a Keystore key, which is **not** backed up. The backup therefore contains the DB **plus** a backup-only copy of the key, wrapped by a key derived inside the E2E-encrypted backup. Simpler alternative to evaluate: back up a `.cyclus` export generated with a device-backup key. Decide in the Android week-1 spike and document it in the threat model.
-- **Encrypted export/import** via the Storage Access Framework (`ACTION_CREATE_DOCUMENT` / `ACTION_OPEN_DOCUMENT`). Same `.cyclus` v1 format → cross-platform migration.
+### 6.4 Backup & transfer (decided 2026-11-22, implemented in slice 3)
+- **Decision (owner):** spec D5 parity. An encrypted snapshot goes into Android backup **only** when the transport is end-to-end encrypted (client-side encryption with the screen lock) or a device-to-device transfer. Toggle „Nur auf dem Gerät“ turns it off. Plus passphrase-encrypted `.cyclus` export/import (`docs/export/FORMAT.md`).
+- **Mechanism:** `CyclusBackupAgent` (full backup, custom) reads files only, never the database (it runs restricted, often while locked):
+  - `files/backup/snapshot.cyclus` = mode-2 `.cyclus` of all data incl. app-lock settings, written when the app goes to the background after a change;
+  - the 256-bit backup key, wrapped by Keystore key `cyclus_backup_kek_v1` (no unlocked-device requirement, so nightly backups work);
+  - `.device-only` marker, `snapshot.absent` marker, `status.json` (shown in the Privacy Center).
+- **Backup run:** device-only, no E2E/D2D flag or intentionally no snapshot → nothing written. Everything (key unwrap + full snapshot authentication) is validated before the first byte; on failure nothing is written and the status says „failed“. Only then the snapshot and a transient plain copy of the key are streamed (deleted in `finally`; stale copies swept in `Application.onCreate`). Observed with LocalTransport: an empty run is rejected by the transport, so no empty set is committed (not promised to users).
+- **Restore:** `onRestoreFile` wraps the backup key from the stream for the new device (no plaintext key on disk) into `restore/`; `onRestoreFinished` marks `restore/pending` only if snapshot and key both arrived. The first launch imports atomically into a fresh encrypted DB, promotes the key, and on failure deletes only that fresh DB (Retry / „Neu beginnen“).
+- **Never backed up:** the database, its Keystore-wrapped key, preferences. Rules XML include exactly the two backup files (defence in depth).
+- **Encrypted export/import** via the Storage Access Framework (`CreateDocument` / `OpenDocument`). Same `.cyclus` v1 format → cross-platform migration. Exports never contain app-lock/PIN settings.
 
 ### 6.5 On-device language model (v1.5, parity with iOS)
 - Gemini Nano via the **ML Kit GenAI Prompt API**. Device list is limited (e.g. Pixel 10, Galaxy S26, recent vivo/Xiaomi). Inference runs only while the app is in the foreground.
@@ -299,6 +304,8 @@ Compose for Wear OS + Wear M3 (Expressive): log period/symptom, glance at cycle 
 | OEM cloud features (e.g. Samsung) | OEM backup/sync of app data varies | Same `dataExtractionRules`; document tested OEMs |
 | Rooted devices | Keystore can be weaker | No blocking (accessibility/fairness); disclosure in FAQ |
 | Network | **No `INTERNET` permission** | OS-enforced "no data leaves via the app" (privacy label claim is verifiable) |
+| Device backup snapshot | The snapshot key is hardware-wrapped and not usable from a disk image, but **code running as Cyclus on a locked phone after first unlock can decrypt the snapshot** (the DB key needs an unlocked device) | Accepted for automatic backups; only sent over E2E/D2D; „Nur auf dem Gerät“ removes snapshot and key |
+| Cyclus PIN | UI gate only: its hash lives inside the encrypted DB | Back-off after 5 wrong tries (elapsedRealtime); not presented as data encryption |
 
 ---
 

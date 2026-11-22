@@ -2,6 +2,8 @@ package com.nordinary.cyclus.ui
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.nordinary.cyclus.backup.SettingKeys
+import com.nordinary.cyclus.backup.preview
 import com.nordinary.cyclus.core.CycleOverride
 import com.nordinary.cyclus.core.Day
 import com.nordinary.cyclus.core.DayLog
@@ -32,6 +34,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
@@ -49,15 +52,33 @@ data class AppModel(
     val showFertility: Boolean,
     val muted: Set<String>,
     val activeEpisode: Episode?,
+    val settings: Map<String, String>,
 ) {
     val logs: Map<Day, DayLog> get() = snapshot.data.logs
 }
 
-/** One-shot UI message (snackbar), optionally undoable. */
-data class UiMessage(val key: String, val undo: (suspend () -> Unit)? = null)
+/** One-shot UI message (snackbar): a prototype text key or an app string resource, optionally undoable. */
+data class UiMessage(val key: String, val res: Int? = null, val undo: (suspend () -> Unit)? = null)
 
 @OptIn(ExperimentalUuidApi::class)
-class AppViewModel(private val repo: CyclusRepository) : ViewModel() {
+class AppViewModel(
+    private val repo: CyclusRepository,
+    private val app: com.nordinary.cyclus.CyclusApplication,
+    restored: Boolean = false,
+) : ViewModel() {
+    private val _messages = MutableSharedFlow<UiMessage>(extraBufferCapacity = 4)
+    val messages: SharedFlow<UiMessage> = _messages
+
+    init {
+        // shown once the UI listens (after the lock screen), not into the void
+        if (restored) viewModelScope.launch {
+            _messages.subscriptionCount.first { it > 0 }
+            _messages.emit(UiMessage("", res = com.nordinary.cyclus.R.string.restored))
+        }
+    }
+
+    /** „Nur auf dem Gerät“ (file marker, not a DB setting). */
+    val deviceOnly = kotlinx.coroutines.flow.MutableStateFlow(app.backup.deviceOnly)
 
     /** Local calendar day; re-checked so the app rolls over at midnight. */
     private val todayFlow = flow {
@@ -77,12 +98,10 @@ class AppViewModel(private val repo: CyclusRepository) : ViewModel() {
             today = TodayPresenter.present(snap, episode?.kind, muted),
             insights = InsightsPresenter.present(snap, muted),
             why = WhyPresenter.present(snap),
-            mode = mode, showFertility = showFert, muted = muted, activeEpisode = episode,
+            mode = mode, showFertility = showFert, muted = muted, activeEpisode = episode, settings = settings,
         )
-    }.flowOn(Dispatchers.Default).stateIn(viewModelScope, SharingStarted.Eagerly, null)
+    }.flowOn(Dispatchers.Default).stateIn(viewModelScope, SharingStarted.WhileSubscribed(0), null)
 
-    private val _messages = MutableSharedFlow<UiMessage>(extraBufferCapacity = 4)
-    val messages: SharedFlow<UiMessage> = _messages
 
     fun updateLog(day: Day, transform: (DayLog) -> DayLog) {
         viewModelScope.launch {
@@ -179,6 +198,120 @@ class AppViewModel(private val repo: CyclusRepository) : ViewModel() {
         }
     }
 
+    // ---------------- privacy, backup, export / import, erase (slice 3) ----------------
+
+    private fun msg(res: Int) { viewModelScope.launch { _messages.emit(UiMessage("", res = res)) } }
+
+    fun setDeviceOnly(on: Boolean) {
+        deviceOnly.value = on
+        viewModelScope.launch { app.backup.setDeviceOnly(on, repo, app.appLabel()) }
+    }
+
+    fun backupStatus() = app.backup.status()
+
+    fun setSetting(key: String, value: String?) { viewModelScope.launch { repo.setSetting(key, value) } }
+
+    fun setPin(pin: String) {
+        viewModelScope.launch(Dispatchers.Default) {
+            val (salt, hash) = com.nordinary.cyclus.security.Pin.hash(pin)
+            repo.setSetting(SettingKeys.LOCK_PIN_SALT, salt)
+            repo.setSetting(SettingKeys.LOCK_PIN_HASH, hash)
+        }
+    }
+
+    fun removePin() {
+        viewModelScope.launch {
+            repo.setSetting(SettingKeys.LOCK_PIN_HASH, null); repo.setSetting(SettingKeys.LOCK_PIN_SALT, null)
+            repo.setSetting(SettingKeys.LOCK_PIN_ONLY, null)
+        }
+    }
+
+    /** Verifies a PIN on the lock screen (PBKDF2 off the main thread is short enough to block once per entry). */
+    fun checkPin(pin: String, config: com.nordinary.cyclus.lock.LockConfig): Boolean {
+        val ok = config.pinSalt != null && config.pinHash != null && com.nordinary.cyclus.security.Pin.verify(pin, config.pinSalt, config.pinHash)
+        viewModelScope.launch {
+            if (ok) repo.setSetting(SettingKeys.LOCK_BACKOFF, null)
+            else repo.setSetting(SettingKeys.LOCK_BACKOFF, app.lock.registerFailure(config.failures).toString())
+        }
+        return ok
+    }
+
+    val exporting = kotlinx.coroutines.flow.MutableStateFlow(false)
+
+    /** Encrypts all data with [passphrase] (mode 1) and writes it to the picked document. */
+    fun export(uri: android.net.Uri, passphrase: CharArray) {
+        exporting.value = true
+        viewModelScope.launch {
+            try {
+                val model = repo.exportAll(java.time.Instant.now().toString(), app.appLabel(), includeSecurity = false)
+                val bytes = kotlinx.coroutines.withContext(Dispatchers.Default) { com.nordinary.cyclus.backup.CyclusFile.sealWithPassphrase(model.encode(), passphrase) }
+                kotlinx.coroutines.withContext(Dispatchers.IO) {
+                    app.contentResolver.openOutputStream(uri, "wt")!!.use { it.write(bytes) }
+                }
+                val count = (repo.setting(SettingKeys.EXPORT_COUNT)?.toIntOrNull() ?: 0) + 1
+                repo.setSetting(SettingKeys.EXPORT_COUNT, count.toString())
+                repo.setSetting(SettingKeys.EXPORT_LAST, LocalDate.now().toEpochDay().toString())
+                msg(com.nordinary.cyclus.R.string.export_done)
+            } catch (e: Exception) {
+                msg(com.nordinary.cyclus.R.string.export_failed)
+            } finally {
+                passphrase.fill(' ')
+                exporting.value = false
+            }
+        }
+    }
+
+    val importStage = kotlinx.coroutines.flow.MutableStateFlow<com.nordinary.cyclus.ui.privacy.ImportStage>(com.nordinary.cyclus.ui.privacy.ImportStage.Passphrase)
+    private var importUri: android.net.Uri? = null
+    private var pendingImport: com.nordinary.cyclus.backup.ExportFile? = null
+
+    fun startImport(uri: android.net.Uri) { importUri = uri; pendingImport = null; importStage.value = com.nordinary.cyclus.ui.privacy.ImportStage.Passphrase }
+
+    fun openImport(passphrase: CharArray) {
+        val uri = importUri ?: return
+        importStage.value = com.nordinary.cyclus.ui.privacy.ImportStage.Working
+        viewModelScope.launch {
+            val stage = try {
+                val bytes = kotlinx.coroutines.withContext(Dispatchers.IO) {
+                    app.contentResolver.openInputStream(uri)!!.use { s -> readCapped(s, com.nordinary.cyclus.backup.CyclusFile.MAX_FILE_BYTES) }
+                }
+                val file = kotlinx.coroutines.withContext(Dispatchers.Default) {
+                    com.nordinary.cyclus.backup.ExportFile.decode(com.nordinary.cyclus.backup.CyclusFile.openWithPassphrase(bytes, passphrase))
+                }
+                pendingImport = file
+                com.nordinary.cyclus.ui.privacy.ImportStage.Preview(file.preview())
+            } catch (e: com.nordinary.cyclus.backup.CyclusFileException.WrongPassphraseOrDamaged) {
+                com.nordinary.cyclus.ui.privacy.ImportStage.Error(com.nordinary.cyclus.R.string.import_wrong)
+            } catch (e: com.nordinary.cyclus.backup.CyclusFileException.UnsupportedVersion) {
+                com.nordinary.cyclus.ui.privacy.ImportStage.Error(com.nordinary.cyclus.R.string.import_unsupported)
+            } catch (e: Exception) {
+                com.nordinary.cyclus.ui.privacy.ImportStage.Error(com.nordinary.cyclus.R.string.import_bad)
+            } finally {
+                passphrase.fill(' ')
+            }
+            importStage.value = stage
+        }
+    }
+
+    fun applyImport(replace: Boolean, onDone: () -> Unit) {
+        val file = pendingImport ?: return
+        viewModelScope.launch {
+            app.backup.exclusive { if (replace) repo.importReplace(file) else repo.importMerge(file) }
+            pendingImport = null; importUri = null
+            importStage.value = com.nordinary.cyclus.ui.privacy.ImportStage.Passphrase
+            msg(com.nordinary.cyclus.R.string.import_done)
+            onDone()
+        }
+    }
+
+    fun cancelImport() { pendingImport = null; importUri = null; importStage.value = com.nordinary.cyclus.ui.privacy.ImportStage.Passphrase }
+
+    /** Erase everything (crypto-shred); the store reopens empty. */
+    fun eraseEverything() {
+        app.lock.forget()
+        app.store.erase()
+    }
+
     fun saved() { viewModelScope.launch { _messages.emit(UiMessage("tSaved")) } }
 
     fun undo(message: UiMessage) { message.undo?.let { u -> viewModelScope.launch { u() } } }
@@ -203,4 +336,17 @@ class AppViewModel(private val repo: CyclusRepository) : ViewModel() {
         const val KEY_SHOW_FERT = "showFertTrack"
         const val KEY_MUTED = "mutedPatterns"
     }
+}
+
+/** Reads at most [max] bytes (API 29-safe; `readNBytes` needs Android 13). Larger input → [CyclusFileException.TooLarge]. */
+private fun readCapped(input: java.io.InputStream, max: Int): ByteArray {
+    val out = java.io.ByteArrayOutputStream()
+    val buf = ByteArray(64 * 1024)
+    while (true) {
+        val n = input.read(buf)
+        if (n < 0) break
+        if (out.size() + n > max) throw com.nordinary.cyclus.backup.CyclusFileException.TooLarge("file too large")
+        out.write(buf, 0, n)
+    }
+    return out.toByteArray()
 }

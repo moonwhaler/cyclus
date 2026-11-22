@@ -18,13 +18,25 @@ object AndroidDatabase {
         val app = context.applicationContext
         System.loadLibrary("sqlcipher")
         val dbFile = app.getDatabasePath(fileName)
-        val key = DbKeyManager(app).obtainKey(databaseExists = dbFile.exists())
+        val key = DbKeyManager(app, fileName).obtainKey(databaseExists = dbFile.exists())
         // Raw-key form x'…' skips SQLCipher's PBKDF2 (the key is already 256 random bits).
         val passphrase = "x'${key.toHex()}'".toByteArray(Charsets.US_ASCII)
         key.fill(0)
         val factory = SupportOpenHelperFactory(passphrase, null, true)
         val driver = AndroidSqliteDriver(CyclusDatabase.Schema, app, fileName, factory)
-        return CyclusRepository(CyclusDatabase(driver), Dispatchers.IO) { System.currentTimeMillis() }
+        return CyclusRepository(CyclusDatabase(driver), Dispatchers.IO, onClose = { driver.close() }) { System.currentTimeMillis() }
+    }
+
+    fun exists(context: Context, fileName: String = FILE_NAME): Boolean = context.applicationContext.getDatabasePath(fileName).exists()
+
+    /**
+     * Crypto-shred: deletes the database files (incl. WAL/SHM/journal) **and** the key that encrypted them (wrapped
+     * key file + Keystore alias). Only call after the repository's driver is closed.
+     */
+    fun destroy(context: Context, fileName: String = FILE_NAME) {
+        val app = context.applicationContext
+        app.deleteDatabase(fileName)
+        DbKeyManager(app, fileName).destroy()
     }
 
     private fun ByteArray.toHex(): String = joinToString("") { (it.toInt() and 0xFF).toString(16).padStart(2, '0') }
