@@ -56,7 +56,7 @@ const logsOut = () => [...E.S.logs.entries()].sort((a, b) => a[0] - b[0]).map(([
 const overridesOut = () => [...E.S.overrides.entries()].sort((a, b) => a[0] - b[0]);
 const pickPred = (p) => p && {
   starts: p.starts, lens: p.lens, used: p.used, last: p.last, lo: p.lo, hi: p.hi, neff: p.neff, mun: p.mun,
-  scale: p.scale, df: p.df, loL: p.loL, hiL: p.hiL, tier: p.tier, typLo: p.typLo, typHi: p.typHi,
+  scale: p.scale, df: p.df, loL: p.loL, hiL: p.hiL, tier: p.tier, typLo: p.typLo, typHi: p.typHi, likely: p.likely,
 };
 const pickFert = (f) => f && {
   cs: f.cs, todayCd: f.todayCd, Dmax: f.Dmax,

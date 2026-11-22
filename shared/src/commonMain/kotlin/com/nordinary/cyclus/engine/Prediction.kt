@@ -1,5 +1,7 @@
 package com.nordinary.cyclus.engine
 
+import com.nordinary.cyclus.core.Js
+import kotlin.math.min
 import com.nordinary.cyclus.core.CycleOverride
 import com.nordinary.cyclus.core.Day
 import com.nordinary.cyclus.core.DayLog
@@ -68,7 +70,10 @@ data class Prediction(
     val tier: Tier,
     val typLo: Int,
     val typHi: Int,
-)
+) {
+    /** Most likely start (median cycle length), shown first; [lo]…[hi] says how sure that is (prototype `likely`). */
+    val likely: Day get() = min(hi, max(lo, last + Js.roundInt(exp(mun))))
+}
 
 object StudentT {
     private val T90 = listOf(

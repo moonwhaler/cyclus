@@ -243,8 +243,9 @@ private fun RingCenter(hero: TodayHero, fmt: Fmt) {
         is TodayHero.Track -> {
             kicker = fmt.s("cycleDay"); big = hero.cycleDay.toString(); bigMax = 46
             when (hero.status) {
-                CycleStatus.BETWEEN -> { sub = fmt.s("nextPeriod"); range = fmt.range(hero.lo, hero.hi) }
-                CycleStatus.PRE -> { sub = fmt.s("periodIn"); range = fmt.s("daysRange", hero.daysToLo, hero.daysToHi) }
+                // most likely date first, the range (how sure that is) below it
+                CycleStatus.BETWEEN -> { sub = fmt.s("nextPeriod"); range = fmt.s("around", fmt.md(hero.likely)); subBelow = fmt.s("possibleR", fmt.range(hero.lo, hero.hi)) }
+                CycleStatus.PRE -> { sub = fmt.s("periodIn"); range = fmt.s("aboutDays", hero.daysToLikely); subBelow = fmt.s("possibleR", fmt.range(hero.lo, hero.hi)) }
                 CycleStatus.EXPECTED -> { sub = fmt.s("expectedNow"); range = fmt.range(hero.lo, hero.hi) }
                 CycleStatus.LATER -> { sub = fmt.s("later"); subBelow = fmt.s("expectedOn", fmt.range(hero.lo, hero.hi)) }
                 else -> {}

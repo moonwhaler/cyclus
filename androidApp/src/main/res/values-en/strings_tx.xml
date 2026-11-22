@@ -16,6 +16,9 @@
     <string name="tx_cycleDay">Cycle day</string>
     <string name="tx_cycleDayN">Cycle day %1$s</string>
     <string name="tx_nextPeriod">Next period</string>
+    <string name="tx_around">around %1$s</string>
+    <string name="tx_aboutDays">about %1$s days</string>
+    <string name="tx_possibleR">possible: %1$s</string>
     <string name="tx_periodIn">Period expected in</string>
     <string name="tx_daysRange">%1$s–%2$s days</string>
     <string name="tx_expectedNow">Period expected now</string>

@@ -103,6 +103,7 @@ class GoldenTest {
         cmp.eq("predict.scale", jp["scale"], p.scale); cmp.eq("predict.df", jp["df"], p.df)
         cmp.eq("predict.loL", jp["loL"], p.loL); cmp.eq("predict.hiL", jp["hiL"], p.hiL)
         cmp.eq("predict.tier", jp["tier"], p.tier.key); cmp.eq("predict.typLo", jp["typLo"], p.typLo); cmp.eq("predict.typHi", jp["typHi"], p.typHi)
+        cmp.eq("predict.likely", jp["likely"], p.likely)
 
         val vm = out["vm"]!!.jsonObject
         cmp.eq("vm.paused", vm["paused"], snap.paused); cmp.eq("vm.cd", vm["cd"], snap.cycleDay)

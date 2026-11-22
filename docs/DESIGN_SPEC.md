@@ -395,7 +395,7 @@ SF Symbols (hierarchical rendering). Custom symbols (SF Symbols template format)
 States:
 | State | Ring centre | Subtitle |
 |---|---|---|
-| Normal | Day N | Next period · range |
+| Normal | Day N | Next period · "around <most likely date>" (median cycle length), "possible: <range>" below (2026-11-22: the range's first day was read as *the* forecast) |
 | In period | Period day N | "Tap to log flow" + quick flow chips inline |
 | Pre-period window | Day N | "Period expected in X–Y days" |
 | Past upper bound | Day N | "Later than your usual range" (neutral, no alarm, no push unless opted in) |
@@ -925,7 +925,7 @@ Applied to today's cycle on every recompute. `t` = cycle day of the observation.
 - **Conception weight** `c(t) = Σ_d post(d) · w(t−d)` (relative Wilcox shape) → used for **Peak** days and "best days".
 - **Tiers** (thresholds calibrated in back-test):
   - **Peak:** P_fertile ≥ 0.6 **and** c(t) within top 2 days of the cycle;
-  - **High:** ≥ 0.5;
+  - **High:** ≥ 0.5, **or** the MAP ovulation day and the 2 days before it when P_fertile ≥ 0.3 (owner feedback 2026-11-22: with an uncertain estimate the ≥ 0.5 days stopped two days short of the ◎ marker, which read as a contradiction; this adds at most 3 days, largest high window in the golden set 7 days);
   - **Possible:** 0.15–0.5;
   - **Lower chance:** < 0.15 (shown in Conceive mode only, unfilled).
 - **Window band** = contiguous days with P_fertile ≥ 0.15. Its width *is* the uncertainty: it narrows visibly as evidence arrives.

@@ -179,14 +179,17 @@ fun CycleData.fertility(
 
     val raw = (1..dMax).map { Triple(it, pf(it), cw(it)) }
     val topC = raw.sortedByDescending { it.third }.take(2).map { it.first }
+    val ds = (6..dMax).sortedByDescending { post[it] }
+    val mapD = ds.first()
+    // high: likely in the fertile window, or the most likely ovulation day and the 2 days before it (the most fertile
+    // span) once they are reasonably likely; so the high days never stop short of the ovulation marker
     val days = raw.map { (cd, pfv, c) ->
-        val tier = if (pfv >= 0.6 && cd in topC) 3 else if (pfv >= 0.5) 2 else if (pfv >= 0.15) 1 else 0
+        val nearO = cd in mapD - 2..mapD && pfv >= 0.3
+        val tier = if (pfv >= 0.6 && cd in topC) 3 else if (pfv >= 0.5 || nearO) 2 else if (pfv >= 0.15) 1 else 0
         FertilityDay(cd, pfv, c, tier)
     }
     val inBand = days.filter { it.pf >= 0.15 }
     val band = if (inBand.isNotEmpty()) inBand.first().cd to inBand.last().cd else null
-    val ds = (6..dMax).sortedByDescending { post[it] }
-    val mapD = ds.first()
     var acc = 0.0
     val hp = mutableListOf<Int>()
     val mass = 1 - pA

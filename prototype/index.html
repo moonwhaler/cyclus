@@ -324,7 +324,7 @@ const TX = {
   close:{de:'Schließen',en:'Close'}, done:{de:'Fertig',en:'Done'}, cancel:{de:'Abbrechen',en:'Cancel'}, undo:{de:'Rückgängig',en:'Undo'},
   // today
   cycleDay:{de:'Zyklustag',en:'Cycle day'}, cycleDayN:{de:n=>`Zyklustag ${n}`, en:n=>`Cycle day ${n}`},
-  nextPeriod:{de:'Nächste Periode',en:'Next period'}, periodIn:{de:'Periode erwartet in',en:'Period expected in'}, daysRange:{de:(a,b)=>`${a}–${b} Tagen`, en:(a,b)=>`${a}–${b} days`},
+  nextPeriod:{de:'Nächste Periode',en:'Next period'}, around:{de:d=>`um den ${d}`, en:d=>`around ${d}`}, aboutDays:{de:n=>`etwa ${n} Tagen`, en:n=>`about ${n} days`}, possibleR:{de:r=>`möglich: ${r}`, en:r=>`possible: ${r}`}, periodIn:{de:'Periode erwartet in',en:'Period expected in'}, daysRange:{de:(a,b)=>`${a}–${b} Tagen`, en:(a,b)=>`${a}–${b} days`},
   expectedNow:{de:'Periode jetzt erwartet',en:'Period expected now'}, later:{de:'Später als sonst',en:'Later than usual'}, expectedOn:{de:r=>`Erwartet: ${r}`, en:r=>`Expected ${r}`},
   tier_rough:{de:'Grobe Schätzung',en:'Rough estimate'}, tier_getting:{de:'Wird genauer',en:'Getting there'}, tier_history:{de:'Basiert auf deinem Verlauf',en:'Based on your history'},
   periodStarted:{de:'Periode hat heute begonnen',en:'Period started today'}, logEarlier:{de:'Früheres Datum eintragen',en:'Log an earlier date'},
@@ -700,7 +700,9 @@ function predict(){
   let lo = last+Math.floor(loL), hi = last+Math.ceil(hiL);
   if (hi-lo<2) { lo-=1; hi+=1; }
   const tier = neff<2 ? 'rough' : neff<5 ? 'getting' : 'history';
-  return {starts, lens, used, last, lo, hi, neff, mun, scale, df, loL, hiL, tier, typLo:Math.floor(loL), typHi:Math.ceil(hiL)};
+  // most likely start (median cycle length), shown first; the range says how sure that is
+  const likely = Math.min(hi, Math.max(lo, last+Math.round(Math.exp(mun))));
+  return {starts, lens, used, last, lo, hi, likely, neff, mun, scale, df, loL, hiL, tier, typLo:Math.floor(loL), typHi:Math.ceil(hiL)};
 }
 
 /* ============ fertility engine (spec §11.11) ============ */
@@ -774,11 +776,15 @@ function fertility(pred, uptoCd, opt={}){
   const cw = cd => { let s=0; for (let k=-5;k<=0;k++) s+=(post[cd-k]||0)*WILCOX[k+5]; return s; };
   const days=[]; for (let cd=1; cd<=Dmax; cd++) days.push({cd, pf:pf(cd), c:cw(cd)});
   const topC = [...days].sort((a,b)=>b.c-a.c).slice(0,2).map(x=>x.cd);
-  days.forEach(x => x.tier = x.pf>=0.6 && topC.includes(x.cd) ? 3 : x.pf>=0.5 ? 2 : x.pf>=0.15 ? 1 : 0);
+  const ds = Object.keys(post).map(Number).sort((a,b)=>post[b]-post[a]);
+  const mapD = ds[0];
+  // high: likely in the fertile window, or the most likely ovulation day and the 2 days before it (the most fertile
+  // span) once they are reasonably likely; so the high days never stop short of the ovulation marker
+  const nearO = x => x.cd>=mapD-2 && x.cd<=mapD && x.pf>=0.3;
+  days.forEach(x => x.tier = x.pf>=0.6 && topC.includes(x.cd) ? 3 : (x.pf>=0.5 || nearO(x)) ? 2 : x.pf>=0.15 ? 1 : 0);
   const inBand = days.filter(x=>x.pf>=0.15);
   const band = inBand.length ? [inBand[0].cd, inBand[inBand.length-1].cd] : null;
-  const ds = Object.keys(post).map(Number).sort((a,b)=>post[b]-post[a]);
-  const mapD = ds[0]; let acc=0; const hp=[]; const mass=1-pA;
+  let acc=0; const hp=[]; const mass=1-pA;
   for (const d of ds){ hp.push(d); acc+=post[d]; if (acc>=0.8*mass) break; }
   const hpd=[Math.min(...hp), Math.max(...hp)];
   const has = x => ev.some(e=>e.type===x);
@@ -1200,8 +1206,8 @@ function renderToday(){
   } else {
     const p = v.pred;
     kicker=t('cycleDay'); big=String(v.cd); bigMax=46;
-    if (v.status==='between'){ sub=t('nextPeriod'); extra=`<div class="range">${range(p.lo,p.hi)}</div>`; }
-    if (v.status==='pre'){ sub=t('periodIn'); extra=`<div class="range">${t('daysRange',p.lo-TODAY,p.hi-TODAY)}</div>`; }
+    if (v.status==='between'){ sub=t('nextPeriod'); extra=`<div class="range">${t('around',md(p.likely))}</div><div class="sub">${t('possibleR',range(p.lo,p.hi))}</div>`; }
+    if (v.status==='pre'){ sub=t('periodIn'); extra=`<div class="range">${t('aboutDays',p.likely-TODAY)}</div><div class="sub">${t('possibleR',range(p.lo,p.hi))}</div>`; }
     if (v.status==='expected'){ sub=t('expectedNow'); extra=`<div class="range">${range(p.lo,p.hi)}</div>`; }
     if (v.status==='later'){ sub=t('later'); extra=`<div class="sub">${t('expectedOn',range(p.lo,p.hi))}</div>`; }
     under = `<span class="badge"><span class="dot" style="color:${p.neff<2?'var(--warning)':'var(--success)'}"></span>${t('tier_'+p.tier)}</span>`;

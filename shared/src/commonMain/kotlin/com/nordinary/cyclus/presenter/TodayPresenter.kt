@@ -53,6 +53,9 @@ sealed interface TodayHero {
         val hi: Day,
         val daysToLo: Int,
         val daysToHi: Int,
+        /** Most likely start; shown first, the range below it. */
+        val likely: Day,
+        val daysToLikely: Int,
         val tier: Tier,
         /** Fewer than ~2 cycles of evidence: amber dot instead of green. */
         val rough: Boolean,
@@ -136,6 +139,7 @@ object TodayPresenter {
             }
             else -> TodayHero.Track(
                 cycleDay = cd, status = snap.status, lo = p.lo, hi = p.hi, daysToLo = p.lo - today, daysToHi = p.hi - today,
+                likely = p.likely, daysToLikely = p.likely - today,
                 tier = p.tier, rough = p.neff < 2,
                 showPeriodStartButton = snap.status in setOf(CycleStatus.PRE, CycleStatus.EXPECTED, CycleStatus.LATER) && p.lo - today <= 3,
             )
