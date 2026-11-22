@@ -1,5 +1,6 @@
 package com.nordinary.cyclus.ui.today
 
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -58,6 +59,7 @@ import com.nordinary.cyclus.insights.ForecastKind
 import com.nordinary.cyclus.presenter.OvulationLine
 import com.nordinary.cyclus.presenter.TodayHero
 import com.nordinary.cyclus.presenter.TodayUiState
+import com.nordinary.cyclus.ui.common.CappedFontScale
 import com.nordinary.cyclus.ui.common.Badge
 import com.nordinary.cyclus.ui.common.CyclusCard
 import com.nordinary.cyclus.ui.common.CyclusChip
@@ -87,6 +89,8 @@ fun TodayContent(
     /** In-context opt-in for „Periode bald“ (nothing is armed before the user says yes, on every API level). */
     reminderOffer: Boolean = false,
     onReminderOffer: (Boolean) -> Unit = {},
+    /** One-tap pinned symptoms on the „Heute eingetragen“ card (null: not shown). */
+    onToggleSymptom: ((String) -> Unit)? = null,
 ) {
     val c = Cyclus.colors
     Column(
@@ -149,6 +153,13 @@ fun TodayContent(
                     Text("›", color = c.ink2, fontSize = 18.sp)
                 }
                 TodayLogSummary(state.todaysLog, fmt)
+                // the most common entries in one tap, without opening the sheet
+                if (onToggleSymptom != null) {
+                    @OptIn(ExperimentalLayoutApi::class)
+                    FlowRow(Modifier.padding(top = 8.dp), horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                        for (s in Catalog.PINNED) CyclusChip(fmt.item(s), state.todaysLog?.symptoms?.contains(s) == true, { onToggleSymptom(s) })
+                    }
+                }
             }
             val conceive = state.conceive
             if (conceive != null) {
@@ -336,7 +347,7 @@ private fun ForecastCard(fc: Forecast, fmt: Fmt) {
             Text(fmt.s("fc7"), fontSize = 12.sp, color = c.ink2)
         }
         if (summary.isNotEmpty()) Text(summary.joinToString("\n"), fontSize = 14.sp, color = c.ink)
-        Column(
+        CappedFontScale { Column(
             Modifier.fillMaxWidth().padding(top = 4.dp).clearAndSetSemantics { contentDescription = "${fmt.s("fcAria")}. ${summary.joinToString(". ")}" },
             verticalArrangement = Arrangement.spacedBy(3.dp),
         ) {
@@ -360,7 +371,7 @@ private fun ForecastCard(fc: Forecast, fmt: Fmt) {
                     }
                 }
             }
-        }
+        } }
         Text(fmt.s("fcFoot", fc.cycles), fontSize = 12.sp, color = c.ink2)
     }
 }

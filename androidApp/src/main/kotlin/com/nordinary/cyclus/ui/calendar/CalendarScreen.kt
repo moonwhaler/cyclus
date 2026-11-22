@@ -1,5 +1,6 @@
 package com.nordinary.cyclus.ui.calendar
 
+import androidx.compose.ui.semantics.selected
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -65,8 +66,9 @@ fun CalendarContent(
     snap: CycleSnapshot,
     fmt: Fmt,
     contentPadding: PaddingValues,
-    onDay: (Int) -> Unit,
     onMarkStart: (Int) -> Unit,
+    /** The selected day's detail, shown under the grid (a tap selects; today is selected at first). */
+    detail: @Composable (day: Int) -> Unit,
 ) {
     val c = Cyclus.colors
     val todayDate = LocalDate.ofEpochDay(snap.today.toLong())
@@ -75,6 +77,8 @@ fun CalendarContent(
     val month = ym % 12 + 1
     val model = remember(snap, ym) { CalendarPresenter.month(snap, year, month) }
     var dragged by remember { mutableFloatStateOf(0f) }
+    var selected by rememberSaveable { mutableStateOf(snap.today) }
+    val onDay: (Int) -> Unit = { selected = it }
 
     Column(
         Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(contentPadding).padding(horizontal = 16.dp)
@@ -95,9 +99,11 @@ fun CalendarContent(
         }
         Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
             for (week in model.cells.chunked(7)) Row(Modifier.fillMaxWidth()) {
-                for (cell in week) DayCell(cell, fmt, Modifier.weight(1f), onDay, onMarkStart)
+                for (cell in week) DayCell(cell, fmt, Modifier.weight(1f), cell.day == selected, onDay, onMarkStart)
             }
         }
+        Spacer(Modifier.height(14.dp))
+        detail(selected)
         Text(fmt.s("calTip"), Modifier.padding(horizontal = 4.dp, vertical = 10.dp), fontSize = 12.sp, color = c.ink2)
         Legend(model.fertilityLegend, fmt)
         Spacer(Modifier.height(96.dp))
@@ -113,7 +119,7 @@ private fun NavArrow(symbol: String, label: String, onClick: () -> Unit) {
 
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
-private fun DayCell(cell: CalendarCell, fmt: Fmt, modifier: Modifier, onDay: (Int) -> Unit, onMarkStart: (Int) -> Unit) {
+private fun DayCell(cell: CalendarCell, fmt: Fmt, modifier: Modifier, selected: Boolean, onDay: (Int) -> Unit, onMarkStart: (Int) -> Unit) {
     val c = Cyclus.colors
     var menu by remember { mutableStateOf(false) }
     val markLabel = fmt.s("markStart")
@@ -127,9 +133,11 @@ private fun DayCell(cell: CalendarCell, fmt: Fmt, modifier: Modifier, onDay: (In
         modifier
             .height(50.dp)
             .clip(RoundedCornerShape(12.dp))
+            .then(if (selected) Modifier.background(c.period.copy(alpha = .10f)) else Modifier)
             .combinedClickable(onClick = { onDay(cell.day) }, onLongClick = { if (cell.canMarkStart) menu = true })
             .clearAndSetSemantics {
                 contentDescription = label
+                this.selected = selected
                 onClick(null) { onDay(cell.day); true }
                 if (cell.canMarkStart) customActions = listOf(CustomAccessibilityAction(markLabel) { onMarkStart(cell.day); true })
             },

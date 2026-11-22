@@ -1,5 +1,9 @@
 package com.nordinary.cyclus.ui.calendar
 
+import androidx.compose.ui.semantics.heading
+import androidx.compose.ui.semantics.LiveRegionMode
+import androidx.compose.ui.semantics.liveRegion
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -36,65 +40,63 @@ import com.nordinary.cyclus.ui.theme.Cyclus
 import com.nordinary.cyclus.ui.today.PrimaryButton
 import com.nordinary.cyclus.ui.today.SecondaryButton
 
-/** Day detail (prototype `renderDaySheet`). */
-@OptIn(ExperimentalMaterial3Api::class)
+/**
+ * Day detail (prototype `renderDaySheet`), shown under the calendar grid for the selected day: entries, values from
+ * other apps, and the actions „Bearbeiten“ / „Als Periodenbeginn markieren“ (no long-press needed).
+ */
 @Composable
-fun DaySheet(
-    model: DaySheetModel, fmt: Fmt, onEdit: () -> Unit, onMarkStart: () -> Unit, onDismiss: () -> Unit,
+fun DayDetail(
+    model: DaySheetModel, fmt: Fmt, onEdit: () -> Unit, onMarkStart: () -> Unit,
     /** Values from other apps via Health Connect, with source; not counted when the person logged the field. */
     external: List<ExternalValue> = emptyList(),
 ) {
     val c = Cyclus.colors
-    ModalBottomSheet(onDismissRequest = onDismiss, sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true), containerColor = c.bg) {
-        Row(Modifier.fillMaxWidth().padding(start = 16.dp, end = 8.dp, bottom = 10.dp), verticalAlignment = Alignment.CenterVertically) {
-            Text(fmt.long(model.day), Modifier.weight(1f), fontSize = 17.sp, fontWeight = FontWeight.Bold, color = c.ink)
-            TextButton(onClick = onDismiss) { Text(fmt.s("close"), color = c.period, fontWeight = FontWeight.SemiBold) }
+    Column(Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+        // announced when another day is selected
+        Text(
+            fmt.long(model.day), Modifier.semantics { liveRegion = LiveRegionMode.Polite; heading() },
+            fontSize = 17.sp, fontWeight = FontWeight.Bold, color = c.ink,
+        )
+        if (model.predictedPeriod || model.fertTier > 0) Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            if (model.predictedPeriod) Badge(fmt.s("predPeriod"))
+            if (model.fertTier > 0) Badge(fmt.s("fertBadge", fmt.s("ftAdj${model.fertTier}")), dot = c.fertile, color = c.fertile)
         }
-        Column(
-            Modifier.fillMaxWidth().verticalScroll(rememberScrollState()).padding(start = 16.dp, end = 16.dp, bottom = 28.dp),
-            verticalArrangement = Arrangement.spacedBy(18.dp),
-        ) {
-            if (model.predictedPeriod || model.fertTier > 0) Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                if (model.predictedPeriod) Badge(fmt.s("predPeriod"))
-                if (model.fertTier > 0) Badge(fmt.s("fertBadge", fmt.s("ftAdj${model.fertTier}")), dot = c.fertile, color = c.fertile)
+        if (model.entries.isEmpty()) CyclusCard { Text(fmt.s("dsNothing"), fontSize = 14.sp, color = c.ink2) }
+        else Column(Modifier.fillMaxWidth().clip(RoundedCornerShape(14.dp)).background(c.surface)) {
+            model.entries.forEachIndexed { i, e ->
+                if (i > 0) HorizontalDivider(color = c.line)
+                val (k, v) = row(e, fmt)
+                Column(Modifier.fillMaxWidth().padding(horizontal = 14.dp, vertical = 12.dp)) {
+                    Text(k, fontSize = 13.sp, color = c.ink2)
+                    Text(v, fontSize = 15.sp, fontWeight = FontWeight.Medium, color = c.ink)
+                }
             }
-            if (model.entries.isEmpty()) CyclusCard { Text(fmt.s("dsNothing"), fontSize = 14.sp, color = c.ink2) }
-            else Column(Modifier.fillMaxWidth().clip(RoundedCornerShape(14.dp)).background(c.surface)) {
-                model.entries.forEachIndexed { i, e ->
+        }
+        if (external.isNotEmpty()) {
+            val pm = LocalContext.current.packageManager
+            Column(Modifier.fillMaxWidth().clip(RoundedCornerShape(14.dp)).background(c.surface)) {
+                external.forEachIndexed { i, x ->
                     if (i > 0) HorizontalDivider(color = c.line)
-                    val (k, v) = row(e, fmt)
+                    val app = remember(x.origin) {
+                        runCatching { pm.getApplicationLabel(pm.getApplicationInfo(x.origin, 0)).toString() }.getOrDefault(x.origin)
+                    }
                     Column(Modifier.fillMaxWidth().padding(horizontal = 14.dp, vertical = 12.dp)) {
-                        Text(k, fontSize = 13.sp, color = c.ink2)
-                        Text(v, fontSize = 15.sp, fontWeight = FontWeight.Medium, color = c.ink)
+                        Text(
+                            androidx.compose.ui.res.stringResource(com.nordinary.cyclus.ui.privacy.typeLabel(x.type)),
+                            fontSize = 13.sp, color = c.ink2,
+                        )
+                        externalValue(x, fmt)?.let { Text(it, fontSize = 15.sp, fontWeight = FontWeight.Medium, color = if (x.used) c.ink else c.ink2) }
+                        val src = androidx.compose.ui.res.stringResource(R.string.hc_source, app)
+                        val nc = androidx.compose.ui.res.stringResource(R.string.hc_not_counted)
+                        Text(if (x.used) src else "$src · $nc", fontSize = 12.sp, color = c.ink2)
                     }
                 }
             }
-            if (external.isNotEmpty()) {
-                val pm = LocalContext.current.packageManager
-                Column(Modifier.fillMaxWidth().clip(RoundedCornerShape(14.dp)).background(c.surface)) {
-                    external.forEachIndexed { i, x ->
-                        if (i > 0) HorizontalDivider(color = c.line)
-                        val app = remember(x.origin) {
-                            runCatching { pm.getApplicationLabel(pm.getApplicationInfo(x.origin, 0)).toString() }.getOrDefault(x.origin)
-                        }
-                        Column(Modifier.fillMaxWidth().padding(horizontal = 14.dp, vertical = 12.dp)) {
-                            Text(
-                                androidx.compose.ui.res.stringResource(com.nordinary.cyclus.ui.privacy.typeLabel(x.type)),
-                                fontSize = 13.sp, color = c.ink2,
-                            )
-                            externalValue(x, fmt)?.let { Text(it, fontSize = 15.sp, fontWeight = FontWeight.Medium, color = if (x.used) c.ink else c.ink2) }
-                            val src = androidx.compose.ui.res.stringResource(R.string.hc_source, app)
-                            val nc = androidx.compose.ui.res.stringResource(R.string.hc_not_counted)
-                            Text(if (x.used) src else "$src · $nc", fontSize = 12.sp, color = c.ink2)
-                        }
-                    }
-                }
-            }
-            if (model.showSource) Text(fmt.s("dsSource"), fontSize = 12.sp, color = c.ink2)
-            if (model.canEdit) Row(horizontalArrangement = Arrangement.spacedBy(10.dp), verticalAlignment = Alignment.CenterVertically) {
-                PrimaryButton(if (model.entries.isEmpty()) fmt.s("logThisDay") else fmt.s("edit"), onEdit, Modifier.weight(1f))
-                SecondaryButton(fmt.s("markStart"), onMarkStart)
-            }
+        }
+        if (model.showSource) Text(fmt.s("dsSource"), fontSize = 12.sp, color = c.ink2)
+        if (model.canEdit) Row(horizontalArrangement = Arrangement.spacedBy(10.dp), verticalAlignment = Alignment.CenterVertically) {
+            PrimaryButton(if (model.entries.isEmpty()) fmt.s("logThisDay") else fmt.s("edit"), onEdit, Modifier.weight(1f))
+            SecondaryButton(fmt.s("markStart"), onMarkStart)
         }
     }
 }

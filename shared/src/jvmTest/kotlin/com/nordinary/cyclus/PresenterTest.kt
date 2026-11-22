@@ -152,3 +152,18 @@ class PresenterTest {
         assertEquals(listOf(today - 30, today - 3), d.cycleStarts)
     }
 }
+
+class LogGroupsTest {
+    @kotlin.test.Test fun usedSectionsComeFromRecentDaysOnly() {
+        val today = 20_000
+        val logs = mapOf(
+            today to com.nordinary.cyclus.core.DayLog(symptoms = setOf("Cramps")), // pinned: no section
+            today - 3 to com.nordinary.cyclus.core.DayLog(symptoms = setOf("Acne"), energy = 2, note = " "),
+            today - 400 to com.nordinary.cyclus.core.DayLog(tags = setOf("Stress")), // too long ago
+        )
+        kotlin.test.assertEquals(
+            setOf(com.nordinary.cyclus.presenter.LogGroup.MORE_SYMPTOMS, com.nordinary.cyclus.presenter.LogGroup.ENERGY),
+            com.nordinary.cyclus.presenter.LogGroup.used(logs, today),
+        )
+    }
+}

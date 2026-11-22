@@ -278,4 +278,5 @@
     <string name="hc_restore_no">Don’t bring them back</string>
     <string name="hc_restore_done">Earlier entries brought back.</string>
     <string name="bk_how">With Google backup on, Cyclus adds an encrypted copy and its key. Both are protected by end-to-end encryption with your screen lock; without it, Cyclus sends nothing.</string>
+    <string name="log_more">More details</string>
 </resources>

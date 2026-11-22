@@ -240,6 +240,15 @@ class AppViewModel(
         scope.launch(errors) { repo.updateLog(day, transform) }
     }
 
+    /** Pinned symptom chip on Today: toggles it for today in one tap. */
+    fun toggleSymptomToday(symptom: String) {
+        val today = model.value?.snapshot?.today ?: return
+        updateLog(today) { l ->
+            if (symptom in l.symptoms) l.copy(symptoms = l.symptoms - symptom, symptomSeverity = l.symptomSeverity - symptom)
+            else l.copy(symptoms = l.symptoms + symptom)
+        }
+    }
+
     /** „Periode hat heute begonnen“: medium flow today + start override if detection wouldn't see it. Undoable. */
     fun periodStartedToday() {
         val m = model.value ?: return

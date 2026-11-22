@@ -1,11 +1,15 @@
 package com.nordinary.cyclus.ui
 
+import com.nordinary.cyclus.presenter.LogGroup
 import android.Manifest
 import android.appwidget.AppWidgetManager
 import android.content.ComponentName
 import android.content.pm.PackageManager
 import android.os.Build
 import androidx.activity.result.contract.ActivityResultContracts
+import android.view.accessibility.AccessibilityManager
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Arrangement
@@ -86,7 +90,7 @@ import com.nordinary.cyclus.presenter.ReportPresenter
 import com.nordinary.cyclus.presenter.TodayPresenter
 import com.nordinary.cyclus.sample.SampleScenario
 import com.nordinary.cyclus.ui.calendar.CalendarContent
-import com.nordinary.cyclus.ui.calendar.DaySheet
+import com.nordinary.cyclus.ui.calendar.DayDetail
 import com.nordinary.cyclus.ui.common.CyclusIcons
 import com.nordinary.cyclus.ui.insights.InsightsContent
 import com.nordinary.cyclus.ui.insights.PatternsScreen
@@ -114,7 +118,7 @@ import kotlinx.serialization.Serializable
 @Serializable private data object PatternsKey : NavKey
 
 private enum class Tab(val key: String) { TODAY("tabToday"), CALENDAR("tabCal"), INSIGHTS("tabIns") }
-private enum class Sheet { NONE, LOG, DAY, WHY, METHOD }
+private enum class Sheet { NONE, LOG, WHY, METHOD }
 
 /** Root: pushed screens via Navigation 3 (predictive back, survives recreation), shared snackbar, sheets on top. */
 @Composable
@@ -133,6 +137,12 @@ fun CyclusApp(vm: AppViewModel) {
     var sheetDay by rememberSaveable { mutableStateOf<Int?>(null) }
     var logChanged by rememberSaveable { mutableStateOf(false) }
 
+    val a11yContext = LocalContext.current
+    val undoTimeout = remember(a11yContext) {
+        a11yContext.getSystemService(AccessibilityManager::class.java)
+            ?.getRecommendedTimeoutMillis(5_000, AccessibilityManager.FLAG_CONTENT_CONTROLS or AccessibilityManager.FLAG_CONTENT_TEXT)
+            ?.toLong() ?: 5_000L
+    }
     val res = LocalResources.current
     fun text(msg: UiMessage) = msg.res?.let { res.getString(it) } ?: fmt.s(msg.key)
     LaunchedEffect(vm, fmt) {
@@ -140,7 +150,8 @@ fun CyclusApp(vm: AppViewModel) {
             snackbar.currentSnackbarData?.dismiss()
             launch {
                 if (msg.undo != null) {
-                    launch { delay(5_000); snackbar.currentSnackbarData?.dismiss() }
+                    // 5 s, or longer when the person asked Android for more time (TalkBack, accessibility timeout)
+                    launch { delay(undoTimeout); snackbar.currentSnackbarData?.dismiss() }
                     val r = snackbar.showSnackbar(text(msg), actionLabel = undoLabel, duration = SnackbarDuration.Indefinite)
                     if (r == SnackbarResult.ActionPerformed) vm.undo(msg)
                 } else snackbar.showSnackbar(text(msg), duration = SnackbarDuration.Short)
@@ -193,7 +204,6 @@ fun CyclusApp(vm: AppViewModel) {
                     onPatterns = { backStack.add(PatternsKey) },
                     onOpenLog = ::openLog,
                     onReminderOffer = { yes -> if (yes) consent(true) else vm.declineReminderOffer() },
-                    onDay = { sheetDay = it; sheet = Sheet.DAY },
                     onWhy = { sheet = Sheet.WHY }, onMethod = { sheet = Sheet.METHOD },
                 )
             }
@@ -266,17 +276,11 @@ fun CyclusApp(vm: AppViewModel) {
             suggestions = remember(m, day) { TodayPresenter.suggestions(m.snapshot, day) }, fmt = fmt,
             onDayChange = { sheetDay = it },
             onUpdate = { t -> logChanged = true; shown = t(shown ?: stored); vm.updateLog(day, t) },
+            used = remember(m.userLogs, m.snapshot.today) { LogGroup.used(m.userLogs, m.snapshot.today) },
             onDone = { sheet = Sheet.NONE; if (logChanged) vm.saved(); logChanged = false },
             onDismiss = { sheet = Sheet.NONE; if (logChanged) vm.saved(); logChanged = false },
             )
         }
-        Sheet.DAY -> if (day != null) DaySheet(
-            model = remember(m, day) { CalendarPresenter.daySheet(m.snapshot, day, m.userLogs[day]) }, fmt = fmt,
-            onEdit = { openLog(day) },
-            onMarkStart = { sheet = Sheet.NONE; vm.markStart(day) },
-            onDismiss = { sheet = Sheet.NONE },
-            external = remember(m, day) { HealthMerge.dayDetail(day, m.userLogs[day], m.healthSamples) },
-        )
         Sheet.WHY -> m.why?.let { WhySheet(it, fmt) { sheet = Sheet.NONE } }
         Sheet.METHOD -> MethodSheet(fmt) { sheet = Sheet.NONE }
         Sheet.NONE -> {}
@@ -297,7 +301,6 @@ private fun MainScreen(
     onPatterns: () -> Unit,
     onOpenLog: (Int) -> Unit,
     onReminderOffer: (Boolean) -> Unit,
-    onDay: (Int) -> Unit,
     onWhy: () -> Unit,
     onMethod: () -> Unit,
 ) {
@@ -333,15 +336,28 @@ private fun MainScreen(
         navigationSuiteColors = NavigationSuiteDefaults.colors(navigationBarContainerColor = c.surface),
     ) {
         val scroll = TopAppBarDefaults.exitUntilCollapsedScrollBehavior()
+        // the Log button shrinks to its icon while scrolling down (so it doesn't sit on card text) and grows back on the
+        // way up
+        var fabExpanded by rememberSaveable { mutableStateOf(true) }
+        LaunchedEffect(shownTab) { fabExpanded = true }
+        val fabScroll = remember {
+            object : androidx.compose.ui.input.nestedscroll.NestedScrollConnection {
+                override fun onPreScroll(available: androidx.compose.ui.geometry.Offset, source: androidx.compose.ui.input.nestedscroll.NestedScrollSource): androidx.compose.ui.geometry.Offset {
+                    if (available.y < -4f) fabExpanded = false else if (available.y > 4f) fabExpanded = true
+                    return androidx.compose.ui.geometry.Offset.Zero
+                }
+            }
+        }
         Scaffold(
-            modifier = Modifier.nestedScroll(scroll.nestedScrollConnection),
+            modifier = Modifier.nestedScroll(fabScroll).nestedScroll(scroll.nestedScrollConnection),
             containerColor = c.bg,
             topBar = {
                 LargeFlexibleTopAppBar(
                     title = {
                         Text(fmt.s(shownTab.key), Modifier.combinedClickable(onClick = {}, onLongClick = { if (BuildConfig.DEBUG) debugMenu = true }), fontWeight = FontWeight.Bold)
                     },
-                    subtitle = { Text(fmt.wmd(model?.snapshot?.today ?: java.time.LocalDate.now().toEpochDay().toInt()), color = c.ink2) },
+                    // the date belongs to Today; Calendar has its month, Insights covers many cycles
+                    subtitle = if (shownTab == Tab.TODAY) ({ Text(fmt.wmd(model?.snapshot?.today ?: java.time.LocalDate.now().toEpochDay().toInt()), color = c.ink2) }) else null,
                     actions = {
                         IconButton(onClick = onPrivacy) { Icon(CyclusIcons.Shield, fmt.s("aPrivacy"), tint = c.ink) }
                         IconButton(onClick = onSettings) { Icon(CyclusIcons.Gear, fmt.s("aSettings"), tint = c.ink) }
@@ -352,10 +368,13 @@ private fun MainScreen(
             },
             floatingActionButton = {
                 model?.let { m ->
+                    val label = fmt.s("fab")
                     ExtendedFloatingActionButton(
                         onClick = { onOpenLog(m.snapshot.today) },
                         icon = { Icon(CyclusIcons.Plus, null) },
-                        text = { Text(fmt.s("fab"), fontWeight = FontWeight.Bold, fontSize = 16.sp) },
+                        text = { Text(label, fontWeight = FontWeight.Bold, fontSize = 16.sp) },
+                        expanded = fabExpanded,
+                        modifier = if (fabExpanded) Modifier else Modifier.semantics { contentDescription = label },
                         containerColor = c.surface, contentColor = c.period,
                     )
                 }
@@ -363,6 +382,13 @@ private fun MainScreen(
             snackbarHost = { CyclusSnackbarHost(snackbar) },
         ) { padding ->
             val m = model ?: return@Scaffold
+            val dayDetail: @Composable (Int) -> Unit = { day ->
+                DayDetail(
+                    model = remember(m, day) { CalendarPresenter.daySheet(m.snapshot, day, m.userLogs[day]) }, fmt = fmt,
+                    onEdit = { onOpenLog(day) }, onMarkStart = { vm.markStart(day) },
+                    external = remember(m, day) { HealthMerge.dayDetail(day, m.userLogs[day], m.healthSamples) },
+                )
+            }
             val today: @Composable () -> Unit = {
                 TodayContent(
                     state = m.today, fmt = fmt, contentPadding = padding,
@@ -377,14 +403,15 @@ private fun MainScreen(
                     reminderOffer = NotifyPrefs.from(m.settings).let { !it.consent && !it.asked } &&
                         m.snapshot.prediction != null && !m.snapshot.paused,
                     onReminderOffer = onReminderOffer,
+                    onToggleSymptom = vm::toggleSymptomToday,
                 )
             }
             when (shownTab) {
                 Tab.TODAY -> if (expanded) Row(Modifier.fillMaxSize(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     Box(Modifier.weight(1f)) { today() }
-                    Box(Modifier.weight(1f)) { CalendarContent(m.snapshot, fmt, padding, onDay = onDay, onMarkStart = vm::markStart) }
+                    Box(Modifier.weight(1f)) { CalendarContent(m.snapshot, fmt, padding, onMarkStart = vm::markStart, detail = dayDetail) }
                 } else Centered { today() }
-                Tab.CALENDAR -> Centered { CalendarContent(m.snapshot, fmt, padding, onDay = onDay, onMarkStart = vm::markStart) }
+                Tab.CALENDAR -> Centered { CalendarContent(m.snapshot, fmt, padding, onMarkStart = vm::markStart, detail = dayDetail) }
                 Tab.INSIGHTS -> Centered(if (expanded) 1100.dp else 640.dp) {
                     InsightsContent(
                         m.insights, fmt, padding, onMethod = onMethod, onMute = vm::mute, onAllPatterns = onPatterns,

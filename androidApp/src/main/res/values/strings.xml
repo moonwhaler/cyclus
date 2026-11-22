@@ -279,4 +279,5 @@
     <string name="hc_restore_no">Nicht übernehmen</string>
     <string name="hc_restore_done">Frühere Einträge übernommen.</string>
     <string name="bk_how">Ist das Google-Backup an, legt Cyclus eine verschlüsselte Kopie samt Schlüssel hinein. Beides schützt die Ende-zu-Ende-Verschlüsselung mit deiner Displaysperre; ohne sie sendet Cyclus nichts.</string>
+    <string name="log_more">Weitere Angaben</string>
 </resources>

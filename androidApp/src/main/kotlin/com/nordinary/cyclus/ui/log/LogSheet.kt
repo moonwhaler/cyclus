@@ -1,5 +1,9 @@
 package com.nordinary.cyclus.ui.log
 
+import androidx.compose.ui.text.style.TextOverflow
+import com.nordinary.cyclus.R
+import androidx.compose.ui.res.stringResource
+import com.nordinary.cyclus.presenter.LogGroup
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -101,6 +105,8 @@ fun LogSheet(
     fmt: Fmt,
     onDayChange: (Day) -> Unit,
     onUpdate: ((DayLog) -> DayLog) -> Unit,
+    /** Optional sections the person has used recently ([LogGroup.used]); they open by themselves. */
+    used: Set<LogGroup> = emptySet(),
     onDone: () -> Unit,
     onDismiss: () -> Unit,
 ) {
@@ -118,7 +124,7 @@ fun LogSheet(
         }
         // keyed by day: switching days disposes the old fields, which save what was typed to their own day first
         androidx.compose.runtime.key(day) { Column(
-            Modifier.fillMaxWidth().verticalScroll(rememberScrollState()).imePadding().padding(start = 16.dp, end = 16.dp, bottom = 28.dp),
+            Modifier.fillMaxWidth().weight(1f, fill = false).verticalScroll(rememberScrollState()).imePadding().padding(start = 16.dp, end = 16.dp, bottom = 12.dp),
             verticalArrangement = Arrangement.spacedBy(18.dp),
         ) {
             Group(fmt.s("flowL")) {
@@ -143,36 +149,69 @@ fun LogSheet(
                 }
             }
             if (conceive) { MucusGroup(log, fmt, onUpdate); BbtGroup(fmt.s("bbtL"), fmt.s("bbtHint"), log, fmt, onUpdate) }
-            Group(fmt.s("moreSym")) {
-                FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                    for (s in Catalog.SYMPTOMS.filter { it !in Catalog.PINNED && it !in suggestions }) SymptomChip(s, log, fmt, onUpdate)
-                }
-            }
-            PainGroup(log, fmt, onUpdate)
             Group(fmt.s("mood")) { ScaleRow(fmt.s("mood"), log.mood, fmt.s("moodLo"), fmt.s("moodHi")) { v -> onUpdate { it.copy(mood = v) } } }
-            Group(fmt.s("feelings")) {
-                FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                    for (e in Catalog.EMOTIONS) CyclusChip(fmt.item(e), e in log.emotions, {
-                        onUpdate { l -> l.copy(emotions = if (e in l.emotions) l.emotions - e else l.emotions + e) }
-                    })
-                }
+
+            // optional sections: open when the person uses them (or this day has a value), the rest under „Weitere Angaben“
+            val optional = buildList {
+                add(LogGroup.MORE_SYMPTOMS); add(LogGroup.PAIN); add(LogGroup.FEELINGS)
+                add(LogGroup.ENERGY); add(LogGroup.SLEEP); add(LogGroup.LIBIDO)
+                if (!conceive) { add(LogGroup.DISCHARGE); add(LogGroup.TEMPERATURE) }
+                add(LogGroup.TAGS); add(LogGroup.NOTE)
             }
-            Group(fmt.s("energy")) { ScaleRow(fmt.s("energy"), log.energy, fmt.s("enLo"), fmt.s("enHi")) { v -> onUpdate { it.copy(energy = v) } } }
-            Group(fmt.s("sleep")) { ScaleRow(fmt.s("sleep"), log.sleep, fmt.s("slLo"), fmt.s("slHi")) { v -> onUpdate { it.copy(sleep = v) } } }
-            Group(fmt.s("libido")) { ScaleRow(fmt.s("libido"), log.libido, fmt.s("libLo"), fmt.s("libHi")) { v -> onUpdate { it.copy(libido = v) } } }
-            if (!conceive) { MucusGroup(log, fmt, onUpdate); BbtGroup(fmt.s("tempL"), fmt.s("optional"), log, fmt, onUpdate) }
-            Group(fmt.s("tags")) {
-                FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                    for (t in Catalog.TAGS) CyclusChip(fmt.item(t), t in log.tags, {
-                        onUpdate { l -> l.copy(tags = if (t in l.tags) l.tags - t else l.tags + t) }
-                    })
-                    CyclusChip(fmt.s("newTag"), false, {}, suggested = true, enabled = false)
+            val open = optional.filter { it in used || it.has(log) }
+            val folded = optional - open.toSet()
+            @Composable fun section(g: LogGroup) = when (g) {
+                LogGroup.MORE_SYMPTOMS -> Group(fmt.s("moreSym")) {
+                    FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                        for (s in Catalog.SYMPTOMS.filter { it !in Catalog.PINNED && it !in suggestions }) SymptomChip(s, log, fmt, onUpdate)
+                    }
                 }
+                LogGroup.PAIN -> PainGroup(log, fmt, onUpdate)
+                LogGroup.FEELINGS -> Group(fmt.s("feelings")) {
+                    FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                        for (e in Catalog.EMOTIONS) CyclusChip(fmt.item(e), e in log.emotions, {
+                            onUpdate { l -> l.copy(emotions = if (e in l.emotions) l.emotions - e else l.emotions + e) }
+                        })
+                    }
+                }
+                LogGroup.ENERGY -> Group(fmt.s("energy")) { ScaleRow(fmt.s("energy"), log.energy, fmt.s("enLo"), fmt.s("enHi")) { v -> onUpdate { it.copy(energy = v) } } }
+                LogGroup.SLEEP -> Group(fmt.s("sleep")) { ScaleRow(fmt.s("sleep"), log.sleep, fmt.s("slLo"), fmt.s("slHi")) { v -> onUpdate { it.copy(sleep = v) } } }
+                LogGroup.LIBIDO -> Group(fmt.s("libido")) { ScaleRow(fmt.s("libido"), log.libido, fmt.s("libLo"), fmt.s("libHi")) { v -> onUpdate { it.copy(libido = v) } } }
+                LogGroup.DISCHARGE -> MucusGroup(log, fmt, onUpdate)
+                LogGroup.TEMPERATURE -> BbtGroup(fmt.s("tempL"), fmt.s("optional"), log, fmt, onUpdate)
+                LogGroup.TAGS -> Group(fmt.s("tags")) {
+                    FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                        for (t in Catalog.TAGS) CyclusChip(fmt.item(t), t in log.tags, {
+                            onUpdate { l -> l.copy(tags = if (t in l.tags) l.tags - t else l.tags + t) }
+                        })
+                        CyclusChip(fmt.s("newTag"), false, {}, suggested = true, enabled = false)
+                    }
+                }
+                LogGroup.NOTE -> NoteGroup(day, log, fmt, onUpdate)
             }
-            NoteGroup(day, log, fmt, onUpdate)
+            for (g in open) section(g)
+            if (folded.isNotEmpty()) {
+                var more by rememberSaveable(day) { mutableStateOf(false) }
+                val names = folded.joinToString(", ") { groupLabel(it, fmt) }
+                Row(
+                    Modifier.fillMaxWidth().heightIn(min = 48.dp).clip(RoundedCornerShape(12.dp))
+                        .clickable(role = Role.Button) { more = !more }
+                        .semantics { stateDescription = if (more) fmt.s("close") else names }
+                        .padding(horizontal = 4.dp, vertical = 8.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    Column(Modifier.weight(1f)) {
+                        Text(stringResource(R.string.log_more), fontWeight = FontWeight.SemiBold, color = c.period)
+                        if (!more) Text(names, fontSize = 12.sp, color = c.ink2, maxLines = 2, overflow = TextOverflow.Ellipsis)
+                    }
+                    Text(if (more) "▴" else "▾", color = c.period, fontSize = 18.sp)
+                }
+                if (more) for (g in folded) section(g)
+            }
             NothingElse(log, fmt, onUpdate)
-            PrimaryButton(fmt.s("done"), onDone, Modifier.fillMaxWidth())
         } }
+        // Done stays in reach however long the sheet is
+        PrimaryButton(fmt.s("done"), onDone, Modifier.fillMaxWidth().padding(horizontal = 16.dp).padding(top = 8.dp, bottom = 16.dp))
     }
 }
 
@@ -371,3 +410,10 @@ private fun DrawScope.drawRegion(r: Region, s: Float, color: Color, stroke: Stro
 
 /** Plausible basal body temperatures (°C); anything outside is a typo, not a measurement. */
 private val BBT_RANGE = 34.0..43.0
+
+private fun groupLabel(g: LogGroup, fmt: Fmt) = when (g) {
+    LogGroup.MORE_SYMPTOMS -> fmt.s("moreSym"); LogGroup.PAIN -> fmt.s("painL"); LogGroup.FEELINGS -> fmt.s("feelings")
+    LogGroup.ENERGY -> fmt.s("energy"); LogGroup.SLEEP -> fmt.s("sleep"); LogGroup.LIBIDO -> fmt.s("libido")
+    LogGroup.DISCHARGE -> fmt.s("discharge"); LogGroup.TEMPERATURE -> fmt.s("tempL"); LogGroup.TAGS -> fmt.s("tags")
+    LogGroup.NOTE -> fmt.s("note")
+}

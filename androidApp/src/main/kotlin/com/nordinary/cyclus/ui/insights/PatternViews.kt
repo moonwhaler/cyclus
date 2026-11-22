@@ -6,6 +6,8 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -85,12 +87,13 @@ private fun AreaLabel(a: Area, fmt: Fmt) {
 }
 
 /** A found pattern in full (Muster screen, sheet). [onMute] null: no „Ausblenden“ (watched patterns). */
+@OptIn(ExperimentalLayoutApi::class)
 @Composable
 internal fun PatternCard(p: Pattern, fmt: Fmt, onMute: ((String) -> Unit)?, whyOpen: Boolean = false) {
     val c = Cyclus.colors
     var open by rememberSaveable(p.id) { mutableStateOf(whyOpen) }
     CyclusCard {
-        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
+        FlowRow(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalArrangement = Arrangement.spacedBy(6.dp)) {
             AreaLabel(p.area, fmt)
             StatusChip(p.status, fmt)
         }
@@ -117,13 +120,15 @@ internal fun PatternCard(p: Pattern, fmt: Fmt, onMute: ((String) -> Unit)?, whyO
  * „Deine Muster“ on the Insights overview: counter, the top three found patterns as one-line rows (tap → sheet),
  * and the way to the full Muster screen. Keeps Insights short however many patterns there are.
  */
+@OptIn(ExperimentalLayoutApi::class)
 @Composable
 internal fun PatternSummaryCard(sec: PatternSection, fmt: Fmt, onOpen: (Pattern) -> Unit, onAll: () -> Unit) {
     val c = Cyclus.colors
     val found = sec.found.size
     val watching = sec.watching.size
     Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-        Row(Modifier.fillMaxWidth().padding(horizontal = 4.dp), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
+        // wraps instead of colliding at large font sizes
+        FlowRow(Modifier.fillMaxWidth().padding(horizontal = 4.dp), horizontalArrangement = Arrangement.SpaceBetween, verticalArrangement = Arrangement.spacedBy(2.dp)) {
             Text(fmt.s("pwT").uppercase(), fontSize = 12.sp, fontWeight = FontWeight.SemiBold, letterSpacing = 0.7.sp, color = c.ink2)
             val res = LocalResources.current
             val counter = listOfNotNull(
@@ -137,6 +142,7 @@ internal fun PatternSummaryCard(sec: PatternSection, fmt: Fmt, onOpen: (Pattern)
             Text(fmt.s("pwIntro"), Modifier.padding(horizontal = 4.dp), fontSize = 12.sp, color = c.ink2)
             return@Column
         }
+        val large = androidx.compose.ui.platform.LocalDensity.current.fontScale > 1.3f
         Column(Modifier.fillMaxWidth().clip(RoundedCornerShape(14.dp)).background(c.surface)) {
             for ((i, p) in sec.found.take(3).withIndex()) {
                 if (i > 0) HorizontalDivider(color = c.line)
@@ -151,8 +157,16 @@ internal fun PatternSummaryCard(sec: PatternSection, fmt: Fmt, onOpen: (Pattern)
                     verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp),
                 ) {
                     Box(Modifier.size(10.dp).clip(CircleShape).background(areaColor(p.area, c)))
-                    Text(title, Modifier.weight(1f), fontSize = 15.sp, fontWeight = FontWeight.Medium, color = c.ink, maxLines = 2, overflow = TextOverflow.Ellipsis)
-                    StatusChip(p.status, fmt)
+                    // „Beständiges Muster“ is the normal case here and isn't repeated on every row; only the exception
+                    // (early pattern) gets a chip, and at large font sizes it moves under the title
+                    val chip = p.status != PatternStatus.CONSISTENT
+                    if (large) Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                        Text(title, fontSize = 15.sp, fontWeight = FontWeight.Medium, color = c.ink, maxLines = 3, overflow = TextOverflow.Ellipsis)
+                        if (chip) StatusChip(p.status, fmt)
+                    } else {
+                        Text(title, Modifier.weight(1f), fontSize = 15.sp, fontWeight = FontWeight.Medium, color = c.ink, maxLines = 2, overflow = TextOverflow.Ellipsis)
+                        if (chip) StatusChip(p.status, fmt)
+                    }
                 }
             }
             if (found > 0) HorizontalDivider(color = c.line)

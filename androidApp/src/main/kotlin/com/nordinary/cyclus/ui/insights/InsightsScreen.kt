@@ -61,6 +61,7 @@ import com.nordinary.cyclus.presenter.HeatMap
 import com.nordinary.cyclus.presenter.InsightsUiState
 import com.nordinary.cyclus.presenter.PatternSection
 import com.nordinary.cyclus.presenter.TemperatureChart
+import com.nordinary.cyclus.ui.common.CappedFontScale
 import com.nordinary.cyclus.ui.common.Badge
 import com.nordinary.cyclus.ui.common.CyclusCard
 import com.nordinary.cyclus.ui.common.dashedBorder
@@ -100,8 +101,8 @@ fun InsightsContent(
                         Stat(state.periodTypical?.toString() ?: "–", fmt.s("statPeriod"), Modifier.weight(1f).fillMaxHeight())
                     }
                     CyclusCard {
+                        // no tier badge here: the sentence below already says what the range is based on
                         Title(fmt.s("varyT", state.spread))
-                        Badge(fmt.s("tier_${state.tier.key}"))
                         Row(verticalAlignment = Alignment.CenterVertically) {
                             Text(fmt.s("varyB", state.cyclesUsed) + " ", fontSize = 14.sp, color = c.ink2)
                         }
@@ -262,7 +263,7 @@ private fun TemperatureChartView(t: TemperatureChart, fmt: Fmt) {
 
 /** Symptom heatmap around the period start (prototype `.heat`). */
 @Composable
-private fun Heat(h: HeatMap, fmt: Fmt) {
+private fun Heat(h: HeatMap, fmt: Fmt) = CappedFontScale {
     val c = Cyclus.colors
     Column(Modifier.clearAndSetSemantics { contentDescription = fmt.s("heatT") }, verticalArrangement = Arrangement.spacedBy(3.dp)) {
         Row(horizontalArrangement = Arrangement.spacedBy(3.dp)) {

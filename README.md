@@ -33,6 +33,7 @@ Published (private) link: see `prototype/README.md`.
 - Slice 4 (A3b) done: Arztbericht (PDF, DE/EN, A4/Letter, real preview, share) and onboarding.
 - Slice 5 (A4a) done: notifications (opt-in, discreet), Glance widgets, Quick Settings tile, opt-in shortcut, tablet/foldable layouts.
 - Slice 6 (A4b) done: Health Connect import + opt-in write (all off by default), only while the app is open; schema v2 migration. Release task: Play Health apps declaration.
+- Review hardening (2026-11-22): import validation, atomic day updates, PIN check off the main thread, shared store flows and fewer recomputes, sealed side files, Health Connect restore by consent, startup Baseline Profile, Log sheet / Calendar / large-font UX fixes.
 - Open owner decisions:
   - legal entity + organization developer accounts (Apple, Google);
   - regulatory specialist;
@@ -45,7 +46,9 @@ Published (private) link: see `prototype/README.md`.
 tools/deploy.sh                  # build, install, launch on the local emulator (AVD cyclus-pixel9pro)
 tools/deploy.sh --phone          # same, on the paired phone (wireless adb)
 tools/deploy.sh --phone --optimized   # release code (R8, not debuggable) over the debug app, keeps its data
+ANDROID_SERIAL=emulator-5554 ./gradlew :androidApp:generateReleaseBaselineProfile   # refresh the startup profile (emulator only)
 ```
+Release signing: put `storeFile`, `storePassword`, `keyAlias`, `keyPassword` into an untracked `keystore.properties` in the project root (ignored by git, like `*.jks`).
 Debug builds (`com.nordinary.cyclus.debug`) hold **throwaway test data** until export/backup lands.
 
 Engines are checked against golden vectors exported from the prototype (`tools/golden/`). App strings are generated from the prototype's translation table: `node tools/strings/export.mjs`.

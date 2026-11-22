@@ -178,3 +178,16 @@ fun SectionLabel(text: String, modifier: Modifier = Modifier, trailing: @Composa
         trailing()
     }
 }
+
+/**
+ * Compact graphics (outlook grid, heatmap, calendar grid) keep their layout at very large font sizes: text inside them
+ * scales up to [max] only. Their content is also exposed as one semantic description, so nothing is lost for TalkBack.
+ */
+@Composable
+fun CappedFontScale(max: Float = 1.3f, content: @Composable () -> Unit) {
+    val d = androidx.compose.ui.platform.LocalDensity.current
+    if (d.fontScale <= max) content()
+    else androidx.compose.runtime.CompositionLocalProvider(
+        androidx.compose.ui.platform.LocalDensity provides androidx.compose.ui.unit.Density(d.density, max),
+    ) { content() }
+}
