@@ -271,5 +271,5 @@
     <string name="rep_name_field">Name auf dem Bericht</string>
     <string name="rep_name_hint">Optional, z. B. Vor- und Nachname</string>
     <string name="rep_name_note">Steht nur auf dem PDF, damit die Praxis den Bericht zuordnen kann. Leer lassen für eine Linie zum Ausfüllen. Wird nur auf diesem Gerät gemerkt.</string>
-    <string name="rep_made_with">Erstellt mit Cyclus · ein privates Zyklustagebuch, deine Daten bleiben auf deinem Handy</string>
+    <string name="rep_brand_tag">Privates Zyklustagebuch</string>
 </resources>

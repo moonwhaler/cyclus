@@ -158,6 +158,7 @@ object ReportPdf {
             page = doc.startPage(PdfDocument.PageInfo.Builder(paper.w, paper.h, pageCount).create())
             c = page!!.canvas
             y = m
+            header()
         }
 
         private fun ensure(h: Float) { if (y + h > bottom) newPage() }
@@ -167,18 +168,32 @@ object ReportPdf {
             val foot = paint(8f, color = INK2)
             val label = "${s(R.string.rep_foot)} · $pageCount/${if (total > 0) total else pageCount}"
             c.drawText(label, m, paper.h - 28f, foot)
-            if (total > 0 && pageCount == total) madeWith()
             doc.finishPage(p)
             page = null
         }
 
-        /** Last page only, small and grey: the app's ring and one line about it (no links, no tracking). */
-        private fun madeWith() {
-            val y0 = paper.h - 44f
-            val ring = Paint(Paint.ANTI_ALIAS_FLAG).apply { style = Paint.Style.STROKE; strokeWidth = 1.4f; color = ACCENT; strokeCap = Paint.Cap.ROUND }
-            c.drawArc(android.graphics.RectF(m, y0 - 8f, m + 9f, y0 + 1f), 135f, 270f, false, ring)
-            c.drawCircle(m + 4.5f, y0 - 8f, 1.1f, Paint(Paint.ANTI_ALIAS_FLAG).apply { color = ACCENT })
-            c.drawText(s(R.string.rep_made_with), m + 14f, y0, paint(8f, color = INK2))
+        /**
+         * Letterhead on every page, top right: the app's ring (same geometry as the launcher icon) with „Cyclus“ and a
+         * short tagline. Small, no link, no claims.
+         */
+        private fun header() {
+            val size = 16f
+            val brand = paint(11f, bold, ACCENT)
+            val tag = paint(7.5f, color = INK2)
+            val name = "Cyclus"
+            val tagline = s(R.string.rep_brand_tag)
+            val textW = maxOf(brand.measureText(name), tag.measureText(tagline))
+            val right = paper.w - m
+            val x0 = right - textW - size - 6f
+            val top = 22f
+            val k = size / 48f // icon viewport 48
+            val ring = Paint(Paint.ANTI_ALIAS_FLAG).apply { style = Paint.Style.STROKE; strokeWidth = 5f * k; color = ACCENT; strokeCap = Paint.Cap.ROUND }
+            // open ring: arc over the top from (13,37) to (35,37), centre (24,24), r 15; dot at (24,9)
+            c.drawArc(android.graphics.RectF(x0 + 9f * k, top + 9f * k, x0 + 39f * k, top + 39f * k), 130.2f, 279.6f, false, ring)
+            c.drawCircle(x0 + 24f * k, top + 9f * k, 3f * k, Paint(Paint.ANTI_ALIAS_FLAG).apply { color = ACCENT })
+            val tx = x0 + size + 6f
+            c.drawText(name, tx, top + 9.5f, brand)
+            c.drawText(tagline, tx, top + 18.5f, tag)
         }
 
         private fun layout(t: String, p: TextPaint, w: Float) =

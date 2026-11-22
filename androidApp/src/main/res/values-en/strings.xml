@@ -270,5 +270,5 @@
     <string name="rep_name_field">Name on the report</string>
     <string name="rep_name_hint">Optional, e.g. first and last name</string>
     <string name="rep_name_note">Only appears on the PDF so the practice can match the report. Leave empty for a line to fill in by hand. Remembered on this device only.</string>
-    <string name="rep_made_with">Made with Cyclus · a private cycle diary that keeps your data on your phone</string>
+    <string name="rep_brand_tag">Private cycle diary</string>
 </resources>
