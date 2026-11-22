@@ -1,5 +1,10 @@
 package com.nordinary.cyclus.widget
 
+import com.nordinary.cyclus.ui.theme.AppearanceStore
+import com.nordinary.cyclus.presenter.Themes
+import com.nordinary.cyclus.presenter.ThemeTokens
+import com.nordinary.cyclus.presenter.ThemeChoice
+import com.nordinary.cyclus.presenter.Palette
 import android.appwidget.AppWidgetManager
 import android.content.ComponentName
 import android.content.Context
@@ -79,12 +84,27 @@ object CyclusWidgets {
     internal val VERSION = androidx.datastore.preferences.core.longPreferencesKey("v")
 }
 
+/**
+ * Widget colours: neutrals and the accent of the chosen theme (Settings › Erscheinungsbild), light/dark by the
+ * launcher. Material You falls back to Rose (Glance has no app-level dynamic scheme here). The ring keeps its fixed
+ * cycle colours.
+ */
 private object WColors {
-    val surface = ColorProvider(day = Color(0xFFFFFFFF), night = Color(0xFF1E1A1E))
-    val ink = ColorProvider(day = Color(0xFF1D1A1C), night = Color(0xFFF4EFF1))
-    val ink2 = ColorProvider(day = Color(0xFF6B6267), night = Color(0xFFABA1A6))
-    val period = ColorProvider(day = Color(0xFFB3264E), night = Color(0xFFFF8FA8))
-    val chip = ColorProvider(day = Color(0xFFF4E1E6), night = Color(0xFF43202B))
+    private fun pair(f: (ThemeTokens) -> Long): androidx.glance.unit.ColorProvider {
+        val (day, night) = when (val ch = AppearanceStore.state.value.choice) {
+            is ThemeChoice.Preset -> Themes.tokens(ch.palette, false) to Themes.tokens(ch.palette, true)
+            is ThemeChoice.Custom -> Themes.custom(ch.primary, ch.secondary, false) to Themes.custom(ch.primary, ch.secondary, true)
+            ThemeChoice.Dynamic -> Themes.tokens(Palette.ROSE, false) to Themes.tokens(Palette.ROSE, true)
+        }
+        return ColorProvider(day = Color(f(day).toInt()), night = Color(f(night).toInt()))
+    }
+    val surface get() = pair { it.surface }
+    val ink get() = pair { it.ink }
+    val ink2 get() = pair { it.ink2 }
+    val accent get() = pair { it.accent }
+    val onAccent get() = pair { it.onAccent }
+    val chip get() = pair { it.accentContainer }
+    val onChip get() = pair { it.onAccentContainer }
 }
 
 private fun actionIntent(ctx: Context, action: String) = ActionEntry.intent(ctx, action)
@@ -152,7 +172,7 @@ abstract class CyclusWidget(private val medium: Boolean) : GlanceAppWidget() {
     private fun Summary(ctx: Context, view: WidgetView?, ringBmp: Bitmap?, compact: Boolean) {
         if (view == null || ringBmp == null) {
             // neutral state: „Details im Widget“ off, or nothing to predict yet
-            Image(ImageProvider(R.drawable.ic_notify), ctx.getString(R.string.app_name), GlanceModifier.size(44.dp), colorFilter = ColorFilter.tint(WColors.period))
+            Image(ImageProvider(R.drawable.ic_notify), ctx.getString(R.string.app_name), GlanceModifier.size(44.dp), colorFilter = ColorFilter.tint(WColors.accent))
             Spacer(GlanceModifier.height(6.dp))
             Text(ctx.getString(R.string.app_name), style = TextStyle(color = WColors.ink, fontSize = 15.sp, fontWeight = FontWeight.Bold))
             if (compact) Text(ctx.getString(R.string.w_btn_log), style = TextStyle(color = WColors.ink2, fontSize = 12.sp))
@@ -170,11 +190,11 @@ abstract class CyclusWidget(private val medium: Boolean) : GlanceAppWidget() {
     @Composable
     private fun Pill(label: String, intent: Intent, strong: Boolean) {
         Box(
-            GlanceModifier.fillMaxWidth().height(44.dp).cornerRadius(22.dp).background(if (strong) WColors.period else WColors.chip)
+            GlanceModifier.fillMaxWidth().height(44.dp).cornerRadius(22.dp).background(if (strong) WColors.accent else WColors.chip)
                 .clickable(actionStartActivity(intent)),
             contentAlignment = Alignment.Center,
         ) {
-            Text(label, style = TextStyle(color = if (strong) WColors.surface else WColors.period, fontSize = 13.sp, fontWeight = FontWeight.Bold), maxLines = 1)
+            Text(label, style = TextStyle(color = if (strong) WColors.onAccent else WColors.onChip, fontSize = 13.sp, fontWeight = FontWeight.Bold), maxLines = 1)
         }
     }
 }

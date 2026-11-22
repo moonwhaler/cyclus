@@ -67,7 +67,7 @@ internal fun StatusChip(status: PatternStatus, fmt: Fmt) {
     val label = fmt.s("st_${status.key}")
     val base = Modifier.clip(CircleShape)
     val m = when (status) {
-        PatternStatus.CONSISTENT -> base.background(c.period.copy(alpha = .16f).compositeOver(c.surface))
+        PatternStatus.CONSISTENT -> base.background(c.accent.copy(alpha = .16f).compositeOver(c.surface))
         PatternStatus.EARLY -> base.dashedBorder(c.ink2, 12.dp)
         else -> base.background(c.surface2)
     }
@@ -104,7 +104,7 @@ internal fun PatternCard(p: Pattern, fmt: Fmt, onMute: ((String) -> Unit)?, whyO
             if (p.why != null) Column(Modifier.weight(1f)) {
                 Text(
                     fmt.s("why"), Modifier.clip(RoundedCornerShape(6.dp)).clickable(role = Role.Button) { open = !open }.padding(vertical = 4.dp),
-                    fontSize = 13.sp, fontWeight = FontWeight.SemiBold, color = c.period,
+                    fontSize = 13.sp, fontWeight = FontWeight.SemiBold, color = c.accent,
                 )
                 AnimatedVisibility(open) { Text(fmt.txt(p.why!!), fontSize = 12.sp, color = c.ink2) }
             } else Spacer(Modifier.weight(1f))
@@ -181,7 +181,7 @@ internal fun PatternSummaryCard(sec: PatternSection, fmt: Fmt, onOpen: (Pattern)
                         watching > 0 -> res.getQuantityString(R.plurals.pat_none_watch, watching, watching)
                         else -> fmt.s("hiddenN", sec.hiddenCount) // everything hidden: the way back stays reachable
                     },
-                    Modifier.weight(1f), fontSize = 14.sp, fontWeight = FontWeight.SemiBold, color = c.period,
+                    Modifier.weight(1f), fontSize = 14.sp, fontWeight = FontWeight.SemiBold, color = c.accent,
                 )
                 Text("›", color = c.ink2, fontSize = 18.sp)
             }
@@ -197,7 +197,7 @@ internal fun PatternSheet(p: Pattern, fmt: Fmt, onMute: (String) -> Unit, onDism
     ModalBottomSheet(onDismissRequest = onDismiss, sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true), containerColor = c.bg) {
         Row(Modifier.fillMaxWidth().padding(start = 16.dp, end = 8.dp), verticalAlignment = Alignment.CenterVertically) {
             Text(fmt.s("pwT"), Modifier.weight(1f), fontSize = 17.sp, fontWeight = FontWeight.Bold, color = c.ink)
-            TextButton(onClick = onDismiss) { Text(fmt.s("close"), color = c.period, fontWeight = FontWeight.SemiBold) }
+            TextButton(onClick = onDismiss) { Text(fmt.s("close"), color = c.accent, fontWeight = FontWeight.SemiBold) }
         }
         Column(Modifier.fillMaxWidth().verticalScroll(rememberScrollState()).padding(start = 16.dp, end = 16.dp, bottom = 28.dp)) {
             PatternCard(p, fmt, onMute = { onMute(it); onDismiss() }, whyOpen = true)

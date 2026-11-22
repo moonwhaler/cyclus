@@ -49,7 +49,7 @@ private fun Sheet(title: String, fmt: Fmt, onDismiss: () -> Unit, content: @Comp
     ModalBottomSheet(onDismissRequest = onDismiss, sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true), containerColor = c.bg) {
         Row(Modifier.fillMaxWidth().padding(start = 16.dp, end = 8.dp, bottom = 10.dp), verticalAlignment = Alignment.CenterVertically) {
             Text(title, Modifier.weight(1f), fontSize = 17.sp, fontWeight = FontWeight.Bold, color = c.ink)
-            TextButton(onClick = onDismiss) { Text(fmt.s("cancel"), color = c.period, fontWeight = FontWeight.SemiBold) }
+            TextButton(onClick = onDismiss) { Text(fmt.s("cancel"), color = c.accent, fontWeight = FontWeight.SemiBold) }
         }
         Column(
             Modifier.fillMaxWidth().verticalScroll(rememberScrollState()).padding(start = 16.dp, end = 16.dp, bottom = 28.dp),
@@ -66,7 +66,7 @@ private fun SecretField(value: String, onChange: (String) -> Unit, label: String
         visualTransformation = PasswordVisualTransformation(),
         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password, autoCorrectEnabled = false),
         shape = RoundedCornerShape(12.dp),
-        colors = OutlinedTextFieldDefaults.colors(unfocusedBorderColor = c.line, focusedBorderColor = c.period, unfocusedContainerColor = c.surface, focusedContainerColor = c.surface),
+        colors = OutlinedTextFieldDefaults.colors(unfocusedBorderColor = c.line, focusedBorderColor = c.accent, unfocusedContainerColor = c.surface, focusedContainerColor = c.surface),
     )
 }
 
@@ -93,11 +93,11 @@ fun ExportSheet(fmt: Fmt, working: Boolean, onSave: (CharArray) -> Unit, onDismi
         val st = passphraseStrength(p1)
         Text(
             stringResource(listOf(R.string.export_weak, R.string.export_fair, R.string.export_strong)[st]),
-            color = listOf(c.period, c.warning, c.success)[st], fontSize = 13.sp, fontWeight = FontWeight.SemiBold,
+            color = listOf(c.danger, c.warning, c.success)[st], fontSize = 13.sp, fontWeight = FontWeight.SemiBold,
         )
     }
     SecretField(p2, { p2 = it }, stringResource(R.string.export_repeat))
-    if (p2.isNotEmpty() && p1 != p2) Text(stringResource(R.string.export_mismatch), color = c.period, fontSize = 13.sp)
+    if (p2.isNotEmpty() && p1 != p2) Text(stringResource(R.string.export_mismatch), color = c.danger, fontSize = 13.sp)
     if (working) {
         Text(stringResource(R.string.export_working), color = c.ink2)
         LinearWavyProgressIndicator(Modifier.fillMaxWidth())
@@ -126,7 +126,7 @@ fun ImportSheet(
     when (stage) {
         ImportStage.Passphrase, is ImportStage.Error -> {
             SecretField(pass, { pass = it }, stringResource(R.string.import_pass))
-            if (stage is ImportStage.Error) Text(stringResource(stage.messageRes), color = c.period, fontSize = 13.sp)
+            if (stage is ImportStage.Error) Text(stringResource(stage.messageRes), color = c.danger, fontSize = 13.sp)
             PrimaryButton(stringResource(R.string.import_open), { if (pass.isNotEmpty()) onOpen(pass.toCharArray()) }, Modifier.fillMaxWidth())
         }
         ImportStage.Working -> {
@@ -172,7 +172,7 @@ fun EraseSheet(fmt: Fmt, healthWritten: Boolean, onErase: (deleteHealth: Boolean
     OutlinedTextField(
         text, { text = it }, Modifier.fillMaxWidth(), singleLine = true, placeholder = { Text(word) },
         shape = RoundedCornerShape(12.dp),
-        colors = OutlinedTextFieldDefaults.colors(unfocusedBorderColor = c.line, focusedBorderColor = c.period, unfocusedContainerColor = c.surface, focusedContainerColor = c.surface),
+        colors = OutlinedTextFieldDefaults.colors(unfocusedBorderColor = c.line, focusedBorderColor = c.accent, unfocusedContainerColor = c.surface, focusedContainerColor = c.surface),
     )
     val ok = text.trim().uppercase() == word.uppercase()
     PrimaryButton(fmt.s("eraseT"), { if (ok) onErase(healthWritten && deleteHealth) }, Modifier.fillMaxWidth(), enabled = ok)
@@ -185,7 +185,7 @@ fun PinSetupSheet(fmt: Fmt, onSet: (String) -> Unit, onDismiss: () -> Unit) = Sh
     var first by remember { mutableStateOf<String?>(null) }
     var mismatch by remember { mutableStateOf(false) }
     Text(stringResource(if (first == null) R.string.pin_setup_enter else R.string.pin_setup_repeat), fontWeight = FontWeight.SemiBold, color = c.ink)
-    if (mismatch) Text(stringResource(R.string.pin_setup_mismatch), color = c.period, fontSize = 13.sp)
+    if (mismatch) Text(stringResource(R.string.pin_setup_mismatch), color = c.danger, fontSize = 13.sp)
     androidx.compose.foundation.layout.Box(Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) { PinPad(lockoutUntil = 0L, onPin = { pin ->
         val f = first
         when {

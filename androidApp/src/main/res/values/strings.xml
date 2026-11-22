@@ -280,4 +280,25 @@
     <string name="hc_restore_done">Frühere Einträge übernommen.</string>
     <string name="bk_how">Ist das Google-Backup an, legt Cyclus eine verschlüsselte Kopie samt Schlüssel hinein. Beides schützt die Ende-zu-Ende-Verschlüsselung mit deiner Displaysperre; ohne sie sendet Cyclus nichts.</string>
     <string name="log_more">Weitere Angaben</string>
+    <string name="ap_title">Erscheinungsbild</string>
+    <string name="ap_mode_system">System</string>
+    <string name="ap_mode_light">Hell</string>
+    <string name="ap_mode_dark">Dunkel</string>
+    <string name="pal_rose">Rosé</string>
+    <string name="pal_lavender">Lavendel</string>
+    <string name="pal_sage">Salbei</string>
+    <string name="pal_ocean">Ozean</string>
+    <string name="pal_terracotta">Terrakotta</string>
+    <string name="pal_graphite">Graphit</string>
+    <string name="pal_dynamic">Hintergrund</string>
+    <string name="pal_custom">Eigene</string>
+    <string name="ap_note">Die Zyklusfarben (Periode, fruchtbare Tage, Zeit vor der Periode) bleiben in jedem Design gleich, damit sie immer dasselbe bedeuten.</string>
+    <string name="ap_swatch">Design %1$s</string>
+    <string name="cu_title">Eigene Farben</string>
+    <string name="cu_primary">Hauptfarbe</string>
+    <string name="cu_secondary">Zweitfarbe</string>
+    <string name="cu_hue">Farbton</string>
+    <string name="cu_intensity">Intensität</string>
+    <string name="cu_adjusted">Die Helligkeit wurde angepasst, damit Text und Schaltflächen gut lesbar bleiben.</string>
+    <string name="cu_apply">Übernehmen</string>
 </resources>

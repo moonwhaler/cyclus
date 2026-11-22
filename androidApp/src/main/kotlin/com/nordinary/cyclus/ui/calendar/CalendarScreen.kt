@@ -133,7 +133,7 @@ private fun DayCell(cell: CalendarCell, fmt: Fmt, modifier: Modifier, selected: 
         modifier
             .height(50.dp)
             .clip(RoundedCornerShape(12.dp))
-            .then(if (selected) Modifier.background(c.period.copy(alpha = .10f)) else Modifier)
+            .then(if (selected) Modifier.background(c.accent.copy(alpha = .10f)) else Modifier)
             .combinedClickable(onClick = { onDay(cell.day) }, onLongClick = { if (cell.canMarkStart) menu = true })
             .clearAndSetSemantics {
                 contentDescription = label
@@ -175,7 +175,7 @@ private fun DayCell(cell: CalendarCell, fmt: Fmt, modifier: Modifier, selected: 
             ) {
                 Text(
                     "${cell.dayOfMonth}", fontFamily = Nunito, fontWeight = FontWeight.Bold, fontSize = 15.sp,
-                    color = if (cell.bleed) c.onAccent else if (cell.inMonth) c.ink else c.ink2, modifier = Modifier.alpha(if (cell.inMonth) 1f else .45f),
+                    color = if (cell.bleed) c.onPeriod else if (cell.inMonth) c.ink else c.ink2, modifier = Modifier.alpha(if (cell.inMonth) 1f else .45f),
                 )
             }
             if (cell.logged) Box(Modifier.padding(top = 3.dp).size(4.dp).clip(CircleShape).background(c.ink2))

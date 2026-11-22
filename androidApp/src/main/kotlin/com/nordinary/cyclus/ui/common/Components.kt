@@ -89,7 +89,7 @@ fun CyclusChip(
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
     suggested: Boolean = false,
-    accent: Color = Cyclus.colors.period,
+    accent: Color = Cyclus.colors.accent,
     enabled: Boolean = true,
 ) {
     val c = Cyclus.colors

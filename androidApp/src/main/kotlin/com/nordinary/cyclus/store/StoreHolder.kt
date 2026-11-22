@@ -104,8 +104,9 @@ class StoreHolder(private val context: Context, val backup: BackupCoordinator, p
     }
 
     /**
-     * Erase everything (crypto-shred): database files + their key, snapshot + backup key, settings. Keeps only the
-     * „Nur auf dem Gerät“ choice. Then opens a fresh, empty store.
+     * Erase everything (crypto-shred): database files + their key, snapshot + backup key, settings, reminder/widget
+     * files + their key, and the appearance (back to Cyclus Rose, following the system). Keeps only the „Nur auf dem
+     * Gerät“ choice. Then opens a fresh, empty store.
      */
     fun erase(deleteHealth: Boolean = false, revokeHealth: Boolean = true, onDone: () -> Unit = {}) {
         val current = (_state.value as? StoreState.Ready)?.repo
@@ -128,6 +129,7 @@ class StoreHolder(private val context: Context, val backup: BackupCoordinator, p
                 backup.eraseFilesLocked()
                 File(context.cacheDir, "share").deleteRecursively() // report PDFs
                 SystemSurfaces.clearLocked(context) // reminders, widget days, shortcut
+                com.nordinary.cyclus.ui.theme.AppearanceStore.reset(context)
             }
             runCatching { CyclusWidgets.refresh(context) } // back to the neutral state
             _state.value = open()

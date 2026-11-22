@@ -110,7 +110,7 @@ fun ReportScreen(vm: AppViewModel, fmt: Fmt, snackbar: SnackbarHostState, onBack
         topBar = {
             LargeFlexibleTopAppBar(
                 title = { Text(fmt.s("reportT"), fontWeight = FontWeight.Bold) },
-                navigationIcon = { IconButton(onClick = back) { Icon(CyclusIcons.Back, fmt.s("back"), tint = c.period) } },
+                navigationIcon = { IconButton(onClick = back) { Icon(CyclusIcons.Back, fmt.s("back"), tint = c.accent) } },
                 scrollBehavior = scroll,
                 colors = TopAppBarDefaults.topAppBarColors(containerColor = c.bg, scrolledContainerColor = c.bg),
             )
@@ -156,7 +156,7 @@ fun ReportScreen(vm: AppViewModel, fmt: Fmt, snackbar: SnackbarHostState, onBack
                     placeholder = { Text(androidx.compose.ui.res.stringResource(R.string.rep_name_hint)) },
                     keyboardOptions = KeyboardOptions(capitalization = KeyboardCapitalization.Words),
                     shape = RoundedCornerShape(12.dp),
-                    colors = OutlinedTextFieldDefaults.colors(unfocusedBorderColor = c.line, focusedBorderColor = c.period, unfocusedContainerColor = c.surface, focusedContainerColor = c.surface),
+                    colors = OutlinedTextFieldDefaults.colors(unfocusedBorderColor = c.line, focusedBorderColor = c.accent, unfocusedContainerColor = c.surface, focusedContainerColor = c.surface),
                 )
                 Text(androidx.compose.ui.res.stringResource(R.string.rep_name_note), fontSize = 12.sp, color = c.ink2)
             } }
@@ -165,7 +165,7 @@ fun ReportScreen(vm: AppViewModel, fmt: Fmt, snackbar: SnackbarHostState, onBack
                 OutlinedTextField(
                     o.questions, { q -> vm.report.update { it.copy(questions = q) } }, Modifier.fillMaxWidth(), minLines = 2,
                     shape = RoundedCornerShape(12.dp),
-                    colors = OutlinedTextFieldDefaults.colors(unfocusedBorderColor = c.line, focusedBorderColor = c.period, unfocusedContainerColor = c.surface, focusedContainerColor = c.surface),
+                    colors = OutlinedTextFieldDefaults.colors(unfocusedBorderColor = c.line, focusedBorderColor = c.accent, unfocusedContainerColor = c.surface, focusedContainerColor = c.surface),
                 )
             } }
             item { Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -252,7 +252,7 @@ private fun Segments(labels: List<String>, selected: Int, onSelect: (Int) -> Uni
         labels.forEachIndexed { i, l ->
             SegmentedButton(
                 selected = selected == i, onClick = { onSelect(i) }, shape = SegmentedButtonDefaults.itemShape(i, labels.size),
-                colors = SegmentedButtonDefaults.colors(activeContainerColor = c.period.copy(alpha = .14f), activeContentColor = c.ink, inactiveContainerColor = c.surface),
+                colors = SegmentedButtonDefaults.colors(activeContainerColor = c.accent.copy(alpha = .14f), activeContentColor = c.ink, inactiveContainerColor = c.surface),
             ) { Text(l, fontWeight = FontWeight.SemiBold) }
         }
     }

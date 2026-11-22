@@ -93,7 +93,7 @@ fun OnboardingScreen(vm: AppViewModel, fmt: Fmt) {
         when (step) {
             0 -> {
                 Spacer(Modifier.height(48.dp))
-                Icon(CyclusIcons.Today, null, Modifier.size(72.dp).align(Alignment.CenterHorizontally), tint = c.period)
+                Icon(CyclusIcons.Today, null, Modifier.size(72.dp).align(Alignment.CenterHorizontally), tint = c.accent)
                 Title(fmt.s("onb0T"), center = true)
                 Body(fmt.s("onb0B"), center = true)
                 Spacer(Modifier.height(32.dp))
@@ -170,7 +170,7 @@ fun OnboardingScreen(vm: AppViewModel, fmt: Fmt) {
             }
             else -> {
                 Spacer(Modifier.height(32.dp))
-                Icon(CyclusIcons.Shield, null, Modifier.size(64.dp).align(Alignment.CenterHorizontally), tint = c.period)
+                Icon(CyclusIcons.Shield, null, Modifier.size(64.dp).align(Alignment.CenterHorizontally), tint = c.accent)
                 Title(fmt.s("onb5T"), center = true); Body(fmt.s("onb5B"), center = true)
                 Dots(5)
                 PrimaryButton(fmt.s("turnOn"), { if (Authn.available(ctx)) vm.finishOnboarding(enableLock = true) else pinSheet = true }, Modifier.fillMaxWidth())

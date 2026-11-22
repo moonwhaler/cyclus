@@ -1,5 +1,19 @@
 package com.nordinary.cyclus.ui.theme
 
+import com.nordinary.cyclus.presenter.Themes
+import com.nordinary.cyclus.presenter.ThemeTokens
+import com.nordinary.cyclus.presenter.ThemeChoice
+import com.nordinary.cyclus.presenter.Palette
+import com.nordinary.cyclus.presenter.CycleColors
+import com.nordinary.cyclus.presenter.AppearanceMode
+import com.nordinary.cyclus.presenter.Appearance
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.runtime.collectAsState
+import androidx.compose.material3.dynamicLightColorScheme
+import androidx.compose.material3.dynamicDarkColorScheme
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.animateColorAsState
+import android.os.Build
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.ColorScheme
@@ -25,43 +39,75 @@ import androidx.compose.ui.unit.em
 import androidx.compose.ui.unit.sp
 import com.nordinary.cyclus.R
 
-/** Prototype tokens (DESIGN_SPEC §5.1, contrast-verified). Cycle colours carry meaning and never change. */
+/**
+ * Colour roles (DESIGN_SPEC §5.1). The theme decides the neutrals and the accent roles (Settings › Erscheinungsbild);
+ * [period], [pre], [fertile], [success], [warning] carry meaning and are the same in every theme.
+ * Use [accent] for interaction (buttons, links, selection) and [period] only where something means bleeding.
+ */
 @Immutable
 data class CyclusColors(
-    val bg: Color, val surface: Color, val surface2: Color, val ink: Color, val ink2: Color, val line: Color,
-    val period: Color, val pre: Color, val mid: Color, val fertile: Color, val success: Color, val warning: Color,
-    val onAccent: Color,
+    val bg: Color, val surface: Color, val surface2: Color, val ink: Color, val ink2: Color, val line: Color, val mid: Color,
+    val accent: Color, val onAccent: Color, val accentContainer: Color, val onAccentContainer: Color,
+    val accent2: Color, val onAccent2: Color, val accent2Container: Color, val onAccent2Container: Color,
+    /** Accent on inverse surfaces (snackbar action on [ink]). */
+    val inverseAccent: Color,
+    val period: Color, val onPeriod: Color, val pre: Color, val fertile: Color, val success: Color, val warning: Color,
+    /** Errors and destructive actions; fixed like the cycle colours. */
+    val danger: Color, val onDanger: Color,
+    val dark: Boolean,
 )
 
-val LightCyclus = CyclusColors(
-    bg = Color(0xFFFBF8F5), surface = Color(0xFFFFFFFF), surface2 = Color(0xFFF3EEEA), ink = Color(0xFF1D1A1C),
-    ink2 = Color(0xFF6B6267), line = Color(0xFFE6DED8), period = Color(0xFFB3264E), pre = Color(0xFF6A4C9C),
-    mid = Color(0xFF8A7F76), fertile = Color(0xFF13706F), success = Color(0xFF2E7D5B), warning = Color(0xFF8F5600),
-    onAccent = Color(0xFFFFFFFF),
-)
+private fun Long.c() = Color(this.toInt())
 
-val DarkCyclus = CyclusColors(
-    bg = Color(0xFF141114), surface = Color(0xFF1E1A1E), surface2 = Color(0xFF29242A), ink = Color(0xFFF4EFF1),
-    ink2 = Color(0xFFABA1A6), line = Color(0xFF3A3438), period = Color(0xFFFF8FA8), pre = Color(0xFFBBA6EC),
-    mid = Color(0xFF8F858A), fertile = Color(0xFF5FD0C8), success = Color(0xFF6FCF9F), warning = Color(0xFFF2B65A),
-    onAccent = Color(0xFF141114),
-)
+fun cyclusColors(t: ThemeTokens, dark: Boolean): CyclusColors {
+    val cyc = CycleColors.of(dark)
+    return CyclusColors(
+        bg = t.bg.c(), surface = t.surface.c(), surface2 = t.surface2.c(), ink = t.ink.c(), ink2 = t.ink2.c(), line = t.line.c(), mid = t.mid.c(),
+        accent = t.accent.c(), onAccent = t.onAccent.c(), accentContainer = t.accentContainer.c(), onAccentContainer = t.onAccentContainer.c(),
+        accent2 = t.accent2.c(), onAccent2 = t.onAccent2.c(), accent2Container = t.accent2Container.c(), onAccent2Container = t.onAccent2Container.c(),
+        inverseAccent = t.inverseAccent.c(),
+        period = cyc.period.c(), onPeriod = cyc.onPeriod.c(), pre = cyc.pre.c(), fertile = cyc.fertile.c(),
+        success = cyc.success.c(), warning = cyc.warning.c(), danger = cyc.danger.c(), onDanger = cyc.onDanger.c(), dark = dark,
+    )
+}
+
+val LightCyclus = cyclusColors(Themes.ROSE_LIGHT, dark = false)
+val DarkCyclus = cyclusColors(Themes.ROSE_DARK, dark = true)
 
 val LocalCyclusColors = staticCompositionLocalOf { LightCyclus }
+
+/**
+ * Material You (ANDROID_PLAN D13): accents and surfaces from the wallpaper's scheme — bg = surface, cards =
+ * surfaceContainerLowest, surface2 = surfaceContainer, ink = onSurface, ink2 = onSurfaceVariant, line = outlineVariant,
+ * mid = outline, inverse accent = inversePrimary. Cycle colours and danger stay fixed.
+ */
+private fun fromDynamic(m: ColorScheme, dark: Boolean): CyclusColors {
+    val cyc = CycleColors.of(dark)
+    return CyclusColors(
+        bg = m.surface, surface = m.surfaceContainerLowest.let { if (dark) m.surfaceContainerLow else it },
+        surface2 = m.surfaceContainer, ink = m.onSurface, ink2 = m.onSurfaceVariant, line = m.outlineVariant, mid = m.outline,
+        accent = m.primary, onAccent = m.onPrimary, accentContainer = m.primaryContainer, onAccentContainer = m.onPrimaryContainer,
+        accent2 = m.secondary, onAccent2 = m.onSecondary, accent2Container = m.secondaryContainer, onAccent2Container = m.onSecondaryContainer,
+        inverseAccent = m.inversePrimary,
+        period = cyc.period.c(), onPeriod = cyc.onPeriod.c(), pre = cyc.pre.c(), fertile = cyc.fertile.c(),
+        success = cyc.success.c(), warning = cyc.warning.c(), danger = cyc.danger.c(), onDanger = cyc.onDanger.c(), dark = dark,
+    )
+}
 
 /** ANDROID_PLAN §3.1 colour-role mapping. */
 private fun scheme(c: CyclusColors, dark: Boolean): ColorScheme {
     val base = if (dark) darkColorScheme() else lightColorScheme()
     return base.copy(
-        primary = c.period, onPrimary = c.onAccent,
-        primaryContainer = if (dark) Color(0xFF43202B) else Color(0xFFF4E1E6),
-        onPrimaryContainer = if (dark) Color(0xFFFFD9E1) else Color(0xFF5C0F26),
-        secondary = c.pre, onSecondary = c.onAccent,
-        tertiary = c.fertile, onTertiary = c.onAccent,
+        primary = c.accent, onPrimary = c.onAccent,
+        primaryContainer = c.accentContainer, onPrimaryContainer = c.onAccentContainer,
+        secondary = c.accent2, onSecondary = c.onAccent2, secondaryContainer = c.accent2Container, onSecondaryContainer = c.onAccent2Container,
+        tertiary = c.fertile, onTertiary = c.onPeriod,
         background = c.bg, onBackground = c.ink, surface = c.bg, onSurface = c.ink, onSurfaceVariant = c.ink2,
         surfaceContainerLowest = c.surface, surfaceContainerLow = c.surface, surfaceContainer = c.surface2,
         surfaceContainerHigh = c.surface2, surfaceContainerHighest = c.surface2, surfaceVariant = c.surface2,
         outline = c.mid, outlineVariant = c.line,
+        inverseSurface = c.ink, inverseOnSurface = c.bg, inversePrimary = c.inverseAccent,
+        error = c.danger, onError = c.onDanger,
     )
 }
 
@@ -104,10 +150,47 @@ private val CyclusShapes = Shapes(
     large = RoundedCornerShape(24.dp), extraLarge = RoundedCornerShape(28.dp),
 )
 
+/** Whether the chosen appearance is dark right now (the system setting for „System“). */
+@Composable
+fun isCyclusDark(appearance: Appearance): Boolean = when (appearance.mode) {
+    AppearanceMode.LIGHT -> false
+    AppearanceMode.DARK -> true
+    AppearanceMode.SYSTEM -> isSystemInDarkTheme()
+}
+
+/** Resolves an appearance to colours (dynamic falls back to Rose before Android 12). */
+@Composable
+fun resolveColors(appearance: Appearance, dark: Boolean): CyclusColors {
+    val ctx = LocalContext.current
+    return when (val choice = appearance.choice) {
+        is ThemeChoice.Preset -> cyclusColors(Themes.tokens(choice.palette, dark), dark)
+        is ThemeChoice.Custom -> cyclusColors(Themes.custom(choice.primary, choice.secondary, dark), dark)
+        ThemeChoice.Dynamic ->
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) fromDynamic(if (dark) dynamicDarkColorScheme(ctx) else dynamicLightColorScheme(ctx), dark)
+            else cyclusColors(Themes.tokens(Palette.ROSE, dark), dark)
+    }
+}
+
+/** Theme switches cross-fade every role instead of jumping. */
+@Composable
+private fun animated(c: CyclusColors): CyclusColors {
+    val spec = tween<Color>(300)
+    @Composable fun a(x: Color) = animateColorAsState(x, spec, label = "theme").value
+    return CyclusColors(
+        bg = a(c.bg), surface = a(c.surface), surface2 = a(c.surface2), ink = a(c.ink), ink2 = a(c.ink2), line = a(c.line), mid = a(c.mid),
+        accent = a(c.accent), onAccent = a(c.onAccent), accentContainer = a(c.accentContainer), onAccentContainer = a(c.onAccentContainer),
+        accent2 = a(c.accent2), onAccent2 = a(c.onAccent2), accent2Container = a(c.accent2Container), onAccent2Container = a(c.onAccent2Container),
+        inverseAccent = a(c.inverseAccent),
+        period = a(c.period), onPeriod = a(c.onPeriod), pre = a(c.pre), fertile = a(c.fertile), success = a(c.success), warning = a(c.warning),
+        danger = a(c.danger), onDanger = a(c.onDanger), dark = c.dark,
+    )
+}
+
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
-fun CyclusTheme(dark: Boolean = isSystemInDarkTheme(), content: @Composable () -> Unit) {
-    val c = if (dark) DarkCyclus else LightCyclus
+fun CyclusTheme(appearance: Appearance = AppearanceStore.state.collectAsState().value, content: @Composable () -> Unit) {
+    val dark = isCyclusDark(appearance)
+    val c = animated(resolveColors(appearance, dark))
     CompositionLocalProvider(LocalCyclusColors provides c) {
         MaterialExpressiveTheme(
             colorScheme = scheme(c, dark),

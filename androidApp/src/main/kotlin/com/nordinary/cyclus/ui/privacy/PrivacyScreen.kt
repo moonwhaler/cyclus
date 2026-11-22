@@ -96,7 +96,7 @@ fun PrivacyScreen(
         topBar = {
             LargeFlexibleTopAppBar(
                 title = { Text(fmt.s("privT"), fontWeight = FontWeight.Bold) },
-                navigationIcon = { IconButton(onClick = onBack) { Icon(CyclusIcons.Back, fmt.s("back"), tint = c.period) } },
+                navigationIcon = { IconButton(onClick = onBack) { Icon(CyclusIcons.Back, fmt.s("back"), tint = c.accent) } },
                 scrollBehavior = scroll,
                 colors = TopAppBarDefaults.topAppBarColors(containerColor = c.bg, scrolledContainerColor = c.bg),
             )
@@ -139,7 +139,7 @@ fun PrivacyScreen(
                                     SegmentedButton(
                                         selected = state.lock.afterMillis == ms, onClick = { onLockAfter(ms) },
                                         shape = SegmentedButtonDefaults.itemShape(i, opts.size),
-                                        colors = SegmentedButtonDefaults.colors(activeContainerColor = c.period.copy(alpha = .14f), activeContentColor = c.ink, inactiveContainerColor = c.surface),
+                                        colors = SegmentedButtonDefaults.colors(activeContainerColor = c.accent.copy(alpha = .14f), activeContentColor = c.ink, inactiveContainerColor = c.surface),
                                     ) { Text(stringResource(label)) }
                                 }
                             }
@@ -246,7 +246,7 @@ internal fun Link(title: String, sub: String?, onClick: () -> Unit, danger: Bool
         verticalAlignment = Alignment.CenterVertically,
     ) {
         Column(Modifier.weight(1f)) {
-            Text(title, fontWeight = if (danger) FontWeight.SemiBold else FontWeight.Medium, color = if (danger) c.period else c.ink)
+            Text(title, fontWeight = if (danger) FontWeight.SemiBold else FontWeight.Medium, color = if (danger) c.danger else c.ink)
             if (sub != null) Text(sub, fontSize = 13.sp, color = c.ink2)
         }
         Text("›", color = c.ink2, fontSize = 18.sp)

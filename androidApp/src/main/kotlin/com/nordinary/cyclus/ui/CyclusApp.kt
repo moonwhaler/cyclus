@@ -1,5 +1,6 @@
 package com.nordinary.cyclus.ui
 
+import com.nordinary.cyclus.ui.theme.AppearanceStore
 import androidx.compose.animation.togetherWith
 import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.animation.slideInHorizontally
@@ -111,7 +112,6 @@ import com.nordinary.cyclus.ui.settings.SettingsScreen
 import com.nordinary.cyclus.ui.sheets.MethodSheet
 import com.nordinary.cyclus.ui.sheets.WhySheet
 import com.nordinary.cyclus.ui.theme.Cyclus
-import com.nordinary.cyclus.ui.theme.DarkCyclus
 import com.nordinary.cyclus.ui.today.TodayContent
 import com.nordinary.cyclus.widget.MediumWidgetReceiver
 import com.nordinary.cyclus.widget.SmallWidgetReceiver
@@ -232,6 +232,8 @@ fun CyclusApp(vm: AppViewModel) {
                         onMode = vm::setMode, onShowFertility = vm::setShowFertility, onLifeStage = vm::setLifeStage,
                         onComingSoon = comingSoon, onPrivacy = { backStack.add(PrivacyKey) },
                         onNotifications = { backStack.add(NotifyKey) },
+                        appearance = AppearanceStore.state.collectAsStateWithLifecycle().value,
+                        onAppearance = { AppearanceStore.set(ctx, it) },
                     )
                 }
             }
@@ -329,11 +331,11 @@ private fun MainScreen(
 
     val itemColors = NavigationSuiteDefaults.itemColors(
         navigationBarItemColors = NavigationBarItemDefaults.colors(
-            selectedIconColor = c.period, selectedTextColor = c.period, indicatorColor = c.period.copy(alpha = .14f),
+            selectedIconColor = c.accent, selectedTextColor = c.accent, indicatorColor = c.accent.copy(alpha = .14f),
             unselectedIconColor = c.ink2, unselectedTextColor = c.ink2,
         ),
         navigationRailItemColors = NavigationRailItemDefaults.colors(
-            selectedIconColor = c.period, selectedTextColor = c.period, indicatorColor = c.period.copy(alpha = .14f),
+            selectedIconColor = c.accent, selectedTextColor = c.accent, indicatorColor = c.accent.copy(alpha = .14f),
             unselectedIconColor = c.ink2, unselectedTextColor = c.ink2,
         ),
     )
@@ -389,7 +391,7 @@ private fun MainScreen(
                         text = { Text(label, fontWeight = FontWeight.Bold, fontSize = 16.sp) },
                         expanded = fabExpanded,
                         modifier = if (fabExpanded) Modifier else Modifier.semantics { contentDescription = label },
-                        containerColor = c.surface, contentColor = c.period,
+                        containerColor = c.surface, contentColor = c.accent,
                     )
                 }
             },
@@ -451,7 +453,7 @@ fun CyclusSnackbarHost(state: SnackbarHostState) {
     SnackbarHost(state) { data ->
         Snackbar(
             data, shape = RoundedCornerShape(16.dp), containerColor = c.ink, contentColor = c.bg,
-            actionColor = if (c == DarkCyclus) Color(0xFFB3264E) else Color(0xFFFF9DB3),
+            actionColor = c.inverseAccent,
         )
     }
 }
@@ -471,7 +473,7 @@ private fun DebugMenu(onPick: (SampleScenario) -> Unit, onWipe: () -> Unit, onCl
             Column(Modifier.verticalScroll(rememberScrollState()), verticalArrangement = Arrangement.spacedBy(2.dp)) {
                 Text(stringResource(R.string.debug_body), color = Cyclus.colors.ink2, fontSize = 14.sp)
                 for ((s, id) in labels) TextButton(onClick = { onPick(s) }, Modifier.fillMaxWidth()) { Text(stringResource(id)) }
-                TextButton(onClick = onWipe, Modifier.fillMaxWidth()) { Text(stringResource(R.string.debug_wipe), color = Cyclus.colors.period) }
+                TextButton(onClick = onWipe, Modifier.fillMaxWidth()) { Text(stringResource(R.string.debug_wipe), color = Cyclus.colors.danger) }
                 val ctx = LocalContext.current
                 val scope = rememberCoroutineScope()
                 // records without the cyclus: prefix count as another app's (ownership rule 1): test data for the import path

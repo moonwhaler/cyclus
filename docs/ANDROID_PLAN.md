@@ -15,7 +15,7 @@
 | D10-alt C | Flutter / React Native | ✗ | Rewrite of everything; neither platform's standard look; more third-party runtime code (SOUP). |
 | **D11** | Platform order | ✅ **Revised 2026-11-22: Android first.** Shared core from day 1; Android UI is built first, iOS (SwiftUI on the same `shared/` module) follows. Launch rule unchanged: a release ships when the parity matrix is complete on both platforms, or a feature is flagged off on both (§10). | Owner has the Android toolchain and a Pixel 9 Pro for daily testing. Parity is guaranteed by the shared core and the parity matrix, not by build order. |
 | **D12** | Android baseline | ✅ `minSdk 29` (Android 10), `targetSdk 36` (Android 16, **required by Play since 31 Aug 2026**), compile with the latest SDK. Re-check API 37 requirements before launch. | Covers the vast majority of DACH devices; Health Connect is available from Android 9 via Play and built into 14+. |
-| **D13** | Material You dynamic colour | ✅ **Off by default** (brand colours = prototype). Optional „Farben deines Hintergrunds verwenden“ tints **only neutrals and surfaces**. Period, pre-period, fertile and status colours never change, because they carry meaning. | Parity with prototype and iOS, while still offering a Google-standard personalisation. |
+| **D13** | Material You dynamic colour | ✅ **Revised 2026-11-22 (owner):** part of Settings › Erscheinungsbild next to curated palettes, custom colours and Light/Dark/System; default stays Cyclus Rosé (= prototype). Wallpaper colours drive the **accent roles and surfaces** (bg = `surface`, cards = `surfaceContainerLowest`, surface2 = `surfaceContainer`, ink = `onSurface`, ink2 = `onSurfaceVariant`, line = `outlineVariant`, mid = `outline`, inverse accent = `inversePrimary`). Period, pre-period, fertile, success, warning and danger never change, because they carry meaning. | Google-standard personalisation without touching what the cycle colours mean. |
 | **D14** | Play account | ✅ **Organization account** (same legal entity as D3, D-U-N-S). | Required anyway for health apps (credibility, liability). New *personal* accounts (after 13 Nov 2023) must run a 12-tester, 14-day closed test before production. Organization accounts are widely reported as exempt (verify in Play Console). |
 
 ### 0.1 Trust rules (hard, owner 2026-11-22)
@@ -153,9 +153,10 @@ Pin exact versions at project start and record them in the SOUP list.
 | `mid` | `outline` (non-text only) | `#8A7F76` | `#8F858A` |
 | `success` / `warning` | custom `CyclusColors` extension | as spec | as spec |
 
-- `error` keeps the M3 default, used only for real errors (never for cycle states).
+- **Accent vs meaning (2026-11-22):** `primary`/`secondary` (+ containers, `inversePrimary`) come from the chosen theme (`CyclusColors.accent*`): buttons, links, selection, FAB. `period`, `pre`, `fertile`, `success`, `warning` stay fixed and are used only where something means bleeding / a cycle phase / a status. `error` = fixed `danger` (today's period red) for errors and destructive actions. Theme palettes, OKLCH contrast correction and tests: `shared/.../presenter/Appearance.kt`. The table above is the default theme (Rosé).
+- Appearance is a device setting in SharedPreferences (`appearance`), not health data: read before the encrypted DB opens (no theme flash on the lock screen), never exported or backed up, reset by erase. Night mode: `UiModeManager.setApplicationNightMode` on Android 12+, a base-context `uiMode` override (+ recreate) before.
 - **Contrast:** values are already WCAG-verified (spec §5.1). Provide M3 *medium* and *high* contrast schemes (Android 14+ contrast setting) by darkening fills 15% (light) / lightening 10% (dark), mirroring iOS "Increase Contrast".
-- Dynamic colour per D13.
+- Dynamic colour and themes per D13 (Settings › Erscheinungsbild).
 
 ### 3.2 Shape, elevation, spacing
 - **Shapes:** M3 shape scale: `extraSmall 8` (scale buttons), `medium 16` (cards = prototype 16), `large 24` (sheets = prototype 24), `full` (chips, FAB, badges). Use M3 Expressive **shape morphing** only on press for the FAB and button groups.

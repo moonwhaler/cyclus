@@ -1,5 +1,7 @@
 package com.nordinary.cyclus.health
 
+import kotlinx.coroutines.launch
+import androidx.lifecycle.lifecycleScope
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -29,9 +31,19 @@ import com.nordinary.cyclus.ui.today.PrimaryButton
  * no data and no app lock involved, so it is safe to export and reviewers can read it.
  */
 class HealthRationaleActivity : ComponentActivity() {
+    override fun attachBaseContext(newBase: android.content.Context) {
+        super.attachBaseContext(com.nordinary.cyclus.ui.theme.AppearanceStore.wrap(newBase))
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         enableEdgeToEdge()
         super.onCreate(savedInstanceState)
+        if (com.nordinary.cyclus.ui.theme.AppearanceStore.needsRecreateOnModeChange) {
+            val startMode = com.nordinary.cyclus.ui.theme.AppearanceStore.state.value.mode
+            lifecycleScope.launch {
+                com.nordinary.cyclus.ui.theme.AppearanceStore.state.collect { if (it.mode != startMode) recreate() }
+            }
+        }
         setContent {
             CyclusTheme {
                 Surface(Modifier.fillMaxSize(), color = Cyclus.colors.bg) {

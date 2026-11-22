@@ -280,6 +280,7 @@ Rules:
 - **Fertility tokens:** `fertile` `#13706F` / `#5FD0C8` (5.6:1 / 10.1:1 vs bg; white text on light fill 5.9:1, ink on dark fill 10.1:1). Fertility is shown in **3 intensities** (Possible 30% fill, High 65%, Peak 100% + ✦ glyph) **plus a dot-density pattern**. `fertile` and `period` have near-equal luminance (1.1:1), so they are distinguished by hue + glyph + pattern, never by lightness alone. Ovulation marker: ◎ glyph (dashed = predicted, solid = likely / likely occurred).
 - **Never green-coded "low"**: "Lower chance" days get no fill at all, to avoid a "safe" reading.
 - High-contrast mode (`colorSchemeContrast == .increased`): darken light-mode fills 15%, use solid outlines instead of dashed.
+- **Themes (2026-11-22):** Settings › Appearance lets the person pick a palette (Rosé = these tokens, Lavendel, Salbei, Ozean, Terrakotta, Graphit), custom primary/secondary colours (lightness corrected in OKLCH until WCAG holds) and Light/Dark/System (Android also offers wallpaper colours). Themes change only the **accent** (interaction: buttons, links, selection) and the tint of the neutrals. `period`, `prePeriod`, `fertile`, `success`, `warning` and the error/destructive colour (= `period`) are identical in every theme, so a colour always means the same thing.
 
 ### 5.2 Typography
 System **SF Pro** text styles only, so Dynamic Type works up to AX5. Numerals use **SF Pro Rounded** with `.monospacedDigit()`.

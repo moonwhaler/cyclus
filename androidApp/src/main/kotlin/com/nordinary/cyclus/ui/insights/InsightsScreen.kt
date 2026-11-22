@@ -108,7 +108,7 @@ fun InsightsContent(
                         }
                         Text(
                             fmt.s("howWorks"), Modifier.clip(RoundedCornerShape(6.dp)).clickable(role = Role.Button, onClick = onMethod).padding(vertical = 4.dp),
-                            fontSize = 14.sp, fontWeight = FontWeight.SemiBold, color = c.period,
+                            fontSize = 14.sp, fontWeight = FontWeight.SemiBold, color = c.accent,
                         )
                     }
                     PatternSummaryCard(state.patterns, fmt, onOpen = { sheetPattern = it.id }, onAll = onAllPatterns)
@@ -153,7 +153,7 @@ fun InsightsContent(
                             Text(
                                 androidx.compose.ui.res.stringResource(if (historyAll) R.string.hist_less else R.string.hist_all),
                                 Modifier.fillMaxWidth().clickable(role = Role.Button) { historyAll = !historyAll }.padding(horizontal = 14.dp, vertical = 14.dp),
-                                fontSize = 14.sp, fontWeight = FontWeight.SemiBold, color = c.period,
+                                fontSize = 14.sp, fontWeight = FontWeight.SemiBold, color = c.accent,
                             )
                         }
                     }

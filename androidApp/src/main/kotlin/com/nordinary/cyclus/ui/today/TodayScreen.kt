@@ -387,7 +387,7 @@ fun PrimaryButton(text: String, onClick: () -> Unit, modifier: Modifier = Modifi
     val c = Cyclus.colors
     Button(
         onClick, modifier.heightIn(min = 50.dp), enabled = enabled, shape = RoundedCornerShape(25.dp),
-        colors = ButtonDefaults.buttonColors(containerColor = c.period, contentColor = c.onAccent),
+        colors = ButtonDefaults.buttonColors(containerColor = c.accent, contentColor = c.onAccent),
         contentPadding = PaddingValues(horizontal = 22.dp, vertical = 8.dp),
     ) { Text(text, fontWeight = FontWeight.Bold, fontSize = 16.sp, textAlign = TextAlign.Center) }
 }
@@ -409,8 +409,8 @@ fun LinkRow(text: String, onClick: () -> Unit, modifier: Modifier = Modifier, fi
         modifier.then(if (fill) Modifier.fillMaxWidth() else Modifier).clip(RoundedCornerShape(8.dp)).clickable(role = Role.Button, onClick = onClick).padding(horizontal = 2.dp, vertical = 12.dp),
         horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically,
     ) {
-        Text(text, fontWeight = FontWeight.SemiBold, color = c.period, fontSize = 15.sp)
+        Text(text, fontWeight = FontWeight.SemiBold, color = c.accent, fontSize = 15.sp)
         Spacer(Modifier.size(8.dp))
-        Text("›", fontWeight = FontWeight.SemiBold, color = c.period, fontSize = 18.sp)
+        Text("›", fontWeight = FontWeight.SemiBold, color = c.accent, fontSize = 18.sp)
     }
 }

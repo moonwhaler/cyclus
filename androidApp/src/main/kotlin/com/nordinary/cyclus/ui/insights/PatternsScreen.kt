@@ -81,7 +81,7 @@ fun PatternsScreen(sec: PatternSection, fmt: Fmt, onBack: () -> Unit, onMute: (S
         topBar = {
             LargeFlexibleTopAppBar(
                 title = { Text(fmt.s("pwT"), fontWeight = FontWeight.Bold) },
-                navigationIcon = { IconButton(onClick = onBack) { Icon(CyclusIcons.Back, fmt.s("back"), tint = c.period) } },
+                navigationIcon = { IconButton(onClick = onBack) { Icon(CyclusIcons.Back, fmt.s("back"), tint = c.accent) } },
                 scrollBehavior = scroll,
                 colors = TopAppBarDefaults.topAppBarColors(containerColor = c.bg, scrolledContainerColor = c.bg),
             )
@@ -100,13 +100,13 @@ fun PatternsScreen(sec: PatternSection, fmt: Fmt, onBack: () -> Unit, onMute: (S
                             SegmentedButton(
                                 selected = watchingTab == (i == 1), onClick = { watchingChoice = i == 1 },
                                 shape = SegmentedButtonDefaults.itemShape(i, labels.size),
-                                colors = SegmentedButtonDefaults.colors(activeContainerColor = c.period.copy(alpha = .14f), activeContentColor = c.ink, inactiveContainerColor = c.surface),
+                                colors = SegmentedButtonDefaults.colors(activeContainerColor = c.accent.copy(alpha = .14f), activeContentColor = c.ink, inactiveContainerColor = c.surface),
                             ) { Text(l, maxLines = 1) }
                         }
                     }
                 }
                 if (areas.size > 1) Row(Modifier.horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    val chipColors = FilterChipDefaults.filterChipColors(selectedContainerColor = c.period.copy(alpha = .14f), containerColor = c.surface)
+                    val chipColors = FilterChipDefaults.filterChipColors(selectedContainerColor = c.accent.copy(alpha = .14f), containerColor = c.surface)
                     FilterChip(area == null, { areaKey = null }, label = { Text(stringResource(R.string.pat_filter_all)) }, colors = chipColors)
                     for (a in areas) FilterChip(
                         area == a, { areaKey = if (area == a) null else a.key },
@@ -120,7 +120,7 @@ fun PatternsScreen(sec: PatternSection, fmt: Fmt, onBack: () -> Unit, onMute: (S
                 if (sec.hiddenCount > 0) Text(
                     fmt.s("hiddenN", sec.hiddenCount),
                     Modifier.clip(RoundedCornerShape(6.dp)).clickable(role = Role.Button, onClick = onUnmute).padding(4.dp),
-                    fontSize = 13.sp, fontWeight = FontWeight.SemiBold, color = c.period,
+                    fontSize = 13.sp, fontWeight = FontWeight.SemiBold, color = c.accent,
                 )
                 Spacer(Modifier.height(32.dp))
             }

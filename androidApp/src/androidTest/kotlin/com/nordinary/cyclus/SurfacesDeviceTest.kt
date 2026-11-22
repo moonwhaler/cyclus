@@ -136,6 +136,9 @@ class SurfacesDeviceTest {
         assertTrue(AlarmArmer.isArmed(ctx))
         assertTrue(ShortcutManagerCompat.getDynamicShortcuts(ctx).any { it.id == "log" })
 
+        com.nordinary.cyclus.ui.theme.AppearanceStore.set(ctx, com.nordinary.cyclus.presenter.Appearance(
+            com.nordinary.cyclus.presenter.AppearanceMode.SYSTEM, com.nordinary.cyclus.presenter.ThemeChoice.Preset(com.nordinary.cyclus.presenter.Palette.SAGE),
+        ))
         holder.erase()
         // a sync queued from the old model while erasing, and one after the new store opened: both dropped
         assertFalse(SystemSurfaces.sync(ctx, coord, holder, first.repo, snap, settings))
@@ -145,6 +148,8 @@ class SurfacesDeviceTest {
         assertEquals(NotifyPlan.EMPTY, NotifyFiles.readPlan(ctx))
         assertNull(NotifyFiles.readWidget(ctx))
         assertFalse(AlarmArmer.isArmed(ctx))
+        // the chosen appearance goes too (set before the erase below the sync)
+        assertEquals(com.nordinary.cyclus.presenter.Appearance.DEFAULT, com.nordinary.cyclus.ui.theme.AppearanceStore.state.value)
         assertTrue(ShortcutManagerCompat.getDynamicShortcuts(ctx).none { it.id == "log" })
 
         Shortcuts.apply(ctx, false)

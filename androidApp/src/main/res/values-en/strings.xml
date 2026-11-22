@@ -279,4 +279,25 @@
     <string name="hc_restore_done">Earlier entries brought back.</string>
     <string name="bk_how">With Google backup on, Cyclus adds an encrypted copy and its key. Both are protected by end-to-end encryption with your screen lock; without it, Cyclus sends nothing.</string>
     <string name="log_more">More details</string>
+    <string name="ap_title">Appearance</string>
+    <string name="ap_mode_system">System</string>
+    <string name="ap_mode_light">Light</string>
+    <string name="ap_mode_dark">Dark</string>
+    <string name="pal_rose">Rose</string>
+    <string name="pal_lavender">Lavender</string>
+    <string name="pal_sage">Sage</string>
+    <string name="pal_ocean">Ocean</string>
+    <string name="pal_terracotta">Terracotta</string>
+    <string name="pal_graphite">Graphite</string>
+    <string name="pal_dynamic">Wallpaper</string>
+    <string name="pal_custom">Custom</string>
+    <string name="ap_note">Cycle colours (period, fertile days, the days before your period) stay the same in every theme, so they always mean the same thing.</string>
+    <string name="ap_swatch">Theme %1$s</string>
+    <string name="cu_title">Custom colours</string>
+    <string name="cu_primary">Primary</string>
+    <string name="cu_secondary">Secondary</string>
+    <string name="cu_hue">Hue</string>
+    <string name="cu_intensity">Intensity</string>
+    <string name="cu_adjusted">Brightness was adjusted so text and buttons stay easy to read.</string>
+    <string name="cu_apply">Apply</string>
 </resources>

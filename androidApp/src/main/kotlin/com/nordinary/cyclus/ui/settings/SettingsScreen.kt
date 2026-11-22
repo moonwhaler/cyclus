@@ -68,6 +68,8 @@ fun SettingsScreen(
     onComingSoon: () -> Unit,
     onPrivacy: () -> Unit = onComingSoon,
     onNotifications: () -> Unit = onComingSoon,
+    appearance: com.nordinary.cyclus.presenter.Appearance = com.nordinary.cyclus.presenter.Appearance.DEFAULT,
+    onAppearance: (com.nordinary.cyclus.presenter.Appearance) -> Unit = {},
 ) {
     val c = Cyclus.colors
     val scroll = TopAppBarDefaults.exitUntilCollapsedScrollBehavior()
@@ -77,7 +79,7 @@ fun SettingsScreen(
         topBar = {
             LargeFlexibleTopAppBar(
                 title = { Text(fmt.s("setT"), fontWeight = FontWeight.Bold) },
-                navigationIcon = { IconButton(onClick = onBack) { Icon(CyclusIcons.Back, fmt.s("back"), tint = c.period) } },
+                navigationIcon = { IconButton(onClick = onBack) { Icon(CyclusIcons.Back, fmt.s("back"), tint = c.accent) } },
                 scrollBehavior = scroll,
                 colors = TopAppBarDefaults.topAppBarColors(containerColor = c.bg, scrolledContainerColor = c.bg),
             )
@@ -88,6 +90,7 @@ fun SettingsScreen(
             Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(padding).padding(horizontal = 16.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp),
         ) {
+            AppearanceSection(fmt, appearance, onAppearance)
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) LanguageSection(fmt)
             Section(fmt.s("goal")) {
                 Segments(listOf(fmt.s("goalTrack"), fmt.s("goalConceive")), if (mode == Mode.CONCEIVE) 1 else 0) {
@@ -119,7 +122,7 @@ fun SettingsScreen(
                             verticalAlignment = Alignment.CenterVertically,
                         ) {
                             Text(fmt.s(st?.labelKey ?: LifeStage.NONE_LABEL), Modifier.weight(1f), fontWeight = FontWeight.Medium, color = c.ink)
-                            if (selected) Text("✓", color = c.period, fontWeight = FontWeight.Bold)
+                            if (selected) Text("✓", color = c.accent, fontWeight = FontWeight.Bold)
                         }
                     }
                 }
@@ -153,7 +156,7 @@ private fun LanguageSection(fmt: Fmt) {
 }
 
 @Composable
-private fun Section(label: String, content: @Composable () -> Unit) {
+internal fun Section(label: String, content: @Composable () -> Unit) {
     Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
         Text(label.uppercase(), Modifier.padding(horizontal = 4.dp), fontSize = 12.sp, fontWeight = FontWeight.SemiBold, letterSpacing = 0.7.sp, color = Cyclus.colors.ink2)
         content()
@@ -167,13 +170,13 @@ private fun Group(content: @Composable () -> Unit) {
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-private fun Segments(labels: List<String>, selected: Int, onSelect: (Int) -> Unit) {
+internal fun Segments(labels: List<String>, selected: Int, onSelect: (Int) -> Unit) {
     val c = Cyclus.colors
     SingleChoiceSegmentedButtonRow(Modifier.fillMaxWidth()) {
         labels.forEachIndexed { i, l ->
             SegmentedButton(
                 selected = selected == i, onClick = { onSelect(i) }, shape = SegmentedButtonDefaults.itemShape(i, labels.size),
-                colors = SegmentedButtonDefaults.colors(activeContainerColor = c.period.copy(alpha = .14f), activeContentColor = c.ink, inactiveContainerColor = c.surface),
+                colors = SegmentedButtonDefaults.colors(activeContainerColor = c.accent.copy(alpha = .14f), activeContentColor = c.ink, inactiveContainerColor = c.surface),
             ) { Text(l, fontWeight = FontWeight.SemiBold) }
         }
     }

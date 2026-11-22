@@ -201,10 +201,10 @@ fun LogSheet(
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
                     Column(Modifier.weight(1f)) {
-                        Text(stringResource(R.string.log_more), fontWeight = FontWeight.SemiBold, color = c.period)
+                        Text(stringResource(R.string.log_more), fontWeight = FontWeight.SemiBold, color = c.accent)
                         if (!more) Text(names, fontSize = 12.sp, color = c.ink2, maxLines = 2, overflow = TextOverflow.Ellipsis)
                     }
-                    Text(if (more) "▴" else "▾", color = c.period, fontSize = 18.sp)
+                    Text(if (more) "▴" else "▾", color = c.accent, fontSize = 18.sp)
                 }
                 if (more) for (g in folded) section(g)
             }
@@ -275,7 +275,7 @@ private fun BbtGroup(label: String, hint: String, log: DayLog, fmt: Fmt, onUpdat
             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal, imeAction = ImeAction.Done),
             keyboardActions = KeyboardActions(onDone = { commit(text) }),
             shape = RoundedCornerShape(10.dp),
-            colors = OutlinedTextFieldDefaults.colors(unfocusedBorderColor = c.line, focusedBorderColor = c.period, unfocusedContainerColor = c.surface, focusedContainerColor = c.surface),
+            colors = OutlinedTextFieldDefaults.colors(unfocusedBorderColor = c.line, focusedBorderColor = c.accent, unfocusedContainerColor = c.surface, focusedContainerColor = c.surface),
         )
         StepButton("+", fmt.s("higher")) { step(0.05) }
         Text("°C", color = c.ink2)
@@ -311,7 +311,7 @@ private fun NoteGroup(day: Day, log: DayLog, fmt: Fmt, onUpdate: ((DayLog) -> Da
         value = text, onValueChange = { text = it }, modifier = Modifier.fillMaxWidth(), minLines = 2,
         placeholder = { Text(fmt.s("notePh"), color = c.ink2) },
         shape = RoundedCornerShape(12.dp),
-        colors = OutlinedTextFieldDefaults.colors(unfocusedBorderColor = c.line, focusedBorderColor = c.period, unfocusedContainerColor = c.surface, focusedContainerColor = c.surface),
+        colors = OutlinedTextFieldDefaults.colors(unfocusedBorderColor = c.line, focusedBorderColor = c.accent, unfocusedContainerColor = c.surface, focusedContainerColor = c.surface),
     )
 }
 
@@ -359,7 +359,7 @@ private fun PainGroup(log: DayLog, fmt: Fmt, onUpdate: ((DayLog) -> DayLog) -> U
                     val on = (log.pain[r.key] ?: 0) > 0
                     val fill = if (on) c.period.copy(alpha = .55f) else c.surface2
                     val stroke = if (sel == r.key) Stroke(2.5f * s) else Stroke(1.5f * s)
-                    val strokeColor = if (sel == r.key) c.period else c.line
+                    val strokeColor = if (sel == r.key) c.accent else c.line
                     drawRegion(r, s, fill, null); drawRegion(r, s, strokeColor, stroke)
                 }
             }
@@ -378,7 +378,7 @@ private fun PainGroup(log: DayLog, fmt: Fmt, onUpdate: ((DayLog) -> DayLog) -> U
             Text(fmt.item(sel), fontWeight = FontWeight.Bold, color = c.ink)
             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
                 Text(fmt.s("painNone"), fontSize = 12.sp, color = c.ink2)
-                Text("${slider.toInt()}", fontFamily = Nunito, fontSize = 22.sp, fontWeight = FontWeight.ExtraBold, color = c.period)
+                Text("${slider.toInt()}", fontFamily = Nunito, fontSize = 22.sp, fontWeight = FontWeight.ExtraBold, color = c.accent)
                 Text(fmt.s("painMax"), fontSize = 12.sp, color = c.ink2)
             }
             Slider(
@@ -388,7 +388,7 @@ private fun PainGroup(log: DayLog, fmt: Fmt, onUpdate: ((DayLog) -> DayLog) -> U
                     onUpdate { l -> l.copy(pain = if (v == 0) l.pain - sel else l.pain + (sel to v)) }
                 },
                 modifier = Modifier.semantics { stateDescription = "${slider.toInt()}/10"; contentDescription = "${fmt.s("painL")}: ${fmt.item(sel)}" },
-                colors = SliderDefaults.colors(thumbColor = c.period, activeTrackColor = c.period, inactiveTrackColor = c.surface2),
+                colors = SliderDefaults.colors(thumbColor = c.accent, activeTrackColor = c.accent, inactiveTrackColor = c.surface2),
             )
             val list = Catalog.PAIN_REGIONS.mapNotNull { k -> log.pain[k]?.takeIf { it > 0 }?.let { "${fmt.item(k)} $it" } }
             Text(if (list.isEmpty()) fmt.s("noPain") else list.joinToString(" · "), fontSize = 12.sp, color = c.ink2)

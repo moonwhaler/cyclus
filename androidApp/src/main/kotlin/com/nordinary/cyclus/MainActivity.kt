@@ -1,5 +1,7 @@
 package com.nordinary.cyclus
 
+import kotlinx.coroutines.launch
+import androidx.lifecycle.lifecycleScope
 import android.content.Intent
 import android.os.Build
 import android.os.Bundle
@@ -49,6 +51,10 @@ import com.nordinary.cyclus.ui.today.SecondaryButton
 class MainActivity : FragmentActivity() {
     private val app get() = application as CyclusApplication
 
+    override fun attachBaseContext(newBase: android.content.Context) {
+        super.attachBaseContext(com.nordinary.cyclus.ui.theme.AppearanceStore.wrap(newBase))
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         enableEdgeToEdge()
         super.onCreate(savedInstanceState)
@@ -57,6 +63,12 @@ class MainActivity : FragmentActivity() {
         else window.setFlags(WindowManager.LayoutParams.FLAG_SECURE, WindowManager.LayoutParams.FLAG_SECURE)
         app.store.ensureOpen()
         if (savedInstanceState == null) takeAction(intent) // not again after rotation / recreation
+        if (com.nordinary.cyclus.ui.theme.AppearanceStore.needsRecreateOnModeChange) {
+            val startMode = com.nordinary.cyclus.ui.theme.AppearanceStore.state.value.mode
+            lifecycleScope.launch {
+                com.nordinary.cyclus.ui.theme.AppearanceStore.state.collect { if (it.mode != startMode) recreate() }
+            }
+        }
         setContent {
             CyclusTheme {
                 Surface(color = Cyclus.colors.bg) {

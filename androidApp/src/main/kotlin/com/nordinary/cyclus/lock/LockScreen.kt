@@ -63,7 +63,7 @@ fun LockScreen(
         Modifier.fillMaxSize().background(c.bg).systemBarsPadding().padding(24.dp),
         horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(14.dp, Alignment.CenterVertically),
     ) {
-        Icon(CyclusIcons.Today, null, Modifier.size(56.dp), tint = c.period)
+        Icon(CyclusIcons.Today, null, Modifier.size(56.dp), tint = c.accent)
         Text(fmt.s("lockedT"), fontSize = 22.sp, fontWeight = FontWeight.Bold, color = c.ink)
         Text(fmt.s("lockedB"), color = c.ink2, textAlign = TextAlign.Center)
         if (config.hasPin) PinPad(lockoutUntil, onPin)
@@ -89,7 +89,7 @@ fun PinPad(lockoutUntil: Long, onPin: suspend (String) -> Boolean, modifier: Mod
         }
         Text(
             when { waitS > 0 -> stringResource(R.string.pin_wait, waitS.toInt()); wrong -> stringResource(R.string.pin_wrong); else -> " " },
-            color = c.period, fontSize = 13.sp,
+            color = c.danger, fontSize = 13.sp,
         )
         val keys = listOf("1", "2", "3", "4", "5", "6", "7", "8", "9", "", "0", "⌫")
         for (row in keys.chunked(3)) Row(horizontalArrangement = Arrangement.spacedBy(16.dp)) {
