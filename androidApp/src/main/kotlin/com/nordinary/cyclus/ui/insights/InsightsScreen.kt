@@ -7,6 +7,8 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.IntrinsicSize
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -85,9 +87,10 @@ fun InsightsContent(
                 Title(fmt.s("insEmptyT")); Body(fmt.s("insEmptyB"))
             }
             is InsightsUiState.Ready -> {
-                Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                    Stat("${state.typLo}–${state.typHi}", fmt.s("statCycle"), Modifier.weight(1f))
-                    Stat(state.periodTypical?.toString() ?: "–", fmt.s("statPeriod"), Modifier.weight(1f))
+                // equal heights even when one label wraps (German: „Tage, dein typischer Zyklus“)
+                Row(Modifier.height(IntrinsicSize.Min), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                    Stat("${state.typLo}–${state.typHi}", fmt.s("statCycle"), Modifier.weight(1f).fillMaxHeight())
+                    Stat(state.periodTypical?.toString() ?: "–", fmt.s("statPeriod"), Modifier.weight(1f).fillMaxHeight())
                 }
                 CyclusCard {
                     Title(fmt.s("varyT", state.spread))
