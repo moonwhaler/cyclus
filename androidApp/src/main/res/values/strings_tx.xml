@@ -118,7 +118,7 @@
     <string name="tx_history">Zyklusverlauf</string>
     <string name="tx_histRow">%1$s Tage · Periode %2$s Tage</string>
     <string name="tx_flowL">Blutung</string>
-    <string name="tx_pinned">Angeheftet</string>
+    <string name="tx_pinned">Schnellauswahl</string>
     <string name="tx_edit">Bearbeiten</string>
     <string name="tx_often">Oft um diese Zeit eingetragen</string>
     <string name="tx_moreSym">Weitere Symptome</string>

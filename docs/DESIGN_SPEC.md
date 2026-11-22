@@ -407,7 +407,7 @@ States:
 ### 7.3 Log sheet
 - Presented as a `.sheet` with detents `.medium` / `.large`. Date header with ‹ › arrows; swipe between days.
 - **Stable section order:** Flow → Pinned → Suggested → Symptoms → Pain → Mood & energy → Sleep → Discharge → Sex (hidden unless enabled) → Temperature → Tags → Note.
-- **Pinned row:** user-chosen (default: Cramps, Headache, Tired, Bloating). Fixed positions → muscle memory.
+- **Pinned row** (UI label „Schnellauswahl“ / „Quick picks“; „Angeheftet“ was unclear): user-chosen (default: Cramps, Headache, Tired, Bloating). Fixed positions → muscle memory.
 - **Suggested row:** separate, up to 4 chips, "Often logged around this time". Never reorders other sections.
 - **"Nothing else today"** button at the bottom marks the day as *observed*, which the pattern engine needs (§11.7). It is **explicit only**, never auto-set on save, because an absent entry ≠ no symptom. Dismissing with "Done" without it leaves unlogged symptoms *unknown*.
 - Save is implicit: every change persists immediately. A "Done" button dismisses. The success haptic fires once.

@@ -118,7 +118,7 @@
     <string name="tx_history">Cycle history</string>
     <string name="tx_histRow">%1$s days · period %2$s days</string>
     <string name="tx_flowL">Flow</string>
-    <string name="tx_pinned">Pinned</string>
+    <string name="tx_pinned">Quick picks</string>
     <string name="tx_edit">Edit</string>
     <string name="tx_often">Often logged around this time</string>
     <string name="tx_moreSym">More symptoms</string>
