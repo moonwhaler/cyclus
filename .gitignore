@@ -1,0 +1,13 @@
+.DS_Store
+# Xcode
+DerivedData/
+build/
+*.xcuserstate
+xcuserdata/
+*.xcscmblueprint
+.swiftpm/
+.build/
+# Secrets / local
+*.env
+*.p12
+*.mobileprovision
