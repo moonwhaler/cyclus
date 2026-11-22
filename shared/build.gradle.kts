@@ -42,6 +42,8 @@ kotlin {
             implementation(libs.sqlcipher.android)
             implementation(libs.androidx.sqlite)
         }
+        jvmTest { resources.srcDir("golden") }
+        getByName("androidDeviceTest") { resources.srcDir("golden") }
         getByName("androidDeviceTest").dependencies {
             implementation(libs.androidx.test.runner)
             implementation(libs.androidx.test.ext.junit)

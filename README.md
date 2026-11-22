@@ -41,3 +41,9 @@ tools/deploy.sh                  # build, install, launch on the local emulator 
 tools/deploy.sh --phone          # same, on the paired phone (wireless adb)
 ```
 Debug builds (`com.nordinary.cyclus.debug`) hold **throwaway test data** until export/backup lands.
+
+Engines are checked against golden vectors exported from the prototype (`tools/golden/`).
+
+Troubleshooting: if Gradle reports `Plugin ... was not found` or `Could not find androidx...` although the version exists,
+Google Maven may be failing over IPv4 on your network (seen behind a VPN). Run Gradle with IPv6 preferred:
+`./gradlew --stop && JAVA_TOOL_OPTIONS=-Djava.net.preferIPv6Addresses=true ./gradlew --refresh-dependencies build`.
