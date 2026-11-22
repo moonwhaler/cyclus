@@ -390,7 +390,7 @@ States:
 | Predictions paused (episode) | Day N since last bleed or episode label | Explanation + link to Life stage |
 | No data | — | "Log your period to begin" + big **Log period** button |
 
-- In-period quick action: when cycle day ≤ 10 and no period is open, show a **"Period started today"** one-tap button directly under the ring. One tap = log (undo toast for 5 s).
+- Period-start quick action: when no period is open and today ≥ predicted lower bound − 3 (status pre-period, expected or later), show a **"Period started today"** one-tap button directly under the ring. One tap = log (undo toast for 5 s). During a period, the ring area shows inline flow droplets instead.
 
 ### 7.3 Log sheet
 - Presented as a `.sheet` with detents `.medium` / `.large`. Date header with ‹ › arrows; swipe between days.
@@ -729,15 +729,15 @@ iOS 27 SDK review item (week 2): new perimenopause/menopause-related identifiers
 Work on log length `y = ln(L)` (cycle lengths are right-skewed).
 - **Prior (Normal-Inverse-Gamma) by age band.** Values are *provisional*, to be calibrated in back-test and reviewed by the clinician.
 
-  | Band | Prior median L | σ_y prior mean | κ₀ | α₀ |
+  | Band | Prior median L | σ_y prior mean (within-person) | κ₀ | α₀ |
   |---|---|---|---|---|
-  | Teen (< 20 or unknown + teen indicated) | 30 | 0.22 | 1 | 2 |
-  | Adult 20–39 / unknown | 29 | 0.14 | 1 | 2 |
-  | 40+ | 28 | 0.20 | 1 | 2 |
-  | Perimenopause episode | 30 | 0.35 | 0.5 | 2 |
-  | PCOS condition | 33 | 0.35 | 0.5 | 2 |
+  | Teen (< 20 or unknown + teen indicated) | 30 | 0.15 | 1 | 2 |
+  | Adult 20–39 / unknown | 29 | 0.09 | 1 | 2 |
+  | 40+ | 28 | 0.13 | 1 | 2 |
+  | Perimenopause episode | 30 | 0.25 | 0.5 | 2 |
+  | PCOS condition | 33 | 0.25 | 0.5 | 2 |
 
-  `μ₀ = ln(median)`, `β₀ = σ²_prior · (α₀ − 1)`.
+  `μ₀ = ln(median)`, `β₀ = σ²_prior · (α₀ − 1)`. σ is the *within-person* spread (≈ 2–3 days for adults), not the population spread (Bull et al. SD 5.2 d includes between-person variation). Changed in v1.0.1 after the prototype showed 0.14 made ranges ~8 days wide for very regular users.
 - **Robust, recency-weighted update.** For the last ≤ 12 eligible cycles, the weight `w_i = r_i · t_i`:
   - recency `r_i = 0.5^(age_i / 6)` (half-life 6 cycles);
   - robustness `t_i = (ν + 1) / (ν + z_i²)`, with ν = 4 and `z_i` the standardised residual from the current fit. Iterate 3× (IRLS ≈ Student-t likelihood).
@@ -861,7 +861,7 @@ Every new data point updates them, and each finished cycle personalises the mode
   Provisional; clinician review + back-test.
 - **Prior over O:**
   - **(a)** If ≥ 2 past cycles have a *good* ovulation estimate (80% HPD ≤ 3 days and temperature- or LH-supported): log-normal NIG model (as §11.5.2) on *follicular length* `F = O`. Posterior predictive → discrete pmf.
-  - **(b)** Otherwise, `O = L* − Lut + 1`, with `L*` ~ the cycle-length posterior predictive (§11.5) and `Lut` ~ personal luteal predictive (prior N(12.4, 2.4²) truncated to 7…17; NIG update from good past cycles). Discrete convolution.
+  - **(b)** Otherwise, `O = L* − Lut` (luteal length defined as days after ovulation until the next period starts), with `L*` ~ the cycle-length posterior predictive (§11.5) and `Lut` ~ personal luteal predictive (prior N(12.4, 2.4²) truncated to 7…17; NIG update from good past cycles). Discrete convolution.
   - **(c)** No cycle history: population prior from (b) with the age-band cycle prior. Labelled "Calendar estimate — very uncertain".
 
 #### 11.11.3 Evidence likelihoods `P(observation | O = d)`
