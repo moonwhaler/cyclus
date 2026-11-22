@@ -54,7 +54,9 @@ class Fmt(private val res: Resources, val locale: Locale) {
 
     fun s(key: String, vararg args: Any): String {
         val id = TxRes.strings[key] ?: return key
-        return if (args.isEmpty()) res.getString(id) else res.getString(id, *args)
+        val out = if (args.isEmpty()) res.getString(id) else res.getString(id, *args)
+        // "… 24. Nov.." → "… 24. Nov." when an abbreviated date ends a sentence (keeps real ellipses)
+        return if (args.isEmpty()) out else DOUBLE_DOT.replace(out, ".")
     }
 
     fun plural(key: String, n: Int): String = res.getQuantityString(TxRes.plurals.getValue(key), n, n)
@@ -64,6 +66,35 @@ class Fmt(private val res: Resources, val locale: Locale) {
         val id = TxRes.sym[key] ?: TxRes.emo[key] ?: TxRes.tag[key] ?: TxRes.flow[key] ?: TxRes.mucus[key] ?: TxRes.region[key]
         return id?.let { res.getString(it) } ?: key
     }
+
+    /** String with {b}…{/b} markers (from the prototype's inline <b>) as bold spans. */
+    fun rich(key: String, vararg args: Any): androidx.compose.ui.text.AnnotatedString {
+        val raw = s(key, *args)
+        return androidx.compose.ui.text.buildAnnotatedString {
+            var rest = raw
+            while (true) {
+                val a = rest.indexOf("{b}")
+                val b = if (a >= 0) rest.indexOf("{/b}", a) else -1
+                if (a < 0 || b < 0) { append(rest); break }
+                append(rest.substring(0, a))
+                pushStyle(androidx.compose.ui.text.SpanStyle(fontWeight = androidx.compose.ui.text.font.FontWeight.SemiBold))
+                append(rest.substring(a + 3, b)); pop()
+                rest = rest.substring(b + 4)
+            }
+        }
+    }
+
+    fun array(key: String): List<String> = when (key) {
+        "wk" -> res.getStringArray(com.nordinary.cyclus.R.array.tx_wk).toList()
+        "method" -> res.getStringArray(com.nordinary.cyclus.R.array.tx_method).toList()
+        else -> emptyList()
+    }
+
+    fun monthYear(year: Int, month: Int): String =
+        DateFormat.getInstanceForSkeleton("MMMMy", locale).apply { timeZone = TimeZone.GMT_ZONE }
+            .format(date(java.time.LocalDate.of(year, month, 1).toEpochDay().toInt()))
+
+    fun monthShort(day: Day): String = df("MMM").format(date(day)).replace(".", "")
 
     fun txt(t: Txt): String {
         if (t.key in TxRes.plurals) return plural(t.key, (t.args.first() as Number).toInt())
@@ -80,6 +111,8 @@ class Fmt(private val res: Resources, val locale: Locale) {
         return if (t.lowercase) out.lowercase(locale) else out
     }
 }
+
+private val DOUBLE_DOT = Regex("(?<=\\p{L})\\.\\.(?!\\.)")
 
 @Composable
 fun rememberFmt(): Fmt {

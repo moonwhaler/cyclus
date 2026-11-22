@@ -106,7 +106,7 @@ Pin exact versions at project start and record them in the SOUP list.
 - Kotlin 2.x (K2), Coroutines, kotlinx-datetime, kotlinx-serialization.
 - **SQLDelight** (KMP) with **SQLCipher** Android driver (encryption at rest).
 - **Compose Material 3 1.5** (stable; Expressive APIs such as `ButtonGroup`, `MotionScheme.expressive()` and `MaterialExpressiveTheme` are public from 1.5, not 1.4) and `material3-adaptive` (navigation suite, list-detail).
-- Navigation Compose (type-safe) **or** Navigation 3. Decide at project start; both support predictive back.
+- **Navigation 3** (decided 2026-11-22, slice 2): saveable back stack of `@Serializable` keys for pushed screens (Settings, later Privacy/Arztbericht), predictive back; tabs stay a `NavigationSuiteScaffold` state.
 - **Glance** (widgets), **WorkManager**, **Biometric** (`BiometricPrompt`), **Health Connect client** (`androidx.health.connect`).
 - Testing: JUnit 5 (JVM shared tests), Compose UI test, **Roborazzi** or Compose Preview Screenshot Testing, Accessibility Test Framework.
 - iOS bridge: **SKIE** (Flows → AsyncSequence, sealed classes → Swift enums). Revisit Kotlin **Swift Export** when it leaves alpha.

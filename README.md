@@ -27,7 +27,8 @@ Published (private) link: see `prototype/README.md`.
   - „Deine Muster“ + „Ausblick“ in v1.
 - **Android first** (ANDROID_PLAN D11 revised), Kotlin Multiplatform shared core confirmed (D10). iOS follows on the same `shared/` module.
 - Trust rules: no `INTERNET` permission, no third-party services, all intelligence on-device, encrypted at rest (ANDROID_PLAN §0.1).
-- Slice 1 (A0 + A1) done: engines ported and verified against the prototype (138 golden cases, JVM + Android), encrypted store (SQLCipher + Keystore), Today + Log sheet, deploy script. Next: Calendar, Insights, Conceive UI. See `docs/PARITY.md`.
+- Slice 1 (A0 + A1) done: engines ported and verified against the prototype (138 golden cases, JVM + Android), encrypted store (SQLCipher + Keystore), Today + Log sheet, deploy script.
+- Slice 2 (A2) done: Kalender + Tagesansicht, Einblicke + Deine Muster, Kinderwunsch-Modus, Warum-/Methoden-Sheets, Einstellungen (Sprache, Ziel, Lebensphase). Next (A3): Arztbericht, Datenschutz-Center, Onboarding, App-Sperre, Export. See `docs/PARITY.md`.
 - Open owner decisions:
   - legal entity + organization developer accounts (Apple, Google);
   - regulatory specialist;

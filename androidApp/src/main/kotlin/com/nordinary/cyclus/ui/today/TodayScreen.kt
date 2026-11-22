@@ -75,6 +75,8 @@ fun TodayContent(
     onQuickFlow: (Flow) -> Unit,
     onPatterns: () -> Unit,
     onChangeStage: () -> Unit,
+    onLh: (com.nordinary.cyclus.core.LhResult) -> Unit = {},
+    onWhy: () -> Unit = {},
 ) {
     val c = Cyclus.colors
     Column(
@@ -106,6 +108,19 @@ fun TodayContent(
                     Badge(fmt.s("tier_${hero.tier.key}"), dot = if (hero.rough) c.warning else c.success)
                     if (hero.showPeriodStartButton) PrimaryButton(fmt.s("periodStarted"), onPeriodStarted)
                 }
+                is TodayHero.ConceiveFertile -> {
+                    val ov = when (val o = hero.ovulation) {
+                        com.nordinary.cyclus.presenter.OvulationLine.TodayOrTomorrow -> fmt.s("ovSoonTT")
+                        is com.nordinary.cyclus.presenter.OvulationLine.Soon -> fmt.s("ovSoon", fmt.range(o.from, o.to))
+                        is com.nordinary.cyclus.presenter.OvulationLine.Estimated -> fmt.s("ovEst", fmt.range(o.from, o.to))
+                    }
+                    Text(ov, fontSize = 14.sp, fontWeight = FontWeight.SemiBold, color = c.ink, textAlign = TextAlign.Center)
+                    Badge(fmt.s(hero.chip.key), dot = c.fertile, color = c.fertile)
+                }
+                is TodayHero.ConceiveAfter -> {
+                    Text(fmt.s("ovOccurred", fmt.md(hero.ovulationDay)), fontSize = 14.sp, fontWeight = FontWeight.SemiBold, color = c.ink, textAlign = TextAlign.Center)
+                    Badge(fmt.s(hero.chip.key), dot = c.fertile, color = c.fertile)
+                }
             }
         }
 
@@ -117,17 +132,48 @@ fun TodayContent(
                 }
                 TodayLogSummary(state.todaysLog, fmt)
             }
-            state.trackFertileWindow?.let { (a, b) ->
-                CyclusCard {
-                    CardTitle(fmt.s("fertWinTrack"))
-                    CardBody("${fmt.range(a, b)}. ${fmt.s("notBC")}")
+            val conceive = state.conceive
+            if (conceive != null) {
+                conceive.earliestTest?.let { test ->
+                    CyclusCard { CardTitle(fmt.s("testTitle")); Text(fmt.rich("testBody", fmt.wmd(test)), fontSize = 14.sp, color = c.ink2) }
                 }
-            }
-            state.forecast?.let { ForecastCard(it, fmt) }
-            state.preWindowFrom?.let { from ->
-                CyclusCard {
-                    CardTitle(fmt.s("preTitle", fmt.wmd(from)))
-                    CardBody(fmt.s("preBody"))
+                if (conceive.bestDays.isNotEmpty()) CyclusCard {
+                    CardTitle(fmt.s("bestDays"))
+                    Text(
+                        conceive.bestDays.joinToString(" · ") { d -> when (d) { state.today -> fmt.s("today"); state.today + 1 -> fmt.s("tomorrow"); else -> fmt.wmd(d) } },
+                        fontSize = 14.sp, fontWeight = FontWeight.SemiBold, color = c.ink,
+                    )
+                    CardBody(fmt.s("bestTip"))
+                }
+                conceive.lhPlanStart?.let { start ->
+                    CyclusCard { CardTitle(fmt.s("lhTests")); Text(fmt.rich("lhPlan", fmt.wmd(start), conceive.cyclesUsed), fontSize = 14.sp, color = c.ink2) }
+                }
+                if (conceive.lhToday) CyclusCard {
+                    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
+                        CardTitle(fmt.s("lhToday"))
+                        Text(fmt.s("lhNegSoFar", conceive.lhNegativesSoFar), fontSize = 12.sp, color = c.ink2)
+                    }
+                    androidx.compose.foundation.layout.FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        for (r in com.nordinary.cyclus.core.LhResult.entries) com.nordinary.cyclus.ui.common.CyclusChip(
+                            fmt.s("lh_${r.key}"), conceive.todaysLh == r, { onLh(r) }, accent = c.fertile,
+                        )
+                    }
+                }
+                state.forecast?.let { ForecastCard(it, fmt) }
+                LinkRow(fmt.s("whyLink"), onWhy)
+            } else {
+                state.forecast?.let { ForecastCard(it, fmt) }
+                state.trackFertileWindow?.let { (a, b) ->
+                    CyclusCard {
+                        CardTitle(fmt.s("fertWinTrack"))
+                        CardBody("${fmt.range(a, b)}. ${fmt.s("notBC")}")
+                    }
+                }
+                state.preWindowFrom?.let { from ->
+                    CyclusCard {
+                        CardTitle(fmt.s("preTitle", fmt.wmd(from)))
+                        CardBody(fmt.s("preBody"))
+                    }
                 }
             }
             if (state.patternCount > 0) LinkRow(fmt.plural("nPatterns", state.patternCount), onPatterns)
@@ -146,7 +192,19 @@ fun TodayContent(
 private fun RingCenter(hero: TodayHero, fmt: Fmt) {
     val c = Cyclus.colors
     var kicker = ""; var big = ""; var bigMax = 40; var sub: String? = null; var range: String? = null; var subBelow: String? = null
+    var bigColor = c.ink
     when (hero) {
+        is TodayHero.ConceiveFertile -> {
+            kicker = fmt.s("fertToday"); big = fmt.s("ft${hero.tier}"); bigMax = 36
+            if (hero.tier > 0) bigColor = c.fertile
+            val opens = hero.windowOpensIn
+            sub = when {
+                opens != null -> fmt.plural("windowOpens", opens)
+                hero.windowPassed -> fmt.s("windowPassed")
+                else -> fmt.s("cycleDayN", hero.cycleDay)
+            }
+        }
+        is TodayHero.ConceiveAfter -> { kicker = fmt.s("afterOv"); big = fmt.s("dayN", hero.daysAfter); sub = fmt.s("cycleDayN", hero.cycleDay) }
         TodayHero.Empty -> { kicker = fmt.s("welcome"); big = fmt.s("letsStart"); bigMax = 30; sub = fmt.s("startSub") }
         is TodayHero.Paused -> {
             kicker = fmt.s("cycleDayN", hero.cycleDay); big = fmt.s("paused"); bigMax = 32
@@ -166,7 +224,7 @@ private fun RingCenter(hero: TodayHero, fmt: Fmt) {
     }
     Text(kicker, fontSize = 13.sp, fontWeight = FontWeight.SemiBold, color = c.ink2, maxLines = 1, overflow = TextOverflow.Ellipsis)
     Text(
-        big, fontFamily = Nunito, fontWeight = FontWeight.ExtraBold, color = c.ink, maxLines = 1, softWrap = false,
+        big, fontFamily = Nunito, fontWeight = FontWeight.ExtraBold, color = bigColor, maxLines = 1, softWrap = false,
         lineHeight = (bigMax * 1.05).sp, letterSpacing = (-0.4).sp, textAlign = TextAlign.Center,
         autoSize = TextAutoSize.StepBased(minFontSize = 18.sp, maxFontSize = bigMax.sp, stepSize = 1.sp),
     )

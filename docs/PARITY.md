@@ -19,18 +19,18 @@ Status values: `—` not started · `wip` · `done` · `off` (feature-flagged of
 | F-004 | Ausblick card | 11.13 | Heute | done | — | | |
 | F-005 | Log sheet | 7.3 | Eintragen | done | — | | „Bearbeiten“ (pinned) and „+ Neues Stichwort“ shown disabled |
 | F-006 | Pain body map | 7.3 | Eintragen | done | — | | |
-| F-007 | Calendar + Day sheet | 7.4 | Kalender | — | — | | |
-| F-008 | Insights (stats, charts, heatmap, history) | 7.5 | Einblicke | — | — | | |
-| F-009 | „Deine Muster“ cards | 11.12 | Einblicke | — | — | | |
-| F-010 | Why this window? / Method sheets | 7.14 | Sheets | — | — | | |
-| F-011 | Conceive mode UI | 7.14 | Heute (Kinderwunsch) | — | — | | Regulatory feature flag per region. Log sheet already shows LH/mucus/BBT/sex in conceive mode; Today hero still track-style |
+| F-007 | Calendar + Day sheet | 7.4 | Kalender | done | — | | Long-press menu + TalkBack custom action „Periodenbeginn“ (past/today only) |
+| F-008 | Insights (stats, charts, heatmap, history) | 7.5 | Einblicke | done | — | | History rows not tappable until Cycle detail (7.6) exists |
+| F-009 | „Deine Muster“ cards | 11.12 | Einblicke | done | — | | Muted patterns are persisted (prototype: session only). „Im Arztbericht enthalten“ hidden until F-017 |
+| F-010 | Why this window? / Method sheets | 7.14 | Sheets | done | — | | Method copy: Android override (no iPhone, no outlier-question claim) |
+| F-011 | Conceive mode UI | 7.14 | Heute (Kinderwunsch) | done | — | | Regulatory feature flag per region still to add before release |
 | F-012 | Onboarding | 7.1 | Onboarding | — | — | | |
 | F-013 | Privacy Center | 7.8 | Datenschutz | — | — | | |
-| F-014 | Settings + in-app language | 4 | Einstellungen | — | — | | Android: system per-app language (Settings › Apps › Cyclus › Sprache) works already |
+| F-014 | Settings + in-app language | 4 | Einstellungen | wip | — | | Language (Android 13+), goal, show fertile window, life stage done; notifications row → A4 |
 | F-015 | App lock (biometric + PIN) | 7.12 | Sperre | — | — | | |
 | F-016 | Erase everything | 7.9 | Sheet | — | — | | |
 | F-017 | Doctor Visit Pack (PDF) | 7.7 | Arztbericht | — | — | | |
-| F-018 | Episodes (pill, pregnancy, …) | 2.2 | Einstellungen | — | — | | |
+| F-018 | Episodes (pill, pregnancy, …) | 2.2 | Einstellungen | wip | — | | Pill / pregnant / postpartum pause predictions (undoable). Conditions (peri, PCOS, endo, T) hidden until the engine widens ranges for them |
 | P-001 | Health store sync | 11.4 | — | — | — | n/a | Health Connect vs HealthKit |
 | P-002 | Widgets | 8.1 | — | — | — | | Glance vs WidgetKit |
 | P-003 | Quick action (QS tile / Control) | 8.2 | — | — | — | n/a | v1.1 |
