@@ -1,4 +1,4 @@
--- Cyclus store, schema v1 (DESIGN_SPEC §11.3, ANDROID_PLAN §2.4). Every change after v1 ships with a .sqm migration.
+-- Cyclus store, schema v2 (DESIGN_SPEC §11.3, ANDROID_PLAN §2.4). Every change after v1 ships with a .sqm migration (1.sqm: Health Connect).
 -- Days are epoch days (civil date). Cycles are derived, never stored.
 
 CREATE TABLE day_log (
@@ -69,6 +69,27 @@ CREATE TABLE episode (
 CREATE TABLE setting (
     key TEXT NOT NULL PRIMARY KEY,
     value TEXT NOT NULL
+);
+
+CREATE TABLE health_sample (
+    record_id TEXT NOT NULL PRIMARY KEY, -- Health Connect record id (external apps only)
+    type TEXT NOT NULL,                  -- flow | period | spotting | bbt | mucus | lh | sex
+    day INTEGER NOT NULL,                -- civil date in the record's zone offset
+    value TEXT NOT NULL,                 -- mapped Cyclus value; for period: end day
+    origin TEXT NOT NULL,                -- source package (precedence derived at read time)
+    updated_at INTEGER NOT NULL          -- epoch millis of the record's last modification
+);
+
+CREATE INDEX health_sample_day ON health_sample(day);
+
+CREATE TABLE health_link (
+    sync_id TEXT NOT NULL PRIMARY KEY,   -- clientRecordId: cyclus:<type>:<day>
+    type TEXT NOT NULL,
+    day INTEGER NOT NULL,
+    record_id TEXT,                      -- Health Connect record id once written
+    version INTEGER NOT NULL,            -- clientRecordVersion written (always increasing)
+    hash TEXT NOT NULL,                  -- content written; a change triggers an upsert
+    state TEXT NOT NULL                  -- ok | deleting (local delete not yet confirmed) | removed (deleted in Health Connect, awaiting review)
 );
 
 INSERT INTO tag (id, builtin) VALUES ('Stress', 1), ('Travel', 1), ('Alcohol', 1), ('Sport', 1), ('Sick', 1);
@@ -187,3 +208,40 @@ DELETE FROM setting;
 
 upsertTag:
 INSERT OR REPLACE INTO tag (id, name, symbol, archived, builtin) VALUES (?, ?, ?, ?, 0);
+
+-- Health Connect (schema v2): external samples and records Cyclus wrote
+selectAllSamples:
+SELECT * FROM health_sample;
+
+upsertSample:
+INSERT OR REPLACE INTO health_sample (record_id, type, day, value, origin, updated_at) VALUES (?, ?, ?, ?, ?, ?);
+
+deleteSample:
+DELETE FROM health_sample WHERE record_id = ?;
+
+deleteSamplesOfType:
+DELETE FROM health_sample WHERE type = ?;
+
+countSamples:
+SELECT COUNT(*) FROM health_sample;
+
+deleteAllSamples:
+DELETE FROM health_sample;
+
+selectAllLinks:
+SELECT * FROM health_link;
+
+upsertLink:
+INSERT OR REPLACE INTO health_link (sync_id, type, day, record_id, version, hash, state) VALUES (?, ?, ?, ?, ?, ?, ?);
+
+deleteLink:
+DELETE FROM health_link WHERE sync_id = ?;
+
+setLinkStateByRecord:
+UPDATE health_link SET state = ? WHERE record_id = ? AND state = 'ok';
+
+deleteLinksOfType:
+DELETE FROM health_link WHERE type = ?;
+
+deleteAllLinks:
+DELETE FROM health_link;

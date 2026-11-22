@@ -57,6 +57,73 @@ class CyclusRepository(
 
     suspend fun log(day: Day): DayLog? = withContext(io) { readAllLogs()[day] }
 
+    // ---- Health Connect (schema v2). Imported samples and links are device data: never exported, gone with the DB.
+
+    fun observeHealthSamples(): Flow<List<com.nordinary.cyclus.health.HealthSample>> =
+        q.selectAllSamples().asFlow().mapToList(io).map { rows -> rows.mapNotNull { it.toSample() } }
+
+    private fun com.nordinary.cyclus.store.db.Health_sample.toSample() =
+        com.nordinary.cyclus.health.HealthType.of(type)?.let { com.nordinary.cyclus.health.HealthSample(record_id, it, day.toInt(), value_, origin, updated_at) }
+
+    suspend fun healthSampleCount(): Long = withContext(io) { q.countSamples().executeAsOne() }
+
+    suspend fun healthLinks(): Map<String, com.nordinary.cyclus.health.HealthLink> = withContext(io) {
+        q.selectAllLinks().executeAsList().mapNotNull { r ->
+            com.nordinary.cyclus.health.HealthType.of(r.type)?.let {
+                r.sync_id to com.nordinary.cyclus.health.HealthLink(
+                    r.sync_id, it, r.day.toInt(), r.record_id, r.version, r.hash, com.nordinary.cyclus.health.LinkState.of(r.state),
+                )
+            }
+        }.toMap()
+    }
+
+    suspend fun upsertHealthLink(l: com.nordinary.cyclus.health.HealthLink) = withContext(io) {
+        q.upsertLink(l.syncId, l.type.key, l.day.toLong(), l.recordId, l.version, l.hash, l.state.key)
+    }
+
+    suspend fun deleteHealthLink(syncId: String) = withContext(io) { q.deleteLink(syncId) }
+
+    suspend fun deleteHealthLinksOfType(t: com.nordinary.cyclus.health.HealthType) = withContext(io) { q.deleteLinksOfType(t.key) }
+
+    /**
+     * One page of Health Connect data applied atomically together with the token it came with, so a crash or a
+     * cancelled read never moves the token past data that wasn't stored. [replaceTypes]: full read, drop old samples first.
+     */
+    suspend fun applyHealthPage(
+        replaceTypes: Set<com.nordinary.cyclus.health.HealthType>,
+        upserts: List<com.nordinary.cyclus.health.HealthSample>,
+        deletedRecordIds: List<String>,
+        tokens: Map<String, String?>,
+    ) = withContext(io) {
+        db.transaction {
+            for (t in replaceTypes) q.deleteSamplesOfType(t.key)
+            for (s in upserts) q.upsertSample(s.recordId, s.type.key, s.day.toLong(), s.value, s.origin, s.updatedAt)
+            for (id in deletedRecordIds) {
+                q.deleteSample(id)
+                // one of ours deleted in Health Connect: keep the Cyclus data, ask the user (rule 6)
+                q.setLinkStateByRecord(com.nordinary.cyclus.health.LinkState.REMOVED.key, id)
+            }
+            for ((k, v) in tokens) if (v == null) q.deleteSetting(k) else q.upsertSetting(k, v)
+        }
+    }
+
+    /** Disconnect: imported samples, links and tokens go; Cyclus' own entries stay. */
+    suspend fun clearHealth() = withContext(io) {
+        db.transaction {
+            q.deleteAllSamples(); q.deleteAllLinks()
+            q.selectAllSettings().executeAsList().map { it.key }.filter { it.startsWith("hc.") }.forEach { q.deleteSetting(it) }
+        }
+    }
+
+    /** Reinstall recovery: own records become user entries, only while the store has no logs (checked in the transaction). */
+    suspend fun restoreFromHealth(logs: Map<Day, DayLog>): Boolean = withContext(io) {
+        db.transactionWithResult {
+            if (q.selectAllLogs().executeAsList().isNotEmpty()) return@transactionWithResult false
+            for ((d, l) in logs) writeLog(d, l)
+            true
+        }.also { if (it) changes++ }
+    }
+
     suspend fun saveLog(day: Day, log: DayLog) = withContext(io) {
         db.transaction { writeLog(day, log) }
         changes++
@@ -160,6 +227,7 @@ class CyclusRepository(
     private fun eraseAllInTransaction() {
         q.deleteAllLogs(); q.deleteAllSymptoms(); q.deleteAllEmotions(); q.deleteAllPains(); q.deleteAllDayTags()
         q.deleteAllOverrides(); q.deleteAllEpisodes(); q.deleteUserTags(); q.deleteAllSettings()
+        q.deleteAllSamples(); q.deleteAllLinks()
     }
 
     private fun writeLog(day: Day, log: DayLog, updatedAt: Long = nowMillis()) {

@@ -97,8 +97,9 @@ object CalendarPresenter {
     private fun isLogged(l: DayLog?) = l != null && (l.symptoms.isNotEmpty() || l.mood != null || l.lh != null || l.mucus != null || l.note != null)
 
     /** Day detail (prototype `renderDaySheet`). */
-    fun daySheet(snap: CycleSnapshot, day: Day): DaySheetModel {
-        val l = snap.data.log(day)
+    /** [userLog]: the person's own entry (values from Health Connect are listed separately with their source). */
+    fun daySheet(snap: CycleSnapshot, day: Day, userLog: com.nordinary.cyclus.core.DayLog? = snap.data.log(day)): DaySheetModel {
+        val l = userLog
         val entries = mutableListOf<DayEntry>()
         if (l != null) {
             l.flow?.let { entries += DayEntry.FlowEntry(it) }
