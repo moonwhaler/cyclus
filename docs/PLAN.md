@@ -12,7 +12,7 @@
 | Audience | Broad: anyone who menstruates, with switchable **life-stage modes** |
 | Business model | **Fully free.** No ads, no IAP, no subscription, no tracking SDKs |
 | Data & AI | **Local-first.** Data never leaves the user's devices / Apple's E2E Health sync. AI runs **on-device only** |
-| Team | **Solo developer + Claude.** Lean MVP, ~10–12 weeks |
+| Team | **Solo developer + Claude.** Lean MVP |
 | Platform | iOS first (iPhone), watchOS later. No Android/web |
 
 Assumptions (not yet confirmed by owner — see §14):
@@ -56,7 +56,7 @@ Conditions overlay (any mode, v1.5): **PCOS / endometriosis / irregular** flags 
 
 ## 4. Scope by release
 
-### v1.0 — MVP (target: week 12)
+### v1.0 — MVP
 **Core**
 - Onboarding ≤ 60 s: privacy promise → optional Apple Health import → last period date (or "don't know") → typical length (or "not sure") → mode → done. Every step skippable.
 - **Today screen**: cycle day, phase, next-period range with confidence, fertile window (Conceive mode, or optional in Track), a large "Log" button, and one contextual insight card.
@@ -76,7 +76,7 @@ Conditions overlay (any mode, v1.5): **PCOS / endometriosis / irregular** flags 
 
 **Explicitly NOT in v1**: Apple Watch app, partner sharing, AI chat, pregnancy/postpartum, iPad-optimised layout, iCloud sync (see §6.5 risk), community features, content library.
 
-### v1.5 (target: +8 weeks after launch)
+### v1.5
 - **Pattern engine** (§6.3): personal symptom ↔ phase correlations.
 - **On-device weekly digest** via Foundation Models, with a template fallback.
 - **Perimenopause** and **Birth control** modes, plus the conditions overlay.
@@ -235,22 +235,20 @@ Packages/
 
 ---
 
-## 9. Timeline (solo + Claude, ~15–20 h/week assumed)
+## 9. Delivery
+Ordered steps:
+1. prototype + validation;
+2. foundations;
+3. engines;
+4. store;
+5. core screens;
+6. HealthKit;
+7. onboarding / settings;
+8. widgets / report;
+9. localisation and accessibility;
+10. beta and submission.
 
-| Week | Milestone |
-|---|---|
-| 1 | Design: HTML clickable prototype of Today, Log, Calendar. Validate with 5 people |
-| 2 | Design spec final, design tokens, Xcode project + packages scaffold, CI (Xcode Cloud free tier) |
-| 3–4 | CycleCore + CycleEngine (predictions, ovulation detection) + test suite + synthetic back-test |
-| 5 | CycleStore (SwiftData), repository, sample data generator |
-| 6–7 | UI: Today, Log sheet, Calendar, History |
-| 8 | HealthKit import/export/observe |
-| 9 | Onboarding, notifications, app lock, settings, export/import |
-| 10 | Widgets, App Intents, Control Center control, clinician PDF |
-| 11 | Localisation DE, accessibility pass, polish, perf |
-| 12 | TestFlight beta → fixes → App Store submission |
-
-Buffer: none explicitly. Expect slip to ~14 weeks.
+(Effort and time estimates removed on owner request; see DESIGN_SPEC §13.)
 
 ---
 
@@ -289,12 +287,11 @@ Buffer: none explicitly. Expect slip to ~14 weeks.
 ## 13. Deliverables after this plan
 1. `REVIEW.md` — sceptic review (MAJOR/MINOR).
 2. `DESIGN_SPEC.md` — UX/UI + system design spec incorporating the review.
-3. HTML prototype (week 1).
+3. HTML prototype.
 4. Xcode scaffold.
 
 ## 14. Open questions for owner
 1. Name / brand vibe.
 2. Apple Watch Series 8+ available for testing?
 3. Confirm launch markets (EU + US) and languages (EN + DE).
-4. Weekly hours available (timeline assumes 15–20 h).
-5. Tip jar acceptable later, or strictly zero money?
+4. Tip jar acceptable later, or strictly zero money?

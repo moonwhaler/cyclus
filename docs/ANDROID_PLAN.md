@@ -13,7 +13,7 @@
 | D10-alt A | Two fully native code bases (Swift + Kotlin) | ✗ | Engine written and validated twice; parity drifts; double regulatory evidence. |
 | D10-alt B | Compose Multiplatform UI on both | ✗ | One UI, but iOS loses the native feel (Liquid Glass, SwiftUI behaviours). It conflicts with the iOS principle "feels like Apple built it". |
 | D10-alt C | Flutter / React Native | ✗ | Rewrite of everything; neither platform's standard look; more third-party runtime code (SOUP). |
-| **D11** | Android timing | ✅ Shared core from day 1. **iOS ships first**; Android UI work starts after iOS internal TestFlight. Target: Android public launch ≈ 7 months after iOS at 20 h/week (§10). | Solo developer; parity is guaranteed by the shared core and the parity matrix, not by simultaneous launch. |
+| **D11** | Android timing | ✅ Shared core from day 1. **iOS ships first**; Android UI work starts after iOS internal TestFlight. Android launches when the parity matrix is complete on both platforms (§10). | Solo developer; parity is guaranteed by the shared core and the parity matrix, not by simultaneous launch. |
 | **D12** | Android baseline | ✅ `minSdk 29` (Android 10), `targetSdk 36` (Android 16, **required by Play since 31 Aug 2026**), compile with the latest SDK. Re-check API 37 requirements before launch. | Covers the vast majority of DACH devices; Health Connect is available from Android 9 via Play and built into 14+. |
 | **D13** | Material You dynamic colour | ✅ **Off by default** (brand colours = prototype). Optional „Farben deines Hintergrunds verwenden“ tints **only neutrals and surfaces**. Period, pre-period, fertile and status colours never change, because they carry meaning. | Parity with prototype and iOS, while still offering a Google-standard personalisation. |
 | **D14** | Play account | ✅ **Organization account** (same legal entity as D3, D-U-N-S). | Required anyway for health apps (credibility, liability). New *personal* accounts (after 13 Nov 2023) must run a 12-tester, 14-day closed test before production. Organization accounts are widely reported as exempt (verify in Play Console). |
@@ -53,7 +53,7 @@
 Anything not in this table must be identical. A difference that isn't listed is a **parity bug**.
 
 ### 1.2 Parity matrix (process)
-- `docs/PARITY.md` (to be created in week 1 of Android work): one row per feature ID (`F-001 Today ring`, `F-002 Log flow` …), with columns *Spec §*, *Prototype screen*, *iOS status*, *Android status*, *Screenshot pair*, *Notes*.
+- `docs/PARITY.md` (to be created at the start of Android work, phase A1): one row per feature ID (`F-001 Today ring`, `F-002 Log flow` …), with columns *Spec §*, *Prototype screen*, *iOS status*, *Android status*, *Screenshot pair*, *Notes*.
 - Every PR touching UI updates the row. Release gate: all rows "done" on both platforms, or explicitly flagged off on both.
 
 ---
@@ -117,7 +117,7 @@ Pin exact versions at project start and record them in the SOUP list.
 | 11.1 | Swift packages CycleCore, CycleEngine, CycleInsights, CycleBackup | KMP `shared/*` consumed via SKIE; Swift packages only for UI (CycleDesign), HealthKit adapter, Report renderer |
 | 11.2–11.3 | SwiftData models | SQLDelight schema (same fields). The file protection rules for the SQLite file and its `-wal`/`-shm` stay as specified |
 | 12.1 | Swift Testing for engine | Kotlin `commonTest` (JVM, fast) + run on iOS simulator in CI; Swift tests for UI and adapters |
-| 13.1 | — | +35 h KMP setup/integration (§10) |
+| 13.1 | — | KMP setup added to iOS phases 2–3 (§10, A0) |
 
 ---
 
@@ -327,53 +327,41 @@ Compose for Wear OS + Wear M3 (Expressive): log period/symptom, glance at cycle 
 ---
 
 ## 10. Delivery plan
+Phases with exit criteria, no effort or time estimates (same rule as DESIGN_SPEC §13).
 
-### 10.1 Effort (hours, AI-assisted, solo)
-| Work item | h |
-|---|---|
-| KMP setup: shared module, SQLDelight, SKIE bridge, CI for both platforms, golden-vector pipeline from prototype | 35 |
-| Android scaffold, Gradle conventions, lint (incl. banned terms, no-INTERNET), GitHub Actions | 15 |
-| Design system (theme, tokens, type, shapes, ring, droplets, body map, charts, heat grids) | 45 |
-| Today (+ Conceive, Period, Paused, Empty; Ausblick card) | 30 |
-| Log sheet | 30 |
-| Calendar + Day sheet | 22 |
-| Insights + „Deine Muster“ + charts + history | 35 |
-| Why / Method sheets | 6 |
-| Onboarding (incl. Health Connect availability/permissions) | 12 |
-| Privacy Center, app lock (Biometric + PIN), FLAG_SECURE, erase | 22 |
-| Settings, episodes, per-app language, dynamic colour toggle | 10 |
-| Doctor Visit Pack PDF + share | 22 |
-| Health Connect adapter (import with history, write-own, changes API, permission UX) + device tests | 45 |
-| Storage encryption (SQLCipher + Keystore) + backup agent/rules | 18 |
-| Encrypted export/import (SAF; format shared) | 6 |
-| Glance widgets + QS tile | 22 |
-| Notifications (channels, public versions, scheduling) | 10 |
-| Adaptive layouts (rail, two-pane, side sheet) | 18 |
-| Accessibility pass | 18 |
-| Localisation (generated strings, plurals, Android-specific copy review) | 6 |
-| Play Console: listing DE/EN, screenshots, Data safety, Health declarations, video | 18 |
-| Device matrix & OEM quirks | 20 |
-| Closed test + fixes | 30 |
-| **Subtotal** | **495** |
-| Buffer 25% | ~125 |
-| **Total Android** | **~620 h** |
+### 10.1 Android work packages
+1. **KMP setup** (done during iOS phase 2–3): shared module, SQLDelight, SKIE bridge, CI for both platforms, golden-vector pipeline from the prototype.
+2. **Android foundations:** scaffold, Gradle conventions, lint (banned terms, no `INTERNET`), CI.
+3. **Design system:** theme, tokens, type, shapes, ring, droplets, body map, charts, heat grids.
+4. **Core screens:** Today (Track, Conceive, Period, Paused, Empty; Ausblick card), Log sheet, Calendar + Day sheet.
+5. **Insights:** „Deine Muster“, charts, history, Why/Method sheets.
+6. **Completeness:** onboarding (Health Connect availability and permissions), Privacy Center, app lock (Biometric + PIN), FLAG_SECURE, erase, settings, episodes, per-app language, dynamic-colour toggle, Doctor Visit Pack PDF + share.
+7. **Platform services:**
+   - Health Connect adapter (history import, write-own, changes API) + device tests;
+   - SQLCipher + Keystore;
+   - backup agent/rules;
+   - SAF export/import;
+   - Glance widgets + QS tile;
+   - notifications.
+8. **Large screens:** navigation rail, two-pane, side sheet.
+9. **Readiness:**
+   - accessibility pass;
+   - localisation;
+   - Play Console listing (DE/EN), Data safety, Health declarations and video;
+   - device matrix and OEM quirks.
+10. **Beta & release:** closed testing ≥ 2 cycles, fixes, staged rollout.
 
-**Programme total:** iOS ~940 h (spec §13) + Android ~620 h ≈ **1,560 h**.
-- At 20 h/week: iOS launch ≈ week 49 (+2 weeks for KMP setup), Android launch ≈ **week 80**.
-- At 30 h/week: ≈ week 33 / week 53.
-- Simultaneous launch is possible only with more hours or a second developer (the shared core makes a second Android/iOS UI developer productive quickly).
-
-### 10.2 Milestones (Android, relative to the iOS plan)
-| When | Milestone |
-|---|---|
-| iOS weeks 3–4 | KMP shared module created; engine/insights written in Kotlin (port from `prototype/index.html` JS reference); golden vectors green on JVM + iOS |
-| iOS week ~22 (internal TestFlight) | Android week 1: scaffold, design system spike, Keystore/SQLCipher/backup spike → decide §6.4. Create `docs/PARITY.md` |
-| +4 weeks | Today, Log sheet, Calendar on Android (prototype-identical screenshots) |
-| +8 weeks | Insights, Deine Muster, Ausblick, Arztbericht, Privacy, Settings, Onboarding |
-| +11 weeks | Health Connect, widgets, QS tile, notifications, adaptive layouts |
-| +13 weeks | Accessibility, localisation, device matrix → **internal testing** |
-| +15–21 weeks | Closed testing (≥ 2 cycles of beta, like iOS), fixes, Play declarations |
-| ≈ +23–26 weeks | Staged production rollout |
+### 10.2 Phases (relative to the iOS plan)
+| Phase | Content | Exit criteria |
+|---|---|---|
+| A0 (during iOS phases 2–3) | KMP shared module; engines/insights in Kotlin (port from `prototype/index.html` JS reference) | Golden vectors green on JVM + iOS |
+| A1 (after iOS internal TestFlight) | Scaffold, design-system spike, Keystore/SQLCipher/backup spike; create `docs/PARITY.md` | §6.4 decided; component gallery matches prototype |
+| A2 | Today, Log sheet, Calendar | Screenshot pairs with prototype approved |
+| A3 | Insights, Deine Muster, Ausblick, Arztbericht, Privacy, Settings, Onboarding | Parity rows done |
+| A4 | Health Connect, widgets, QS tile, notifications, adaptive layouts | Device checklist passes |
+| A5 | Accessibility, localisation, device matrix | **Internal testing** track |
+| A6 | Closed testing (≥ 2 cycles of beta, like iOS), fixes, Play declarations | All parity rows done on both platforms |
+| A7 | Staged production rollout (10% → 50% → 100%) | Crash-free ≥ 99.5% at each stage |
 
 ### 10.3 Risks
 | Risk | Mitigation |
@@ -395,7 +383,6 @@ Compose for Wear OS + Wear M3 (Expressive): log period/symptom, glance at cycle 
 4. Owner decisions still open:
    - D3/D14 legal entity + organization accounts (Apple + Google);
    - D10 KMP confirmation;
-   - weekly hours;
    - regulatory specialist booked;
    - clinician reviewer named;
    - App Review question on guideline 5.1.3(ii).

@@ -8,7 +8,7 @@ Verdict: The plan is a list of features with the hard parts left out. Five probl
 4. **The wrist-temperature algorithm rests on a false premise.** HealthKit gives absolute temperatures, not deviations from baseline.
 5. **"Data never leaves the device" is not true as designed.** The privacy story ignores the HealthKit mirror, Health Sharing, iCloud Backup, plaintext exports and lock-screen surfaces.
 
-On top of that, the statistics are under-specified to the point of producing fake precision. Validation depends on data that does not exist under a usable licence. The timeline is about 3× too short for 180–240 hours of solo work. The privacy architecture is genuinely good. But the product as scoped is "Apple Health with mood logging and a nicer ring", sitting in a regulated gray zone, built by an individual without a legal entity. Do not write the design spec until M1, M2, M4, M5 and M10 are resolved.
+On top of that, the statistics are under-specified to the point of producing fake precision. Validation depends on data that does not exist under a usable licence. The delivery plan is missing whole work items and compresses everything into an unrealistic sequence. The privacy architecture is genuinely good. But the product as scoped is "Apple Health with mood logging and a nicer ring", sitting in a regulated gray zone, built by an individual without a legal entity. Do not write the design spec until M1, M2, M4, M5 and M10 are resolved.
 
 ---
 
@@ -63,7 +63,7 @@ On top of that, the statistics are under-specified to the point of producing fak
   - 9to5Mac on the iOS 27.3 Health app: https://9to5mac.com/2026/11/03/ios-27-3-adds-all-new-apple-health-app-details-here/
 - **Required fix:**
   - Write a one-page "why switch from Apple Health" with 2–3 concrete wedges. Candidates: logging speed and depth (mood, energy, pain mapping, custom tags); conditions (PCOS, endometriosis, irregular cycles) underserved by Apple; a clinician report that beats Apple's PDF; DE-first localisation of insights (Apple's AI Insights start US-English only).
-  - Validate the wedges in week 1 with **current Apple Health cycle-tracking users** (not friends), and move the winning wedge into v1.
+  - Validate the wedges first with **current Apple Health cycle-tracking users** (not friends), and move the winning wedge into v1.
   - Run an honest competitive table against iOS 27 Health, Clue, drip, Euki and Stardust.
   - Retire the "smartest" tagline unless v1 actually contains intelligence.
 
@@ -154,7 +154,7 @@ On top of that, the statistics are under-specified to the point of producing fak
   - Add a "last backup: X days ago" indicator and a reminder.
   - Rewrite §1 and the privacy policy wording accordingly.
 
-### M7. The HealthKit two-way sync and conflict model is under-specified and scheduled into one week  (§6.4, §9 week 8)
+### M7. The HealthKit two-way sync and conflict model is under-specified and under-scoped  (§6.4, §9)
 - **Problem:** "Local store is truth, HK mirrored, user edit wins" does not answer the real cases:
   - **Mutation.** HealthKit samples are immutable, so an edit means delete plus re-save. You need `HKMetadataKeySyncIdentifier` and `SyncVersion` and a local↔HK UUID map, and the plan mentions none of these.
   - **Deletion.** A user deletes a Cyclus-authored flow sample in Apple Health. Does Cyclus delete locally, re-write it, or prompt?
@@ -165,14 +165,14 @@ On top of that, the statistics are under-specified to the point of producing fak
   - **Days and time zones.** Flow is per-day, and an `HKCategorySample` start/end crossing time zones yields off-by-one days.
   - **Permission sheet size.** One authorization sheet with ~35 types conflicts with the ≤ 60 s onboarding.
   - **Contradictory claims.** "Source of truth is local" contradicts "core data survives via Health" (M6).
-- **Why it matters:** This is the most bug-prone subsystem in the app and the main source of data corruption, duplicate periods and broken predictions. One week is fantasy.
+- **Why it matters:** This is the most bug-prone subsystem in the app and the main source of data corruption, duplicate periods and broken predictions. It needs its own delivery step.
 - **Evidence:**
   - `HKMetadataKeyMenstrualCycleStart` "is required for menstrualFlow category samples": https://developer.apple.com/documentation/healthkit/hkmetadatakeymenstrualcyclestart
   - The rest is reasoning from HealthKit's sample model.
 - **Required fix:**
   - Write a sync state machine in the design spec covering: ownership, sync identifiers, edit, delete in either direction, dedup by (day, type, source priority), the cycle-start flag policy, reinstall, and the denied-permission UX.
   - Consider v1 = **import plus write-own only**, no "two-way" for other apps' samples beyond read-only display.
-  - Budget 2–3 weeks, with integration tests on a real device.
+  - Give it its own delivery step, with integration tests on a real device.
 
 ### M8. The prediction engine produces fake precision, which violates Principle 1  (§6.2)
 - **Problem:**
@@ -197,7 +197,7 @@ On top of that, the statistics are under-specified to the point of producing fak
 - **Problem:**
   - **No usable dataset.** "Back-test against public datasets (if licences allow)": essentially none allow it. mcPHASES (the main open multimodal set, n = 42) is under PhysioNet's **Restricted Health Data Use Agreement**: research use only, no sharing, and code release required for publications. You cannot put it in a commercial CI pipeline. Other datasets (e.g. Kaggle copies of the Marquette FAM data) have unclear provenance and licence.
   - **Synthetic data proves nothing.** Generators encode the model's own assumptions, so a calibration gate on synthetic data only proves the code matches its spec.
-  - **A beta cannot measure calibration.** A 1-week beta (§9 week 12) covers less than one cycle.
+  - **A short beta cannot measure calibration.** A beta shorter than a cycle covers less than one cycle.
   - **The calibration study breaks the legal premise.** Collecting testers' exported health data by email (§10) makes the developer a GDPR controller of **Art. 9 special-category data**. That contradicts §7's "the developer processes no data", and needs explicit consent, a privacy notice, retention rules and probably a DPIA. A structured accuracy study with participants may also fall under guideline 5.1.3(iii)/(iv) (consent plus an ethics board) if framed as research.
 - **Why it matters:** The "calibration 75–85%" claim, and any accuracy claim on the App Store (guideline 1.4.1 requires disclosed methodology), will be unsupported. Legal exposure follows from the email collection.
 - **Evidence:**
@@ -209,9 +209,9 @@ On top of that, the statistics are under-specified to the point of producing fak
   - Keep the synthetic tests as regression tests only.
   - If raw data is ever collected, write a consent form, a DPIA and a retention policy first.
 
-### M10. The timeline is roughly 3× too short, and the platform baseline is a year out of date  (§1, §9)
+### M10. The delivery plan is incomplete, and the platform baseline is a year out of date  (§1, §9)
 - **Problem:**
-  - **The hours do not add up.** 12 weeks × 15–20 h = 180–240 hours. That has to cover: prototype plus validation with 5 users (recruiting alone takes a week); design spec; engine plus property tests; SwiftData store with migrations; four core screens; HealthKit two-way sync (M7, in **one** week); onboarding, notifications, app lock, settings and export/import (one week); widgets, App Intents, Control Center **and** the PDF report (one week); localisation, accessibility, performance and snapshot tests; and beta, fixes and submission (one week).
+  - **The scope is compressed into an unrealistic sequence.** It has to cover: prototype plus validation with 5 users; design spec; engine plus property tests; SwiftData store with migrations; four core screens; HealthKit two-way sync (M7); onboarding, notifications, app lock, settings and export/import; widgets, App Intents, Control Center **and** the PDF report; localisation, accessibility, performance and snapshot tests; and beta, fixes and submission. Several of these are bundled into single steps.
   - **Work items are missing entirely:**
     - clinician review lead time (weeks of external dependency);
     - legal review;
@@ -223,14 +223,14 @@ On top of that, the statistics are under-specified to the point of producing fak
     - Beta App Review before external TestFlight;
     - demo video for App Review.
   - **The platform baseline is stale.** The plan, dated 22 Nov 2026, still says "Deployment target iOS 26.0 … re-evaluate iOS 27 APIs before launch". iOS 27 shipped on 14 Sep 2026, and Apple's Health redesign lands in 27.3. A spring-2027 launch will be built against the iOS 27 SDK, against a Health app that competes directly.
-- **Why it matters:** A guaranteed slip far beyond "~14 weeks", or a cut-corner v1 shipped with data-integrity bugs. "Buffer: none" with a solo developer is not a plan.
+- **Why it matters:** A guaranteed slip, or a cut-corner v1 shipped with data-integrity bugs.
 - **Evidence:**
   - iOS 27 release, Health redesign timing: https://www.macrumors.com/guide/ios-27-health-app/ ; https://9to5mac.com/2026/11/03/ios-27-3-adds-all-new-apple-health-app-details-here/
-  - The rest is arithmetic.
+  - The rest is reasoning from the scope.
 - **Required fix:**
-  - Re-estimate bottom-up in hours, with 30% buffer. Either accept 6–8 months, or cut v1 to: period logging, symptoms, predictions, calendar, HealthKit import + write-own, export, basic widget.
+  - Re-plan as ordered phases with exit criteria. Either accept the full scope, or cut v1 to: period logging, symptoms, predictions, calendar, HealthKit import + write-own, export, basic widget.
   - Defer to v1.1: Control Center control, Siri, the PDF report and the wrist-temperature work.
-  - Add the missing work items as explicit timeline rows.
+  - Add the missing work items as explicit plan rows.
   - Re-baseline on iOS 27 (decide whether the minimum is 26 or 27) and review the 27.x Health changes before the design spec.
 
 ### M11. Individual developer account, personal liability and an under-budgeted legal setup  (§1 Team, §7, §11, §12)
@@ -371,7 +371,7 @@ Mailto feedback (users will email health details), TestFlight tester identities,
 ## Top 5 changes before writing the design spec
 
 1. **Settle the regulatory scope (M1).** Either cut the fertile window, Conceive mode and "confirmed ovulation" from v1, or obtain a written MDR/FDA qualification opinion first. Fix the citations (MDR Art. 2(1) "support of conception", Rule 15, FDA Jan 2026 guidance), and decide on a legal entity and Organization account (M11).
-2. **Rewrite the positioning against iOS 27 Apple Health (M2).** Pick 1–2 wedges, validate them with current Apple Health cycle-tracking users in week 1, and rebuild the v1 scope around the winning wedge. Cut, in favour of that wedge: Control Center, Siri, the PDF report and wrist temperature.
+2. **Rewrite the positioning against iOS 27 Apple Health (M2).** Pick 1–2 wedges, validate them first with current Apple Health cycle-tracking users, and rebuild the v1 scope around the winning wedge. Cut, in favour of that wedge: Control Center, Siri, the PDF report and wrist temperature.
 3. **Write a threat model and a data-flow and protection-class map (M4, M5, M6).** For each surface (lock screen, widget, intents, HealthKit mirror, Health Sharing, iCloud Backup, exports, notifications), record the data class, protection class, adversary and mitigation. This yields: opt-in per-category HealthKit writes, authenticated intents, encrypted export, an explicit backup decision, and honest privacy copy.
 4. **Specify the engine properly (M3, M7, M8, M12).**
    - Posterior-predictive intervals, robust outlier handling, missed-period detection and age-band priors.
@@ -381,4 +381,4 @@ Mailto feedback (users will email health details), TestFlight tester identities,
    - The HealthKit sync state machine.
    - A pattern-engine model that treats "not logged" as missing.
    - Validation on on-device retrospective histories, with no raw-data collection (M9).
-5. **Re-plan delivery honestly (M10).** Do a bottom-up hours estimate with buffer, against an iOS 27 baseline. Add the missing work items: legal, clinician, entity setup, store assets, website, Beta App Review, age rating, DSA. Expect 6–8 months for the current scope, or cut to a v1 that fits 12 weeks.
+5. **Re-plan delivery honestly (M10).** Re-plan in phases with exit criteria, against an iOS 27 baseline. Add the missing work items: legal, clinician, entity setup, store assets, website, Beta App Review, age rating, DSA. Keep the full scope, or cut to a smaller v1.

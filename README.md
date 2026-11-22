@@ -27,7 +27,6 @@ Published (private) link: see `prototype/README.md`.
 - Android plan drafted. D10 (Kotlin Multiplatform shared core) awaits confirmation.
 - Open owner decisions:
   - legal entity + organization developer accounts (Apple, Google);
-  - weekly hours;
   - regulatory specialist;
   - clinician reviewer.
 - Next engineering step: port the prototype's JS engines to Kotlin (`shared/`) with golden test vectors (ANDROID_PLAN §11).

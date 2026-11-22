@@ -14,9 +14,9 @@ Defaults are marked ✅. The rest of this spec is written against them. Changing
 | # | Decision | Default (recommended) | Alternative |
 |---|---|---|---|
 | **D1** | Fertility features (fertile window, Conceive mode, ovulation estimate) | ✅ **IN v1 — owner decision 2026-11-22.** Multi-signal fertility engine (§11.11) + Conceive mode (§7.14). Shipped per region behind a feature flag once the regulatory path for that region is cleared (§1.4). Cycle-deviation nudges stay gated. | — (decided) |
-| **D2** | Positioning vs. iOS 27 Apple Health | ✅ Three wedges (§1.2): **deep fast logging**, **condition-first** (PCOS/endo/irregular), **Doctor Visit Pack**. Validate in week 1–2 with current Apple Health users. | Pick one wedge only |
+| **D2** | Positioning vs. iOS 27 Apple Health | ✅ Three wedges (§1.2): **deep fast logging**, **condition-first** (PCOS/endo/irregular), **Doctor Visit Pack**. Validate in phase 1 with current Apple Health users. | Pick one wedge only |
 | **D3** | Publisher | ✅ **Legal entity + Organization developer account** before submission (UG (haftungsbeschränkt) or e.V.; D-U-N-S number). Start now, because it takes 4–8 weeks. | Individual account (rejection risk under guideline 5.1.1(ix), personal liability) |
-| **D4** | Schedule | ✅ **Honest ~47 weeks** for the full v1 scope incl. fertility, „Deine Muster“ and „Ausblick“ at ~20 h/week (≈ 940 h incl. 25% buffer, §13.1). Internal TestFlight at ~week 22. Fertility can go live per region later than the core app (feature flag). | Apply the §13.1 cut list (≈ −100 h) → ~39 weeks; or 25 h/week → ~35 weeks |
+| **D4** | Delivery | ✅ **Phase-based plan, no effort or time estimates** (owner decision 2026-11-22: built AI-assisted, effort numbers don't apply). Full v1 scope in ordered phases with exit criteria (§13.1); only outside lead times are planned in calendar time. Fertility can go live per region later than the core app (feature flag). | Fallback scope list (§13.1) |
 | **D5** | Backup | ✅ Store **included** in device backups (so phone migration just works), with honest disclosure plus a "Device only" toggle that sets `isExcludedFromBackup`, plus **encrypted export**. | Exclude by default (max privacy, real data-loss risk) |
 | **D6** | Money | ✅ Strictly free. **No tip jar in v1** (it would make the developer a DSA trader, whose address is published). | Tip jar via IAP after the entity exists |
 | **D7** | Platform baseline | ✅ **Deployment target iOS 26.0, built with the iOS 27 SDK.** Use iOS 27 APIs behind `if #available`. | iOS 27 minimum (smaller audience, simpler code) |
@@ -49,10 +49,10 @@ Defaults are marked ✅. The rest of this spec is written against them. Changing
 | M4 File protection vs. lock screen | Single-writer process; intents require authentication; pending-event queue; principle rewritten | §3.3, §11.2 |
 | M5 Threat model | Full threat model; per-category HealthKit write opt-in; widget redaction; PIN; discreet defaults | §3 |
 | M6 Backup honesty | D5 + encrypted export + full HealthKit re-import + backup indicator + honest copy | §3.4, §11.9 |
-| M7 HealthKit sync | Sync state machine, ownership, dedup, time zones, incremental permissions; 2.5 weeks budgeted | §11.4 |
+| M7 HealthKit sync | Sync state machine, ownership, dedup, time zones, incremental permissions; own delivery phase with device tests | §11.4, §13.1 |
 | M8 Fake precision | Log-normal NIG posterior-predictive, robust weights, missed-log detection, age-band priors, hormonal-factor suppression | §11.5 |
 | M9 Circular validation | On-device retrospective back-test, aggregate-only output; no raw-data collection; no public accuracy claims | §12.2 |
-| M10 Timeline | Bottom-up hours, missing items added, iOS 27 baseline | §13 |
+| M10 Timeline | Phase plan with exit criteria, all missing work items added, outside lead times, iOS 27 baseline | §13 |
 | M11 Entity / liability | D3, insurance, legal budget €3–10k, no tip jar | §0.1, §13.3 |
 | M12 Pattern stats | One Bayesian paradigm, cycle as unit, observed-day denominator, tiers, null-simulation gate | §11.7 |
 | m1 FM AUP/guardrails | Template-primary; FM only rephrases; `guardrailViolation` → template; `contextSize` availability-gated | §11.8 |
@@ -72,7 +72,7 @@ Defaults are marked ✅. The rest of this spec is written against them. Changing
 | m15 Perf context | Baseline device iPhone 12, measured to "first frame after auth" | §12.3 |
 | m16 Onboarding vs. day-1 | No fake 29-day guess; honest wide range labelled "rough" | §7.1, §11.5 |
 | m17 Metrics | +90-day observable metrics | §12.4 |
-| m18 Clinician review | Named reviewer by week 3; scope listed | §13.2 |
+| m18 Clinician review | Named reviewer in phase 1; scope listed | §13.1 |
 | m19 DE localisation | Terminology glossary, DE assets, Impressum check | §9.4, §13 |
 | m20 Inclusivity | Gender-affirming hormones episode; neutral copy audit; no partner assumption | §2.2, §9 |
 | m21 Palette a11y | Contrast-verified tokens; shape + label redundancy; VoiceOver chart descriptors | §5.1, §10 |
@@ -100,7 +100,7 @@ Apple Health is the default and it is good. Cyclus wins only where Apple structu
 | **6. Fertility that explains itself** | Calendar estimate, adjusted by LH tests; retrospective wrist-temperature ovulation estimate (Watch S8+) | Daily probability from **all** signals (LH ±, mucus, BBT, wrist temp), learns your personal luteal length and LH→ovulation lag, **tells you when to start LH tests**, shows *why* the window moved |
 | **5. Insights in German on any iPhone** (v1.5) | AI Insights depend on Apple Intelligence and language rollout | Deterministic insights with localised templates; on-device LLM polish where available |
 
-**Validation gate (week 1–2):** 6–8 interviews with *current Apple Health cycle-tracking users* plus 2 people with endometriosis or PCOS. Each wedge needs ≥ 50% "would switch / use alongside" to stay in v1. Otherwise cut it (D4 alternative).
+**Validation gate (phase 1):** 6–8 interviews with *current Apple Health cycle-tracking users* plus 2 people with endometriosis or PCOS. Each wedge needs ≥ 50% "would switch / use alongside" to stay in v1. Otherwise cut it (D4 alternative).
 
 ### 1.3 Principles (ranked; earlier wins conflicts)
 1. **Trust first.** No dark patterns, fake precision or guilt. The developer never receives data.
@@ -141,7 +141,7 @@ Contraception or conception support, diagnosis, community/social features, conte
 ## 2. Scope
 
 ### 2.1 Releases
-**v1.0 (≈ week 47 at 20 h/week; see D4)**
+**v1.0**
 - Onboarding with Apple Health import.
 - Today, Log sheet (incl. pain map, tags, "nothing else today"), Calendar + Day detail, Insights (stats & charts, no pattern engine).
 - Period prediction (§11.5). Temperature *display*: BBT (logged) in v1. Wrist temperature (Apple Watch) is **read and displayed only if present, behind a flag, and not used by the fertility engine** until it has been tested on a real device (§14, owner has no Apple Watch). The fertility engine runs on cycle history + LH + mucus + BBT.
@@ -152,11 +152,11 @@ Contraception or conception support, diagnosis, community/social features, conte
 - Local notifications.
 - EN + DE.
 
-**v1.1 (+6 weeks):** Control Center control, App Intents (auth-required, no automatic App Shortcuts), StandBy widget, perimenopause symptom set refinements from iOS 27 HealthKit types, iPad layout.
+**v1.1:** Control Center control, App Intents (auth-required, no automatic App Shortcuts), StandBy widget, perimenopause symptom set refinements from iOS 27 HealthKit types, iPad layout.
 
 **Also v1.0:** „Deine Muster“ (§11.12) and „Ausblick“ (§11.13) with template text; feelings and libido logging.
 
-**v1.5 (+10 weeks):** on-device LLM phrasing of pattern text (§11.8); HealthKit sleep/resting-HR watchers; pill/patch/ring schedule within the hormonal-contraception episode; Apple Watch app (log + glance).
+**v1.5:** on-device LLM phrasing of pattern text (§11.8); HealthKit sleep/resting-HR watchers; pill/patch/ring schedule within the hormonal-contraception episode; Apple Watch app (log + glance).
 
 **Also v1.0 (behind the per-region fertility flag, §1.4):**
 - Fertility engine (§11.11);
@@ -737,7 +737,7 @@ struct LocalDate: Codable, Hashable, Comparable, Sendable { // civil date, no ti
 | wrist temperature | `appleSleepingWristTemperature` | Read only | Treated as raw series; baseline computed by Cyclus |
 | episodes | `contraceptive`, `pregnancy`, `lactation` | **Off** | Episode kinds without an HK type are Cyclus only |
 
-iOS 27 SDK review item (week 2): new perimenopause/menopause-related identifiers → add to mapping with `#available`.
+iOS 27 SDK review item (phase 2): new perimenopause/menopause-related identifiers → add to mapping with `#available`.
 
 ### 11.5 Prediction engine (CycleEngine)
 
@@ -1074,7 +1074,7 @@ Turns the patterns that passed §11.12 into a forecast for today + 6 days, so pa
 ### 12.4 Success metrics (observable by launch + 90 days)
 | Metric | Target | Source |
 |---|---|---|
-| Wedge validation | ≥ 50% of interviewees "would use" per wedge | Week 1–2 interviews |
+| Wedge validation | ≥ 50% of interviewees "would use" per wedge | Phase 1 interviews |
 | Logging speed | Median period-start log ≤ 3 s after unlock; 3 symptoms ≤ 6 s | Moderated usability tests (n ≥ 8) |
 | SUS score | ≥ 80 | Same sessions |
 | Beta retention | ≥ 60% of testers active after 2 cycles | TestFlight sessions |
@@ -1085,81 +1085,48 @@ Turns the patterns that passed §11.12 into a forecast for today + 6 days, so pa
 ---
 
 ## 13. Delivery plan
+Delivery is planned as **ordered phases with exit criteria**, not as effort or time estimates (the app is built AI-assisted; effort numbers don't apply). The only durations in this plan are **outside lead times** that coding speed cannot change.
 
-### 13.1 Bottom-up estimate (effort hours, AI-assisted coding)
-| Work item | h |
-|---|---|
-| Wedge interviews (recruit, run, synthesise) + HTML prototype | 30 |
-| Entity setup, D-U-N-S, Org account, insurance (calendar 4–8 wks) | 12 |
-| Regulatory/legal coordination (opinion, privacy policy, MHMDA policy, terms) | 12 |
-| Scaffold, packages, CI, lints, design tokens & components | 30 |
-| CycleCore + CycleEngine (detection, NIG model, missed-log, status) + property tests | 45 |
-| CycleStore (schema, migrations, pending queue, file protection) | 25 |
-| Today + CycleRing | 25 |
-| Log sheet (flow, pinned/suggested, symptoms, pain map, scales, tags, note) | 35 |
-| Calendar + Day detail + overrides | 25 |
-| Insights (overview, 5 charts, history, cycle detail) | 30 |
-| HealthKit import, write-own, sync state machine, device tests | 45 |
-| Onboarding | 15 |
-| Episodes UI (life stage & conditions) | 10 |
-| Privacy Center, app lock, PIN, erase | 25 |
-| Backup & export (crypto, CSV, import/merge) | 20 |
-| Doctor Visit Pack | 30 |
-| **Fertility engine** (§11.11: prior, likelihoods, posterior, learning, planner, evidence trail) + property/back-tests | 45 |
-| **„Deine Muster“ + „Ausblick“** (§11.12–11.13: watchers, null-simulation gates, profiles, Today/Insights UI, feelings & libido logging) | 55 |
-| **Conceive mode UI** (Today variant, LH card, Why sheet, calendar shading, two-week wait, Conceive charts) | 30 |
-| **Regulatory engineering** (requirements traceability, risk register, IEC 62304 docs, usability file, clinical-evaluation data from back-test) | 80 |
-| Widgets (home S/M, lock screen, redaction, snapshot) | 18 |
-| Notifications | 8 |
-| DE localisation + glossary review + DE screenshots | 20 |
-| Accessibility pass & fixes | 18 |
-| Website: privacy policy, support, Impressum, export schema | 10 |
-| App Store: screenshots EN/DE, metadata, age rating, privacy details, review notes, demo video | 15 |
-| TestFlight: Beta App Review, 2-cycle beta (calendar ~8 wks), fixes | 40 |
-| **Subtotal** | **753** |
-| Buffer 25% (rounded) | **~188** |
-| **Total** | **~940 h** |
-
-At 20 h/week → **~47 weeks** (D4 default); at 17.5 h/week → ~54 weeks; at 25 h/week → ~38 weeks. Calendar-time dependencies (entity, regulatory opinion, clinician review, 2-cycle beta) run in parallel and are not the critical path if started in weeks 1–2.
-
-**Cut list** (≈ −78 h subtotal, ≈ −100 h incl. buffer → ~39 weeks at 20 h/week):
-- move the pain map to v1.1 (−20);
-- drop the temperature chart (−8);
-- keep episodes UI to basic toggles (−5);
-- drop the Lock Screen widget (−8);
-- ship the Doctor Visit Pack as a fixed template without builder options (−12);
-- overlap the beta with localisation (−15);
-- reuse the HTML prototype for interviews (−10).
-
-The pain map is part of wedge 2, so cut it only if interviews don't confirm that wedge. Owner confirms weekly hours, then the cut list is finalised.
-
-### 13.2 Milestones (at ~20 h/week, full scope)
-| Week | Milestone | Exit criteria |
+### 13.1 Phases
+| Phase | Content | Exit criteria |
 |---|---|---|
-| 1–2 | Prototype + wedge interviews; start entity + legal opinion request; name clinician reviewer | Wedges confirmed or cut; reviewer agreed |
-| 3–4 | Scaffold, CI, lints, tokens; iOS 27 SDK HealthKit review | Green CI; component gallery |
-| 5–7 | Core + Engine + Store | Engine tests pass; migration test harness |
-| 8–11 | Today, Log sheet, Calendar | Usability test #1 (n = 5): log ≤ 3 s |
-| 12–14 | HealthKit sync | Device integration checklist passes |
-| 15–17 | Fertility engine + Conceive UI | Engine property tests + synthetic robustness pass |
-| 18–20 | Insights, Onboarding, Episodes | — |
-| 21–22 | Privacy Center, lock/PIN, backup/export | **Internal TestFlight** (incl. on-device back-test screen) |
-| 23–26 | Doctor Visit Pack, widgets, notifications | Clinician review of copy/PDF/templates/fertility explainer |
-| 27–30 | DE, a11y, website, legal docs; regulatory technical file | Audit checklists pass; regulatory opinion received |
-| 31–44 | External TestFlight (Beta App Review) for ≥ 2 cycles; back-test aggregates; fixes; store assets; submission (fertility flag per region) | Metrics §12.4 + §11.11.8; privacy report clean |
+| 1 Validate | Prototype + wedge interviews (§1.2); start legal entity, D-U-N-S, organization accounts; request regulatory qualification opinion; name clinician reviewer | Wedges confirmed or cut; reviewer agreed |
+| 2 Foundations | Scaffold, CI, lints (banned terms, no network), design tokens & components; iOS 27 SDK HealthKit review | Green CI; component gallery |
+| 3 Core | Core model + engines (§11.5) + store with migrations + pending queue | Engine tests pass; migration test harness |
+| 4 Core screens | Today, Log sheet (incl. pain map, feelings, libido), Calendar | Usability test #1 (n = 5): period start logged ≤ 3 s |
+| 5 Health sync | HealthKit import, write-own, sync state machine (§11.4) | Device integration checklist passes |
+| 6 Intelligence | Fertility engine + Conceive UI (§11.11, §7.14); „Deine Muster“ + „Ausblick“ (§11.12–11.13) | Property tests, null-simulation and recall gates pass |
+| 7 Completeness | Insights, onboarding, episodes, Privacy Center, lock/PIN, backup/export, Doctor Visit Pack, widgets, notifications | **Internal TestFlight** (incl. on-device back-test screen) |
+| 8 Readiness | DE/EN localisation review, accessibility audit, website & legal docs, regulatory technical file (traceability, risk register, IEC 62304/62366 docs) | Audit checklists pass; regulatory opinion received; clinician review of copy, PDF, templates, fertility explainer |
+| 9 Beta & release | External TestFlight (Beta App Review) for **≥ 2 cycles**; back-test aggregates; store assets; submission (fertility flag per region) | Metrics §12.4 + §11.11.8; privacy report clean |
 
-### 13.3 Budget
+**Outside lead times** (start in phase 1, run in parallel):
+- legal entity + D-U-N-S: ~4–8 weeks;
+- regulatory qualification opinion: ~4–8 weeks;
+- clinician review turnaround;
+- the beta needs **at least two real menstrual cycles**;
+- App Review / Beta App Review.
+
+**Fallback scope** (only if validation or regulatory timing demands it):
+- move the pain map to v1.1;
+- drop the temperature chart;
+- keep the episodes UI to basic toggles;
+- drop the Lock Screen widget;
+- ship the Doctor Visit Pack as a fixed template.
+
+The pain map is part of wedge 2, so drop it only if interviews don't confirm that wedge.
+
+### 13.2 Budget
 Apple Developer (Organization) €99/yr · FDA establishment registration fee if US fertility launch (~US$10k/yr, verify) · EU MDR costs per classification (Class I self-declaration: mainly own effort; IIa: notified body, five figures) · Entity formation (UG) ~€800–1,200 · Regulatory qualification opinion €3–10k · Privacy/terms review ~€1–2k · Liability insurance (quote) · Clinician review €500–1,500 or pro bono · Servers €0.
 
 ---
 
 ## 14. Open questions
-1. D1–D8 sign-off (§0.1).
-2. Weekly hours available (finalises the §13.1 cut list).
-3. ~~Apple Watch for testing?~~ **Answered 2026-11-22: no Apple Watch.** Consequences:
+1. Sign-off of all open decisions in §0.1.
+2. ~~Apple Watch for testing?~~ **Answered 2026-11-22: no Apple Watch.** Consequences:
    - wrist temperature is not used by the fertility engine in v1 (it is display-only and flag-gated);
    - the wrist likelihood (§11.11.3) and the Watch app (v1.5) need a test device, meaning a used Series 8+ / Ultra (~€250–400; SE models have no temperature sensor), or ≥ 3 TestFlight testers with one using the on-device back-test;
    - decide before v1.1.
-4. Name & brand: needs trademark search EU/US before assets are made.
-5. Clinician reviewer: candidate names (gynaecologist + midwife, DE-speaking).
-6. Ask App Review in writing about guideline 5.1.3(ii) for (a) CloudKit `encryptedValues` and (b) the store in iCloud Backup. Keep the response; it decides sync in v2.
+3. Name & brand: needs trademark search EU/US before assets are made.
+4. Clinician reviewer: candidate names (gynaecologist + midwife, DE-speaking).
+5. Ask App Review in writing about guideline 5.1.3(ii) for (a) CloudKit `encryptedValues` and (b) the store in iCloud Backup. Keep the response; it decides sync in v2.

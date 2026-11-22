@@ -1,6 +1,6 @@
 # Cyclus prototype
 
-Clickable iPhone prototype for user interviews (design spec week 1–2).
+Clickable iPhone prototype for user interviews (design spec phase 1).
 
 - Live link (private, share via the page's Share menu): https://claude.ai/artifact/R7vg5CVUJEQkEdiNEbpcM2
 - Local: `python3 -m http.server 8765` in this folder, then open http://127.0.0.1:8765/
