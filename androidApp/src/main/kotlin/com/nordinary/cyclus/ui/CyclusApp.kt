@@ -81,6 +81,7 @@ import androidx.compose.foundation.layout.Box
 @Serializable private data object PrivacyKey : NavKey
 @Serializable private data object ReportKey : NavKey
 @Serializable private data object NotifyKey : NavKey
+@Serializable private data object PatternsKey : NavKey
 
 private enum class Tab(val key: String) { TODAY("tabToday"), CALENDAR("tabCal"), INSIGHTS("tabIns") }
 private enum class Sheet { NONE, LOG, DAY, WHY, METHOD }
@@ -157,6 +158,7 @@ fun CyclusApp(vm: AppViewModel, debug: Boolean) {
                     vm = vm, fmt = fmt, snackbar = snackbar, debug = debug,
                     onSettings = { backStack.add(SettingsKey) }, onPrivacy = { backStack.add(PrivacyKey) }, onComingSoon = comingSoon,
                     onReport = { backStack.add(ReportKey) },
+                    onPatterns = { backStack.add(PatternsKey) },
                     onOpenLog = ::openLog,
                     onReminderOffer = { yes -> if (yes) consent(true) else vm.declineReminderOffer() },
                     onDay = { sheetDay = it; sheet = Sheet.DAY },
@@ -176,6 +178,13 @@ fun CyclusApp(vm: AppViewModel, debug: Boolean) {
                         onNotifications = { backStack.add(NotifyKey) },
                     )
                 }
+            }
+            entry<PatternsKey> {
+                val ins = model?.insights as? com.nordinary.cyclus.presenter.InsightsUiState.Ready
+                if (ins != null) com.nordinary.cyclus.ui.insights.PatternsScreen(
+                    ins.patterns, fmt, onBack = { backStack.removeLastOrNull() }, onMute = vm::mute, onUnmute = vm::unmuteAll,
+                )
+                else LaunchedEffect(Unit) { backStack.removeLastOrNull() }
             }
             entry<NotifyKey> {
                 val m = model
@@ -245,6 +254,7 @@ private fun MainScreen(
     onPrivacy: () -> Unit,
     onComingSoon: () -> Unit,
     onReport: () -> Unit,
+    onPatterns: () -> Unit,
     onOpenLog: (Int) -> Unit,
     onReminderOffer: (Boolean) -> Unit,
     onDay: (Int) -> Unit,
@@ -320,7 +330,7 @@ private fun MainScreen(
                     onOpenLog = { onOpenLog(m.snapshot.today) },
                     onPeriodStarted = vm::periodStartedToday,
                     onQuickFlow = vm::quickFlow,
-                    onPatterns = { tab = Tab.INSIGHTS },
+                    onPatterns = onPatterns, // the Muster screen directly: the count promises the list
                     onChangeStage = onSettings,
                     onLh = vm::todayLh,
                     onWhy = onWhy,
@@ -338,7 +348,7 @@ private fun MainScreen(
                 Tab.CALENDAR -> Centered { CalendarContent(m.snapshot, fmt, padding, onDay = onDay, onMarkStart = vm::markStart) }
                 Tab.INSIGHTS -> Centered(if (expanded) 1100.dp else 640.dp) {
                     InsightsContent(
-                        m.insights, fmt, padding, onMethod = onMethod, onMute = vm::mute, onUnmute = vm::unmuteAll,
+                        m.insights, fmt, padding, onMethod = onMethod, onMute = vm::mute, onAllPatterns = onPatterns,
                         twoColumns = expanded,
                         onReport = if (com.nordinary.cyclus.presenter.ReportPresenter.available(m.snapshot)) onReport else null,
                     )

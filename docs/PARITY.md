@@ -21,7 +21,7 @@ Status values: `—` not started · `wip` · `done` · `off` (feature-flagged of
 | F-006 | Pain body map | 7.3 | Eintragen | done | — | | |
 | F-007 | Calendar + Day sheet | 7.4 | Kalender | done | — | | Long-press menu + TalkBack custom action „Periodenbeginn“ (past/today only) |
 | F-008 | Insights (stats, charts, heatmap, history) | 7.5 | Einblicke | done | — | | History rows not tappable until Cycle detail (7.6) exists |
-| F-009 | „Deine Muster“ cards | 11.12 | Einblicke | done | — | | Muted patterns are persisted (prototype: session only) |
+| F-009 | „Deine Muster“ cards | 11.12 | Einblicke + Muster | done | — | | Muted patterns are persisted (prototype: session only). **Layout changed 2026-11-22 (owner feedback, iOS to follow):** Insights shows a summary card (top 3 + „Alle N Muster ansehen“), the Arztbericht right below, history 3 + „Alle anzeigen“; a separate „Muster“ screen has Gefunden/Beobachtet segments, area filters, full cards and restore |
 | F-010 | Why this window? / Method sheets | 7.14 | Sheets | done | — | | Method copy: Android override (no iPhone, no outlier-question claim) |
 | F-011 | Conceive mode UI | 7.14 | Heute (Kinderwunsch) | done | — | | Regulatory feature flag per region still to add before release |
 | F-012 | Onboarding | 7.1 | Onboarding | done | — | | Import step: `.cyclus` backup or Health Connect (then the last-period question is skipped). Last period logs only stated days as unspecified flow (no invented levels). Birth year not collected until the engine uses age-band priors |

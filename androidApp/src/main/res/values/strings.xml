@@ -256,4 +256,16 @@
     <string name="hr_local">Alles bleibt auf deinem Gerät. Cyclus hat keine Internetberechtigung und keine Server.</string>
     <string name="hr_revoke">Du kannst den Zugriff jederzeit in Health Connect oder in Cyclus unter Datenschutz › Health Connect entziehen.</string>
     <string name="hr_close">Schließen</string>
+    <!-- Insights revamp -->
+    <string name="pat_seg_found">Gefunden (%1$d)</string>
+    <string name="pat_seg_watch">Beobachtet (%1$d)</string>
+    <string name="pat_filter_all">Alle</string>
+    <string name="pat_empty_filter">In diesem Bereich gibt es gerade nichts.</string>
+    <string name="hist_all">Alle anzeigen</string>
+    <string name="hist_less">Weniger anzeigen</string>
+    <plurals name="pat_found_n"><item quantity="one">%1$d gefunden</item><item quantity="other">%1$d gefunden</item></plurals>
+    <plurals name="pat_watch_n"><item quantity="one">%1$d wird beobachtet</item><item quantity="other">%1$d werden beobachtet</item></plurals>
+    <plurals name="pat_all"><item quantity="one">%1$d Muster ansehen</item><item quantity="other">Alle %1$d Muster ansehen</item></plurals>
+    <plurals name="pat_none_watch"><item quantity="one">Noch keine Muster. %1$d wird beobachtet.</item><item quantity="other">Noch keine Muster. %1$d werden beobachtet.</item></plurals>
+    <string name="pat_open">Details öffnen</string>
 </resources>

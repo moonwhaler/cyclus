@@ -74,11 +74,13 @@ fun InsightsContent(
     contentPadding: PaddingValues,
     onMethod: () -> Unit,
     onMute: (String) -> Unit,
-    onUnmute: () -> Unit,
     onReport: (() -> Unit)?,
     twoColumns: Boolean = false,
+    onAllPatterns: () -> Unit = {},
 ) {
     val c = Cyclus.colors
+    var sheetPattern by rememberSaveable { mutableStateOf<String?>(null) }
+    var historyAll by rememberSaveable { mutableStateOf(false) }
     Column(
         Modifier.fillMaxWidth().verticalScroll(rememberScrollState()).padding(contentPadding).padding(horizontal = 16.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp),
@@ -105,7 +107,7 @@ fun InsightsContent(
                             fontSize = 14.sp, fontWeight = FontWeight.SemiBold, color = c.period,
                         )
                     }
-                    Patterns(state.patterns, fmt, onMute, onUnmute)
+                    PatternSummaryCard(state.patterns, fmt, onOpen = { sheetPattern = it.id }, onAll = onAllPatterns)
                     CyclusCard(onClick = onReport) {
                         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) { Title(fmt.s("reportT")); if (onReport != null) Text("›", color = c.ink2, fontSize = 18.sp) }
                         Body(if (onReport != null) fmt.s("reportB") else androidx.compose.ui.res.stringResource(com.nordinary.cyclus.R.string.rep_unavailable))
@@ -134,12 +136,21 @@ fun InsightsContent(
                     }
                     SectionLabel(fmt.s("history"))
                     Column(Modifier.fillMaxWidth().clip(RoundedCornerShape(14.dp)).background(c.surface)) {
-                        state.history.forEachIndexed { i, h ->
+                        val shown = if (historyAll) state.history else state.history.take(3)
+                        shown.forEachIndexed { i, h ->
                             if (i > 0) HorizontalDivider(color = c.line)
                             Column(Modifier.fillMaxWidth().padding(horizontal = 14.dp, vertical = 12.dp)) {
                                 Text(fmt.range(h.start, h.end), fontFamily = Nunito, fontWeight = FontWeight.Bold, color = c.ink, fontSize = 15.sp)
                                 Text(fmt.s("histRow", h.length, h.periodLength), fontSize = 13.sp, color = c.ink2)
                             }
+                        }
+                        if (state.history.size > 3) {
+                            HorizontalDivider(color = c.line)
+                            Text(
+                                androidx.compose.ui.res.stringResource(if (historyAll) com.nordinary.cyclus.R.string.hist_less else com.nordinary.cyclus.R.string.hist_all),
+                                Modifier.fillMaxWidth().clickable(role = Role.Button) { historyAll = !historyAll }.padding(horizontal = 14.dp, vertical = 14.dp),
+                                fontSize = 14.sp, fontWeight = FontWeight.SemiBold, color = c.period,
+                            )
                         }
                     }
                 }
@@ -148,6 +159,12 @@ fun InsightsContent(
                     Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(12.dp)) { left() }
                     Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(12.dp)) { right() }
                 } else { left(); right() }
+                // the pattern tapped in the summary, looked up live (gone after „Ausblenden“)
+                sheetPattern?.let { id ->
+                    val p = state.patterns.found.firstOrNull { it.id == id }
+                    if (p == null) sheetPattern = null
+                    else PatternSheet(p, fmt, onMute = onMute, onDismiss = { sheetPattern = null })
+                }
             }
         }
         Spacer(Modifier.height(96.dp))
@@ -168,89 +185,6 @@ private fun Stat(value: String, label: String, modifier: Modifier) {
     Column(modifier.clip(RoundedCornerShape(14.dp)).background(c.surface).padding(horizontal = 14.dp, vertical = 12.dp)) {
         Text(value, fontFamily = Nunito, fontWeight = FontWeight.ExtraBold, fontSize = 24.sp, color = c.ink)
         Text(label, fontSize = 12.sp, color = c.ink2)
-    }
-}
-
-private fun areaColor(a: Area, c: CyclusColors) = when (a) {
-    Area.BODY -> c.period; Area.MOOD -> c.pre; Area.LIFE -> c.warning; Area.FERT -> c.fertile; Area.HEALTH -> c.ink2
-}
-
-/** Status pill (prototype `.badge.st-*`). */
-@Composable
-private fun StatusChip(status: PatternStatus, fmt: Fmt) {
-    val c = Cyclus.colors
-    val label = fmt.s("st_${status.key}")
-    val base = Modifier.clip(CircleShape)
-    val m = when (status) {
-        PatternStatus.CONSISTENT -> base.background(c.period.copy(alpha = .16f).compositeOver(c.surface))
-        PatternStatus.EARLY -> base.dashedBorder(c.ink2, 12.dp)
-        else -> base.background(c.surface2)
-    }
-    val color = when (status) {
-        PatternStatus.STABLE -> c.success; PatternStatus.NONE, PatternStatus.NEEDS -> c.ink2; else -> c.ink
-    }
-    Text(label, m.padding(horizontal = 11.dp, vertical = 5.dp), fontSize = 12.sp, fontWeight = FontWeight.SemiBold, color = color)
-}
-
-/** „Deine Muster“ (prototype `patternSection` / `patCard`). */
-@Composable
-private fun Patterns(sec: PatternSection, fmt: Fmt, onMute: (String) -> Unit, onUnmute: () -> Unit) {
-    val c = Cyclus.colors
-    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-        SectionLabel(fmt.s("pwT"))
-        Text(fmt.s("pwIntro"), Modifier.padding(horizontal = 4.dp), fontSize = 12.sp, color = c.ink2)
-        for (p in sec.found) PatternCard(p, fmt, onMute)
-        if (sec.watching.isNotEmpty()) {
-            SectionLabel(fmt.s("watching"))
-            Column(Modifier.fillMaxWidth().clip(RoundedCornerShape(14.dp)).background(c.surface)) {
-                sec.watching.forEachIndexed { i, p ->
-                    if (i > 0) HorizontalDivider(color = c.line)
-                    Row(Modifier.fillMaxWidth().padding(horizontal = 14.dp, vertical = 12.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                        Box(Modifier.size(10.dp).clip(CircleShape).background(areaColor(p.area, c)))
-                        Column(Modifier.weight(1f)) {
-                            Text(fmt.txt(p.title), fontSize = 15.sp, fontWeight = FontWeight.Medium, color = c.ink)
-                            Text(fmt.txt(p.body), fontSize = 13.sp, color = c.ink2)
-                        }
-                        StatusChip(p.status, fmt)
-                    }
-                }
-            }
-        }
-        if (sec.hiddenCount > 0) Text(
-            fmt.s("hiddenN", sec.hiddenCount), Modifier.clip(RoundedCornerShape(6.dp)).clickable(role = Role.Button, onClick = onUnmute).padding(4.dp),
-            fontSize = 12.sp, fontWeight = FontWeight.SemiBold, color = c.period,
-        )
-    }
-}
-
-@Composable
-private fun PatternCard(p: Pattern, fmt: Fmt, onMute: (String) -> Unit) {
-    val c = Cyclus.colors
-    var open by rememberSaveable(p.id) { mutableStateOf(false) }
-    CyclusCard {
-        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
-            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                Box(Modifier.size(8.dp).clip(CircleShape).background(areaColor(p.area, c)))
-                Text(fmt.s("area_${p.area.key}").uppercase(), fontSize = 11.sp, fontWeight = FontWeight.Bold, letterSpacing = 0.7.sp, color = c.ink2)
-            }
-            StatusChip(p.status, fmt)
-        }
-        Text(fmt.txt(p.title), fontSize = 16.sp, fontWeight = FontWeight.SemiBold, color = c.ink)
-        Text(fmt.txt(p.body), fontSize = 14.sp, color = c.ink2)
-        if (p.report == true) Text(fmt.s("inReport"), fontSize = 12.sp, color = c.ink)
-        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.Top) {
-            if (p.why != null) Column(Modifier.weight(1f)) {
-                Text(
-                    fmt.s("why"), Modifier.clip(RoundedCornerShape(6.dp)).clickable(role = Role.Button) { open = !open }.padding(vertical = 4.dp),
-                    fontSize = 13.sp, fontWeight = FontWeight.SemiBold, color = c.period,
-                )
-                AnimatedVisibility(open) { Text(fmt.txt(p.why!!), fontSize = 12.sp, color = c.ink2) }
-            } else Spacer(Modifier.weight(1f))
-            Text(
-                fmt.s("hide"), Modifier.clip(RoundedCornerShape(6.dp)).clickable(role = Role.Button) { onMute(p.id) }.padding(4.dp),
-                fontSize = 12.sp, fontWeight = FontWeight.SemiBold, color = c.ink2,
-            )
-        }
     }
 }
 
