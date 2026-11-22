@@ -33,8 +33,18 @@ class CyclusApplication : Application() {
         backup.startupSweep()
         com.nordinary.cyclus.ui.theme.AppearanceStore.init(this)
         ReportFiles.clear(this) // shared report PDFs never outlive the session
+        // a store that couldn't open while the phone was locked opens as soon as it is unlocked
+        androidx.core.content.ContextCompat.registerReceiver(
+            this,
+            object : android.content.BroadcastReceiver() {
+                override fun onReceive(c: android.content.Context, i: android.content.Intent) { store.retryIfLocked() }
+            },
+            android.content.IntentFilter(android.content.Intent.ACTION_USER_PRESENT),
+            androidx.core.content.ContextCompat.RECEIVER_NOT_EXPORTED,
+        )
         ProcessLifecycleOwner.get().lifecycle.addObserver(object : DefaultLifecycleObserver {
             override fun onStart(owner: LifecycleOwner) {
+                store.retryIfLocked()
                 lock.onAppStart(Authn.available(this@CyclusApplication))
                 healthKick.tryEmit(false) // Health Connect syncs only while the app is open
             }

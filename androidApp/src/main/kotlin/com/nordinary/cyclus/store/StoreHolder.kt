@@ -58,6 +58,12 @@ class StoreHolder(private val context: Context, val backup: BackupCoordinator, p
         scope.launch { _state.value = open() }
     }
 
+    /** Phone unlocked / app back in front: a store that failed only because the phone was locked opens now. */
+    fun retryIfLocked() {
+        val s = _state.value
+        if (s is StoreState.Failed && s.reason == DbKeyException.Reason.DEVICE_LOCKED) ensureOpen()
+    }
+
     fun retryRestore() { _state.value = StoreState.Opening; scope.launch { _state.value = open() } }
 
     /** Gives up on the restored copy (a bad or incomplete restore can never succeed) and starts with an empty store. */
@@ -69,7 +75,23 @@ class StoreHolder(private val context: Context, val backup: BackupCoordinator, p
         }
     }
 
-    private suspend fun open(): StoreState = try {
+    /**
+     * Right after a fingerprint/face unlock the activity can start a moment before the Keystore knows the phone is
+     * unlocked. While the keyguard already reports unlocked, a „locked“ failure is retried briefly instead of shown.
+     */
+    private suspend fun open(): StoreState {
+        val keyguard = context.getSystemService(android.app.KeyguardManager::class.java)
+        var result = openOnce()
+        var tries = 0
+        while (result is StoreState.Failed && result.reason == DbKeyException.Reason.DEVICE_LOCKED && keyguard?.isDeviceLocked == false && tries < 10) {
+            kotlinx.coroutines.delay(300)
+            result = openOnce()
+            tries++
+        }
+        return result
+    }
+
+    private suspend fun openOnce(): StoreState = try {
         val f = backup.files
         if (f.restorePending.exists() && !AndroidDatabase.exists(context, dbName)) restore()
         else {

@@ -67,7 +67,8 @@ class SurfacesDeviceTest {
     }
 
     @Test fun receiverPostsDiscreetPrivateNotificationOnce(): Unit = runBlocking {
-        InstrumentationRegistry.getInstrumentation().uiAutomation.grantRuntimePermission(ctx.packageName, Manifest.permission.POST_NOTIFICATIONS)
+        // a runtime permission only from Android 13 on
+        if (android.os.Build.VERSION.SDK_INT >= 33) InstrumentationRegistry.getInstrumentation().uiAutomation.grantRuntimePermission(ctx.packageName, Manifest.permission.POST_NOTIFICATIONS)
         val now = java.time.LocalTime.now()
         val minute = (now.hour * 60 + now.minute - 1).coerceAtLeast(0)
         NotifyFiles.writePlan(ctx, NotifyPlan(listOf(NotifyItem(NotifyKind.PERIOD_SOON.key, today, minute)), discreet = true), System.currentTimeMillis())
