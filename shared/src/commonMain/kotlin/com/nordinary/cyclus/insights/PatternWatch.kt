@@ -72,6 +72,13 @@ internal fun CycleData.pastCycles(starts: List<Day>): List<PastCycle> {
     return out
 }
 
+/** Finished cycles with each day's window (for presenters; same as the engine's internal view). */
+fun CycleData.pastCyclesPublic(starts: List<Day>): List<PastCycleView> =
+    pastCycles(starts).map { c -> PastCycleView(c.s, c.e, c.length, c.days.map { DayView(it.d, it.k, it.l, it.win) }) }
+
+data class DayView(val d: Day, val k: Int, val l: DayLog?, val win: Window)
+data class PastCycleView(val s: Day, val e: Day, val length: Int, val days: List<DayView>)
+
 private fun DayLog?.hasItem(item: String) = this != null && has(item)
 private fun pct(x: Double) = Js.roundInt(x * 100)
 private fun winTxt(w: Window) = txt("win_${w.key}")

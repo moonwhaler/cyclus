@@ -67,19 +67,7 @@ object InsightsPresenter {
             )
         } else null
 
-        // heatmap: share of observed days (nothing-else, any symptom or any flow) with the symptom
-        fun observedForHeat(l: DayLog?) = l != null && (l.nothingElse || l.symptoms.isNotEmpty() || l.flow != null)
-        val pastStarts = starts.drop(1)
-        val rates = HEAT_SYMPTOMS.map { s ->
-            HEAT_REL.map { r ->
-                var h = 0; var n = 0
-                for (st in pastStarts) {
-                    val l = data.log(st + r)
-                    if (observedForHeat(l)) { n++; if (s in l!!.symptoms) h++ }
-                }
-                if (n > 0) h.toDouble() / n else 0.0
-            }
-        }
+        val rates = heatRates(snap, starts.drop(1))
 
         val history = starts.takeLast(7).dropLast(1).reversed().map { s ->
             val nx = starts[starts.indexOf(s) + 1]
@@ -91,6 +79,24 @@ object InsightsPresenter {
             patterns = patternSection(snap, muted), bars = barModels, temperature = temperature,
             heat = HeatMap(HEAT_SYMPTOMS, HEAT_REL, rates), history = history,
         )
+    }
+
+    /**
+     * Symptom heatmap: share of observed days (nothing-else, any symptom or any flow) with the symptom, by day
+     * relative to each period start in [periodStarts] (prototype `renderInsights`).
+     */
+    fun heatRates(snap: CycleSnapshot, periodStarts: List<Day>): List<List<Double>> {
+        fun observedForHeat(l: DayLog?) = l != null && (l.nothingElse || l.symptoms.isNotEmpty() || l.flow != null)
+        return HEAT_SYMPTOMS.map { s ->
+            HEAT_REL.map { r ->
+                var h = 0; var n = 0
+                for (st in periodStarts) {
+                    val l = snap.data.log(st + r)
+                    if (observedForHeat(l)) { n++; if (s in l!!.symptoms) h++ }
+                }
+                if (n > 0) h.toDouble() / n else 0.0
+            }
+        }
     }
 
     fun patternSection(snap: CycleSnapshot, muted: Set<String>): PatternSection {
