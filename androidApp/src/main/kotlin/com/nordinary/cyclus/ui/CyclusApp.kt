@@ -113,7 +113,11 @@ fun CyclusApp(vm: AppViewModel, debug: Boolean) {
 
     NavDisplay(
         backStack = backStack,
-        onBack = { backStack.removeLastOrNull() },
+        onBack = {
+            // leaving the report builder by gesture resets it like the back arrow (and drops the PDF file)
+            if (backStack.lastOrNull() == ReportKey) vm.closeReport()
+            backStack.removeLastOrNull()
+        },
         entryProvider = entryProvider {
             entry<MainKey> {
                 MainScreen(

@@ -95,7 +95,8 @@ fun ReportScreen(vm: AppViewModel, fmt: Fmt, snackbar: SnackbarHostState, onBack
     val options by vm.reportOptions.collectAsStateWithLifecycle()
     val file by vm.reportFile.collectAsStateWithLifecycle()
     val working by vm.reportWorking.collectAsStateWithLifecycle()
-    var pdfDe by remember { mutableStateOf(vm.reportLocale.language == "de") }
+    val pdfLocale by vm.reportLocale.collectAsStateWithLifecycle()
+    val pdfDe = pdfLocale.language == "de"
     val o = options ?: return
     val back = { vm.closeReport(); onBack() }
     val scroll = TopAppBarDefaults.exitUntilCollapsedScrollBehavior()
@@ -156,8 +157,7 @@ fun ReportScreen(vm: AppViewModel, fmt: Fmt, snackbar: SnackbarHostState, onBack
             item { Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                 Label(fmt.s("pdfLang"))
                 Segments(listOf("Deutsch", "English"), if (pdfDe) 0 else 1) { i ->
-                    pdfDe = i == 0
-                    vm.reportLocale = if (pdfDe) Locale.GERMAN else Locale.ENGLISH
+                    vm.reportLocale.value = if (i == 0) Locale.GERMAN else Locale.ENGLISH
                 }
             } }
             item { Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {

@@ -317,12 +317,13 @@ class AppViewModel(
     val reportOptions = kotlinx.coroutines.flow.MutableStateFlow<com.nordinary.cyclus.presenter.ReportOptions?>(null)
     val reportFile = kotlinx.coroutines.flow.MutableStateFlow<java.io.File?>(null)
     val reportWorking = kotlinx.coroutines.flow.MutableStateFlow(false)
-    var reportLocale: java.util.Locale = java.util.Locale.GERMAN
+    /** PDF language: the single source for the toggle and the renderer. */
+    val reportLocale = kotlinx.coroutines.flow.MutableStateFlow(java.util.Locale.GERMAN)
 
     fun initReport(defaultQuestions: String, uiLocale: java.util.Locale) {
         if (reportOptions.value == null) {
             reportOptions.value = com.nordinary.cyclus.presenter.ReportOptions(questions = defaultQuestions)
-            reportLocale = if (uiLocale.language == "en") java.util.Locale.ENGLISH else java.util.Locale.GERMAN
+            reportLocale.value = if (uiLocale.language == "en") java.util.Locale.ENGLISH else java.util.Locale.GERMAN
         }
     }
 
@@ -334,13 +335,14 @@ class AppViewModel(
     fun buildReport(regionLocale: java.util.Locale) {
         val m = model.value ?: return
         val opts = reportOptions.value ?: return
+        val locale = reportLocale.value
         reportWorking.value = true
         viewModelScope.launch {
             try {
                 val file = kotlinx.coroutines.withContext(Dispatchers.Default) {
                     val r = com.nordinary.cyclus.presenter.ReportPresenter.build(m.snapshot, opts, m.muted, m.episodes) ?: return@withContext null
-                    val bytes = com.nordinary.cyclus.report.ReportPdf.render(app, r, reportLocale, com.nordinary.cyclus.report.ReportPdf.paperFor(regionLocale))
-                    val name = (if (reportLocale.language == "de") "Zyklusbericht-" else "Cycle-summary-") + LocalDate.now() + ".pdf"
+                    val bytes = com.nordinary.cyclus.report.ReportPdf.render(app, r, locale, com.nordinary.cyclus.report.ReportPdf.paperFor(regionLocale))
+                    val name = (if (locale.language == "de") "Zyklusbericht-" else "Cycle-summary-") + LocalDate.now() + ".pdf"
                     com.nordinary.cyclus.report.ReportFiles.write(app, name, bytes)
                 }
                 reportFile.value = file
