@@ -13,17 +13,18 @@ Defaults are marked ✅. The rest of this spec is written against them. Changing
 
 | # | Decision | Default (recommended) | Alternative |
 |---|---|---|---|
-| **D1** | Fertility features (fertile window, Conceive mode, ovulation estimate/confirmation, cycle-deviation flags) | ✅ **Not in v1.** v1 = period tracking, symptom/condition diary, period prediction, data display. Fertility goes behind a regulatory gate (§1.4). | Get a written MDR/FDA qualification opinion first (€3–10k, 4–8 weeks), then build to what it allows |
+| **D1** | Fertility features (fertile window, Conceive mode, ovulation estimate) | ✅ **IN v1 — owner decision 2026-11-22.** Multi-signal fertility engine (§11.11) + Conceive mode (§7.14). Shipped per region behind a feature flag once the regulatory path for that region is cleared (§1.4). Cycle-deviation nudges stay gated. | — (decided) |
 | **D2** | Positioning vs. iOS 27 Apple Health | ✅ Three wedges (§1.2): **deep fast logging**, **condition-first** (PCOS/endo/irregular), **Doctor Visit Pack**. Validate in week 1–2 with current Apple Health users. | Pick one wedge only |
 | **D3** | Publisher | ✅ **Legal entity + Organization developer account** before submission (UG (haftungsbeschränkt) or e.V.; D-U-N-S number). Start now, because it takes 4–8 weeks. | Individual account (rejection risk under guideline 5.1.1(ix), personal liability) |
-| **D4** | Schedule | ✅ **Honest ~34 weeks** for the full v1 scope in §2 at ~20 h/week (≈ 680 h incl. 25% buffer, §13.1). Internal TestFlight at ~week 18. | Apply the §13.1 cut list (≈ −100 h) → ~29 weeks |
+| **D4** | Schedule | ✅ **Honest ~44 weeks** for the full v1 scope incl. fertility at ~20 h/week (≈ 870 h incl. 25% buffer, §13.1). Internal TestFlight at ~week 22. Fertility can go live per region later than the core app (feature flag). | Apply the §13.1 cut list (≈ −100 h) → ~39 weeks; or 25 h/week → ~35 weeks |
 | **D5** | Backup | ✅ Store **included** in device backups (so phone migration just works), with honest disclosure plus a "Device only" toggle that sets `isExcludedFromBackup`, plus **encrypted export**. | Exclude by default (max privacy, real data-loss risk) |
 | **D6** | Money | ✅ Strictly free. **No tip jar in v1** (it would make the developer a DSA trader, whose address is published). | Tip jar via IAP after the entity exists |
 | **D7** | Platform baseline | ✅ **Deployment target iOS 26.0, built with the iOS 27 SDK.** Use iOS 27 APIs behind `if #available`. | iOS 27 minimum (smaller audience, simpler code) |
 | **D8** | Markets & languages | ✅ EU + US. EN + DE at launch | — |
 
 ### 0.2 What changed vs. PLAN.md (summary)
-- **Removed from v1:** Conceive mode, fertile window, ovulation estimate/confirmation, anomaly nudges, "phase" names that imply ovulation (follicular/luteal), Siri/App Shortcuts, Control Center control, LLM features.
+- **Removed from v1:** anomaly/deviation nudges, Siri/App Shortcuts, Control Center control, LLM features.
+- **Fertility (D1 = in, revised 2026-11-22):** calendar-only "ovulation = period − 14" replaced by a **daily Bayesian multi-signal engine** (§11.11): cycle history + LH tests (positive *and* negative) + cervical mucus + BBT + Apple Watch wrist temperature, with personal learning, a smart LH-test planner and "Why this window?" explanations.
 - **Added to v1:**
   - life-stage *episodes* in the data model;
   - pain map;
@@ -40,9 +41,9 @@ Defaults are marked ✅. The rest of this spec is written against them. Changing
 ### 0.3 Review resolution map
 | Finding | Resolution | Where |
 |---|---|---|
-| M1 Regulatory | Fertility features gated (D1); copy guardrails; citations fixed | §1.4, §9.3 |
+| M1 Regulatory | Owner chose fertility in v1 (D1). Treated as a medical-device function: regulatory path per region, feature flag, intended-purpose wording, copy guardrails, budget | §1.4, §9.3, §13 |
 | M2 Apple Health parity | Wedges + validation with Apple Health users | §1.2, §13 |
-| M3 Wrist temp / BBT | v1 = temperature *display only*. Shift detection specified for the gated phase, on its own baseline, Sensiplan-correct | §11.6 |
+| M3 Wrist temp / BBT | Own baseline on raw values; Sensiplan-correct BBT rule; wrist used as weaker evidence than BBT, never double-counted; "likely occurred", never "confirmed" | §11.6, §11.11 |
 | M4 File protection vs. lock screen | Single-writer process; intents require authentication; pending-event queue; principle rewritten | §3.3, §11.2 |
 | M5 Threat model | Full threat model; per-category HealthKit write opt-in; widget redaction; PIN; discreet defaults | §3 |
 | M6 Backup honesty | D5 + encrypted export + full HealthKit re-import + backup indicator + honest copy | §3.4, §11.9 |
@@ -56,7 +57,7 @@ Defaults are marked ✅. The rest of this spec is written against them. Changing
 | m2 Age rating | 13+ under the new tiers; teen priors; Declared Age Range API reviewed | §1.5, §11.5 |
 | m3 Modes naive | Episodes model in v1 schema | §2.2, §11.3 |
 | m4 Cycle detection | Precedence: override > start flag > heuristic; `unspecified` flow counts | §11.5.1 |
-| m5 LH timing | Deferred with fertility. When built: first positive → 24–48 h | §11.6 |
+| m5 LH timing | First positive → ovulation mostly +1/+2 days; negatives informative; estrogen-surge results handled; lag personalised | §11.11.3 |
 | m6 HK mapping loss | Lossless mapping table + "not mirrored" fields | §11.4.2 |
 | m7 Zero-network check | Lint bans `Network`/`WebKit`/`URLSession`; App Privacy Report pass in release QA | §12.1 |
 | m8 Privacy manifest | Reason codes listed | §11.10 |
@@ -94,6 +95,7 @@ Apple Health is the default and it is good. Cyclus wins only where Apple structu
 | **2. Condition-first** (PCOS, endometriosis, irregular, perimenopause, gender-affirming hormones) | General cycle model; perimenopause support aimed at 40+ | Episodes that change the model (no "late" language, wider ranges); condition-relevant log sets; a pain and bleeding diary built for diagnosis conversations (endometriosis diagnosis takes ~7–10 years on average) |
 | **3. Doctor Visit Pack** | Generic PDF export of cycle history | Clinician-oriented summary: bleeding calendar, pain trends, symptom-by-cycle-day heatmap, the user's own questions, EN or DE output independent of UI language, FIGO reference ranges printed for context |
 | **4. Privacy controls** | Health data E2E in iCloud; no per-app lock | App lock + optional app-only PIN, per-category control over what goes into Health, discreet widgets/notifications, Privacy Center |
+| **6. Fertility that explains itself** | Calendar estimate, adjusted by LH tests; retrospective wrist-temperature ovulation estimate (Watch S8+) | Daily probability from **all** signals (LH ±, mucus, BBT, wrist temp), learns your personal luteal length and LH→ovulation lag, **tells you when to start LH tests**, shows *why* the window moved |
 | **5. Insights in German on any iPhone** (v1.5) | AI Insights depend on Apple Intelligence and language rollout | Deterministic insights with localised templates; on-device LLM polish where available |
 
 **Validation gate (week 1–2):** 6–8 interviews with *current Apple Health cycle-tracking users* plus 2 people with endometriosis or PCOS. Each wedge needs ≥ 50% "would switch / use alongside" to stay in v1. Otherwise cut it (D4 alternative).
@@ -106,9 +108,18 @@ Apple Health is the default and it is good. Cyclus wins only where Apple structu
 5. **Calm, native, beautiful, accessible.** Feels like Apple built it, with more warmth.
 
 ### 1.4 Regulatory & legal guardrails
-- **Intended purpose (v1), to be used verbatim in the App Store, website and in-app About:** "Cyclus helps you record your periods, symptoms and wellbeing, see patterns in your own records, and share a summary with your healthcare provider. Cyclus is not a medical device, is not intended for contraception or to support conception, and does not diagnose any condition."
-- **Fertility gate (D1).** Fertile-window, ovulation and conception features are built only after a written qualification opinion. Basis: MDR Art. 2(1) "control or support of conception" → software in scope; contraception = Annex VIII Rule 15; software informing decisions = Rule 11; FDA General Wellness guidance reissued 2026-01-06. Apple's own Cycle Tracking is labelled a medical device.
-- **Grey zone to confirm in the same opinion:** whether **period prediction** alone and the **FIGO reference ranges in the PDF** keep v1 outside MDR. Default stance: predictions are framed as "based on your past records", and the PDF prints reference ranges *without* flagging the user's values.
+- **Intended purpose (draft, to be finalised with the regulatory specialist; used verbatim in the App Store, website and in-app About):** "Cyclus helps you record your periods, symptoms and wellbeing, see patterns in your own records, estimate your fertile days **as an aid to conception**, and share a summary with your healthcare provider. Cyclus is **not intended for contraception** and does not diagnose any condition."
+- **Fertility = medical-device function (D1 = in).** MDR Art. 2(1) covers software for "control or support of conception". FDA General Wellness guidance was reissued 2026-01-06. Precedents:
+  - Apple's Cycle Tracking IFU labels it a medical device "to facilitate conception".
+  - Clue's Conceive mode is listed in FDA GUDID under product code **LHD** ("fertility diagnostic, proceptive"), and BioWink declares it a regulated device under EU law.
+
+  **Consequences:**
+  1. A specialist qualification and classification opinion (EU class under Annex VIII Rule 11, and US product code / registration and listing duties) is **required before release in each region**. Budget €3–10k.
+  2. Likely EU work: QMS-lite + technical documentation (ISO 14971 risk management, IEC 62304 software lifecycle, IEC 62366 usability, clinical evaluation from literature + own validation), EUDAMED registration, a Person Responsible for Regulatory Compliance (PRRC), and post-market surveillance. If classified IIa, a notified body is needed (cost and timeline jump; specialist to confirm).
+  3. US: FDA establishment registration and device listing likely, with an **annual registration user fee** (around US$10k in recent fiscal years; verify the current amount). A real cost for a free app.
+  4. **Engineering consequence:** fertility ships behind `FeatureFlags.fertility(region:)`. The app can launch period/symptom tracking in a region while fertility waits for clearance there. Code is written to IEC 62304-friendly standards from day one: requirements traceability (spec § → tests), a risk register, SOUP list (none at runtime).
+  - Contraception claims remain **out of scope** (Annex VIII Rule 15, FDA Class II special controls). Never "safe days".
+- **Grey zone (same opinion):** whether the **FIGO reference ranges in the PDF** are acceptable. Default: printed *without* flagging the user's values.
 - **Copy guardrails:** see the banned-terms list in §9.3. App Store screenshots and text count as "intended purpose" evidence.
 - **Privacy law:**
   - Privacy policy states no data is received.
@@ -128,7 +139,7 @@ Contraception or conception support, diagnosis, community/social features, conte
 ## 2. Scope
 
 ### 2.1 Releases
-**v1.0 (≈ week 34)**
+**v1.0 (≈ week 44 at 20 h/week; see D4)**
 - Onboarding with Apple Health import.
 - Today, Log sheet (incl. pain map, tags, "nothing else today"), Calendar + Day detail, Insights (stats & charts, no pattern engine).
 - Period prediction (§11.5). Temperature *display* (BBT logged + wrist temp read).
@@ -143,7 +154,16 @@ Contraception or conception support, diagnosis, community/social features, conte
 
 **v1.5 (+10 weeks):** Pattern engine (§11.7) with template insights; on-device LLM phrasing (§11.8); pill/patch/ring schedule within the hormonal-contraception episode; Apple Watch app (log + glance).
 
-**Gated (needs D1 opinion):** fertile window, Conceive mode, LH tests → ovulation, temperature-shift detection, cycle-deviation nudges.
+**Also v1.0 (behind the per-region fertility flag, §1.4):**
+- Fertility engine (§11.11);
+- **Conceive mode** (§7.14);
+- optional "Show fertile window" in Track mode (off by default);
+- LH-test planner;
+- ovulation estimate (predicted → likely → likely occurred);
+- temperature shift markers;
+- Conceive section in the Doctor Visit Pack.
+
+**Gated:** cycle-deviation nudges (Apple ships these as a regulated feature).
 
 **v2:** "Ask your data" (on-device), pregnancy & postpartum experiences, partner sharing (mechanism depends on Apple's answer about 5.1.3(ii)), Live Activity during period.
 
@@ -253,7 +273,8 @@ Contrast verified (WCAG 2.2) against `bg` and `surface`. Text tokens ≥ 4.5:1; 
 
 Rules:
 - **Colour is never the only signal.** Bleeding days have a filled droplet glyph. Predicted days use a dashed outline + "predicted" label. The pre-period window uses a dotted pattern on the ring.
-- Fertility colours (amber "ovulatory") are reserved. They are **not used** in v1 (gate D1).
+- **Fertility tokens:** `fertile` `#13706F` / `#5FD0C8` (5.6:1 / 10.1:1 vs bg; white text on light fill 5.9:1, ink on dark fill 10.1:1). Fertility is shown in **3 intensities** (Possible 30% fill, High 65%, Peak 100% + ✦ glyph) **plus a dot-density pattern**. `fertile` and `period` have near-equal luminance (1.1:1), so they are distinguished by hue + glyph + pattern, never by lightness alone. Ovulation marker: ◎ glyph (dashed = predicted, solid = likely / likely occurred).
+- **Never green-coded "low"**: "Lower chance" days get no fill at all, to avoid a "safe" reading.
 - High-contrast mode (`colorSchemeContrast == .increased`): darken light-mode fills 15%, use solid outlines instead of dashed.
 
 ### 5.2 Typography
@@ -395,7 +416,8 @@ States:
    - Period lengths: bar chart.
    - **Symptom heatmap:** rows = symptoms, columns = days relative to period start (−10…+10), cell = % of observed days with the symptom. Requires ≥ 2 cycles.
    - Pain: line of max daily pain, period days shaded.
-   - Temperature: BBT (logged) and wrist temperature (from Apple Watch) as separate series with gaps shown. **No shift markers in v1** (gate D1).
+   - Temperature: BBT (logged) and wrist temperature (from Apple Watch) as separate series with gaps shown. A coverline and "temperature rise" marker appear where the shift detector (§11.6) fires (fertility flag on).
+   - Conceive (fertility flag on): ovulation day per cycle (dot + 80% range bar), luteal length per cycle, first positive LH test vs estimated ovulation.
 3. **Cycle history:** list rows (start date, length, period length, mini heatmap). Tap → Cycle detail.
 4. **Doctor Visit Pack** entry card.
 5. (v1.5) **Patterns** section with InsightCards.
@@ -460,6 +482,43 @@ Full-screen `bg` with the app glyph, "Cyclus is locked", and an [Unlock] button 
 | Wrong export passphrase | "That passphrase didn't work. Nothing was changed." |
 | Storage full | "Your iPhone is out of space, so we couldn't save. Free up space and try again." |
 
+### 7.14 Conceive mode (fertility flag on)
+Selected in onboarding step 6 ("Trying to get pregnant") or in Settings › Life stage. In Track mode, "Show fertile window" (off by default) shows the band and the ovulation marker only: no "Lower chance", no planner.
+
+**Today (Conceive):**
+```
+┌──────────────────────────────────────┐
+│          ╭───────────────╮           │
+│        ╱  ✦ Peak day      ╲          │  ring: fertile arc shaded by P_fertile
+│       │   Cycle day 14     │         │  ◎ ovulation marker (dashed=predicted)
+│        ╲ Ovulation likely ╱          │
+│          ╰ today or tmrw ╯           │
+│   [Updated by your LH test]          │  evidence chip
+│ ┌──────────────────────────────────┐ │
+│ │ Best days: Today · Tomorrow      │ │
+│ │ Sex every 1–2 days in High/Peak. │ │
+│ └──────────────────────────────────┘ │
+│ ┌──────────────────────────────────┐ │
+│ │ LH test · today      [–]  [+]    │ │  one-tap result
+│ │ Positive yesterday ✓             │ │
+│ └──────────────────────────────────┘ │
+│  Why this window? ›                  │
+│  Not for birth control.              │
+└──────────────────────────────────────┘
+```
+- **Centre text by tier:** "✦ Peak day" / "High chance today" / "Possible today" / "Lower chance · window opens in ~3 days".
+- **Evidence chip:** "Calendar estimate" / "Updated by your LH test" / "Updated by your mucus" / "Temperature rise detected".
+- **LH card:** shown from planner start day until a positive or a temperature shift. Buttons are text-labelled (Negative / Positive / Surge), not just ±.
+- **Why this window?** sheet: timeline of the `EvidenceTrail`, e.g.
+  - "From your last 8 cycles: Nov 9–15"
+  - → "Positive LH Nov 12: narrowed to Nov 11–13"
+  - → "Temperature rise Nov 14: ovulation likely occurred around Nov 13."
+
+  Plus a "How Cyclus estimates fertility" explainer (clinician-reviewed).
+- **Two-week wait** (after *Likely occurred*): ring centre "Day 6 after ovulation", card "Earliest reliable test: Nov 28". No countdown pressure, no baby imagery.
+- **Log sheet pinned (Conceive default):** LH test · Mucus · BBT · Sex. The BBT field remembers the last value and offers a ±0.05 stepper; the °C/°F unit follows settings.
+- **Calendar:** fertility shading (3 intensities + dot pattern), ◎ ovulation marker, ✦ peak day, LH-positive tick.
+
 ---
 
 ## 8. System surfaces
@@ -485,6 +544,9 @@ Timeline: one entry per day at local midnight, plus a reload after each save (`W
 | Log reminder (daily, user time) | Off | "Cyclus · Reminder" | "How are you feeling today?" |
 | Later than usual (1 d past upper bound) | **Off** | "Cyclus · Check-in" | "Your period is later than your usual range." |
 | Backup reminder (monthly) | Off | "Cyclus · Backup" | "It's been a month since your last backup." |
+| LH test reminder (Conceive, planner days) | On in Conceive | "Cyclus · Reminder" | "Time for today's LH test." |
+| Window opening (Conceive) | On in Conceive | "Cyclus · Check-in" | "Your fertile window is likely starting." |
+| BBT morning reminder (Conceive, if BBT used) | Off | "Cyclus · Reminder" | "Take your temperature before getting up." |
 
 Copy note in settings: "Notifications also appear on your Apple Watch."
 
@@ -503,8 +565,12 @@ Warm, plain, direct; second person; short sentences. Say "period", "bleeding", "
 ### 9.3 Banned / restricted terms (v1, all surfaces incl. App Store)
 | Term | Rule |
 |---|---|
-| fertile, fertility window, ovulation, ovulating, safe days, conceive, TTC | **Banned** (gate D1). Exception: "Not for contraception or conception." |
-| follicular, luteal, ovulatory phase | Banned in UI (implies ovulation estimation). Use "period", "pre-period window", "between periods". |
+| safe days, infertile days, unsafe days, "can't get pregnant", "low risk", protection, birth control (as a claim) | **Banned everywhere.** Only allowed: "Not for birth control." |
+| fertile, fertile window, ovulation, conceive | Allowed **only** when the fertility flag is on (Conceive mode or Track with "Show fertile window"), always with uncertainty ("likely", "estimated") |
+| "confirmed ovulation", "you ovulated" | Banned. Use "ovulation likely occurred around …" |
+| % chance of pregnancy | Banned (age-dependent, a claim). Use tiers: Lower chance / Possible / High / Peak |
+| "Lower chance" | Conceive mode only; never shown in Track mode; never with a fill colour |
+| follicular, luteal | UI uses "before ovulation" / "after ovulation". Technical terms only in the Doctor Visit Pack (clinician audience) |
 | diagnose, detect, screen, "signs of PCOS/endometriosis" | Banned |
 | irregular | Only in user-chosen condition labels or as a neutral description of the user's own data ("your cycles vary"), never as a verdict |
 | accurate / % accuracy | Banned until validated (§12.2) |
@@ -642,6 +708,7 @@ struct LocalDate: Codable, Hashable, Comparable, Sendable { // civil date, no ti
 | mood (1–5) | `HKStateOfMind` (dailyMood, valence mapped −1…+1) | **Off** | Labels not mapped in v1 |
 | energy, sleepQuality, pain map, tags, notes | — | Not mirrored | Shown in Privacy Center as "Cyclus only" |
 | discharge | `cervicalMucusQuality` (dry/sticky/creamy/watery/eggWhite) | Off | Cyclus-only options (e.g. "unusual") not mirrored |
+| LH test | `ovulationTestResult` (negative/LHSurge/estrogenSurge/indeterminate) | Off (Conceive status is sensitive; turning it on improves Apple Health's own estimates) | — |
 | sex | `sexualActivity` + `HKMetadataKeySexualActivityProtectionUsed` | **Off** | — |
 | BBT | `basalBodyTemperature` | On | — |
 | wrist temperature | `appleSleepingWristTemperature` | Read only | Treated as raw series; baseline computed by Cyclus |
@@ -700,9 +767,9 @@ For a completed cycle with `L ≥ 1.6 · exp(μ_n)` **and** user logging activit
 #### 11.5.5 Pre-period window
 Displayed as 7 days before the predicted **lower bound**. This is a calendar convenience, not a physiological claim; copy: "the days before your period".
 
-### 11.6 Temperature (v1 display; detection gated)
+### 11.6 Temperature (display + shift detection feeding §11.11)
 - **v1:** display BBT (user-logged) and wrist temperature (read). Wrist values are plotted as **deviation from a Cyclus-computed baseline**, defined as the rolling median of nights −35…−6 with ≥ 10 nights present. This works whether HealthKit returns absolute values (as the developer docs indicate) or relative ones, because subtracting a baseline is idempotent for our purpose. Gaps are shown as gaps. No markers or inference.
-- **Gated (D1), specified for later:**
+- **Shift detection (feeds §11.11 as likelihoods, never as hard truth):**
   - **BBT (Sensiplan-style):** a shift is confirmed when 3 consecutive readings are each higher than the highest of the 6 preceding readings, and the 3rd is ≥ 0.2 °C above that maximum. Apply the Sensiplan exception rules (verify against the official Arbeitsgruppe NFP handbook before implementation).
   - **Wrist:** an own detector on baseline-corrected deviations (persistent elevation ≥ 0.25 °C for ≥ 3 of 4 nights after ≥ 5 of 7 lower nights), labelled "possible temperature shift". Never fed into period prediction until back-tested on real wrist data.
   - **LH:** ovulation typically 24–48 h after the *first* positive.
@@ -758,6 +825,122 @@ struct Insight: Sendable, Codable {
 - System boot time — audit via an Xcode privacy report; declare if triggered by dependencies.
 
 App Store privacy label: **Data Not Collected** (optional user-initiated feedback mail is not "collection" by the app; re-verify at submission).
+
+### 11.11 Fertility engine (CycleEngine/Fertility, D1 = in)
+
+**Goal.** For every day in the current cycle, compute:
+- the probability it is inside the fertile window;
+- a ranked "best days" list;
+- an ovulation-day estimate with uncertainty.
+
+Every new data point updates them, and each finished cycle personalises the model. "Intelligent" here means **multi-signal evidence fusion + personal calibration + honest uncertainty**, not calendar arithmetic.
+
+#### 11.11.1 Physiology the model encodes
+- The fertile window is the **6 days ending on ovulation day** (Wilcox et al., NEJM 1995). Per-day conception chance (intercourse on that day only) is ≈ 0.10, 0.16, 0.14, 0.27, 0.31, 0.33 for days −5…0. Only the **relative** shape is used, never shown as %.
+- Ovulation timing varies a lot between and within people. Only ~30% have the window entirely within cycle days 10–17 (Wilcox, BMJ 2000). Hence a distribution, not a date.
+- After ovulation (luteal phase) is **less variable within a person** than before ovulation. Population mean 12.4 ± 2.4 d (Bull et al. 2019). Learning the personal luteal length is the biggest accuracy gain.
+- Signals:
+  - urinary LH surge precedes ovulation (~24–48 h after the first positive);
+  - fertile-quality cervical mucus (watery / egg-white) appears in the days before ovulation; "peak day" ≈ ovulation ±2;
+  - basal temperature rises after ovulation (retrospective);
+  - wrist skin temperature and resting heart rate rise in the luteal phase (weaker, noisier).
+
+#### 11.11.2 State & prior
+- Hidden state per cycle: `O ∈ {6 … D_max}` (cycle day of ovulation, `D_max = max(60, ⌈1.5 × predicted length⌉)`) **plus** `A` = anovulatory cycle.
+- **P(A) prior**:
+
+  | Context | P(A) |
+  |---|---|
+  | Adult | 0.05 |
+  | Teen / < 2 yrs since first period | 0.15 |
+  | First 3 cycles after hormonal contraception or birth | 0.15 |
+  | 40+ | 0.10 |
+  | Perimenopause | 0.25 |
+  | PCOS | 0.30 |
+
+  Provisional; clinician review + back-test.
+- **Prior over O:**
+  - **(a)** If ≥ 2 past cycles have a *good* ovulation estimate (80% HPD ≤ 3 days and temperature- or LH-supported): log-normal NIG model (as §11.5.2) on *follicular length* `F = O`. Posterior predictive → discrete pmf.
+  - **(b)** Otherwise, `O = L* − Lut + 1`, with `L*` ~ the cycle-length posterior predictive (§11.5) and `Lut` ~ personal luteal predictive (prior N(12.4, 2.4²) truncated to 7…17; NIG update from good past cycles). Discrete convolution.
+  - **(c)** No cycle history: population prior from (b) with the age-band cycle prior. Labelled "Calendar estimate — very uncertain".
+
+#### 11.11.3 Evidence likelihoods `P(observation | O = d)`
+Applied to today's cycle on every recompute. `t` = cycle day of the observation.
+
+| Signal | Likelihood model (provisional, personalised over time) |
+|---|---|
+| **LH positive (first of a run)** | Lag `k = d − t`: P(k = 0) 0.15, P(1) 0.45, P(2) 0.30, P(3) 0.07, else 0.03 spread. Later positives in the same run add no extra evidence |
+| **LH negative** | If `d − t ∈ {1, 2}` (the surge should have been visible) → 0.20 (missed or short surges happen); else 0.95 |
+| **LH "estrogen surge" / high** (HK `.estrogenSurge`) | `d − t ∈ 1…5` → 0.8; else 0.2 |
+| **Mucus egg-white / watery on day t** | `t ∈ [d−5, d]` → 0.8; `t ∈ {d+1, d+2}` → 0.4; else 0.1 |
+| **Mucus dry / sticky on day t** | `t ∈ [d−2, d]` → 0.2; else 0.8 |
+| **Mucus peak day** (last fertile-quality day, identified ≥ 1 day later) | `d − peak ∈ {−1, 0, +1, +2}` → 0.2, 0.35, 0.3, 0.1; else 0.05 spread |
+| **BBT shift** (Sensiplan, §11.6; first high reading on day h) | `d ∈ {h−3, h−2, h−1, h}` → 0.1, 0.3, 0.45, 0.15; **no-shift evidence:** if ≥ 6 valid lows after day `d+2` → 0.1 |
+| **Wrist-temp shift** (§11.6 detector; first elevated night h) | Flatter: `d ∈ {h−4 … h}` → 0.1, 0.2, 0.3, 0.3, 0.1. **Used only if no BBT that cycle** (avoid double counting) |
+| **Resting HR rise** (v1.5) | Likelihood ratio capped at 1.5, only as a tiebreaker |
+| **Positive pregnancy test** | Ends fertility outputs; suggests Pregnancy episode |
+
+- **Conditional independence** given O is assumed, except that BBT and wrist are mutually exclusive as above, and repeated same-type observations within 1 day collapse to one.
+- **Anovulation likelihood:** `P(obs | A)`:
+  - LH negatives → 0.95;
+  - no temperature shift for the whole cycle → high;
+  - fertile mucus → 0.4 (it occurs in anovulatory cycles too).
+
+#### 11.11.4 Posterior & outputs
+`post(d) ∝ prior(d) · Π likelihoods`, normalised jointly with `A`.
+
+- **P_fertile(t)** = Σ_d post(d) · 1[t ∈ [d−5, d]], the probability that day t is in the window.
+- **Conception weight** `c(t) = Σ_d post(d) · w(t−d)` (relative Wilcox shape) → used for **Peak** days and "best days".
+- **Tiers** (thresholds calibrated in back-test):
+  - **Peak:** P_fertile ≥ 0.6 **and** c(t) within top 2 days of the cycle;
+  - **High:** ≥ 0.5;
+  - **Possible:** 0.15–0.5;
+  - **Lower chance:** < 0.15 (shown in Conceive mode only, unfilled).
+- **Window band** = contiguous days with P_fertile ≥ 0.15. Its width *is* the uncertainty: it narrows visibly as evidence arrives.
+- **Ovulation estimate:** MAP day + 80% HPD. Status:
+  - *Predicted*: prior-dominated;
+  - *Likely soon*: LH positive or fertile mucus, and HPD ≤ 4 d;
+  - *Likely occurred*: temperature shift or day after peak + HPD ≤ 3 d.
+- **Next-period refinement:** once *likely occurred* and the back-test gate has passed, `L* = O + Lut` (personal luteal predictive), mixed with the §11.5 prediction by HPD width. The interval only ever narrows when evidence supports it.
+- **Anovulation copy:** if P(A) > 0.5 and today > personal 95th-percentile O + 3: "No sign of ovulation yet this cycle. That happens sometimes, especially with [context]." Never diagnostic.
+- **Explanations:** every output carries an `EvidenceTrail` (ordered list of `(signal, date, effect: .narrowed/.shiftedEarlier/.shiftedLater/.supported)`). This powers "Why this window?" (§7.14).
+
+#### 11.11.5 Personal learning (on cycle close)
+For each closed cycle with a *good* ovulation estimate:
+1. Update the follicular-length and luteal-length NIG posteriors (recency-weighted, robust; same machinery as §11.5).
+2. Update the **personal LH→O lag** distribution (Dirichlet over lags 0…3, prior = the table above × 10 pseudo-counts).
+3. Update the **mucus-peak→O offset** the same way.
+4. Update the personal P(A) (Beta prior from the band, counting cycles judged anovulatory with high confidence).
+
+Learning is per user, on device, deterministic, and fully reproducible from the logs (no stored model weights to migrate).
+
+#### 11.11.6 Smart assistance (Conceive mode)
+- **LH-test planner:** recommended start = first day `t` where P(O ≤ t + 2) ≥ 0.10. Testing continues daily (twice daily optional if P(O ∈ [t+1, t+2]) ≥ 0.3) until the first positive or a temperature shift. Shows: "Start testing **Thu, Nov 6** · usually 4–6 tests this cycle", with expected tests computed from the posterior. Reminder at a user time (default 14:00, per typical test instructions).
+- **Best days:** the top 3 days by `c(t)`, plus clinician-reviewed guidance: "Sex every 1–2 days during High and Peak days gives the best chance."
+- **Pregnancy test timing:** "Earliest reliable test: around **Nov 28**" = ovulation estimate + 14 or the predicted period lower bound, whichever is later.
+- **Time-to-pregnancy context** (educational, clinician-reviewed): after 12 months of trying (6 months if 35+), "many people talk to a fertility specialist". Shown once, dismissible, framed as general information.
+- **Doctor Visit Pack (Conceive section):** cycles tracked while trying, ovulation estimates with ranges, luteal lengths, first positive LH days, temperature charts. Neutral presentation; short luteal phases are listed without labels.
+
+#### 11.11.7 Safety rules
+- **Not birth control:** banned terms (§9.3); no "Lower chance" in Track mode; no fill on lower-chance days; a persistent "Not for birth control" footer on fertility surfaces.
+- If onboarding or settings indicate "avoiding pregnancy", show a one-time explainer: Cyclus can't be used for that; talk to a clinician about methods.
+- **Suppressed** when: a hormonal-contraception episode is active; pregnancy; postpartum/breastfeeding until 2 natural cycles; gender-affirming testosterone (unless the user enables it); the region flag is off.
+- **Irregular / PCOS / perimenopause:** prior (c) widened, P(A) raised. The calendar-only window is labelled "Very uncertain — LH tests or temperature help a lot".
+
+#### 11.11.8 Validation (feeds the regulatory clinical evaluation)
+| Metric | Reference | Target (provisional) |
+|---|---|---|
+| Ovulation-day error | First positive LH + 1 day; or Sensiplan BBT (day before first high) | ≥ 80% of cycles within ±2 days once LH or temperature is present (cf. Apple IFU endpoint) |
+| Calendar-only ovulation error | same | Reported honestly (expected ±3–4 d) |
+| Window coverage | Reference window (ref O −5…0) | ≥ 90% of reference fertile days inside the displayed band |
+| Window width | — | Median ≤ 9 days calendar-only, ≤ 6 with LH/temperature |
+| Calibration of P_fertile | Reference membership | Reliability-diagram slope 0.8–1.2; Brier score reported |
+| Null/robustness | Synthetic anovulatory and noisy cycles | No *Likely occurred* in ≥ 95% of simulated anovulatory cycles |
+
+Runs via the on-device back-test (§12.2), aggregate-only. Any public claim needs the regulatory clinical evaluation first.
+
+#### 11.11.9 Performance
+The posterior over ≤ 60 days × ≤ 40 observations is < 1 ms. The full recompute on every log save is trivial.
 
 ---
 
@@ -824,6 +1007,9 @@ App Store privacy label: **Data Not Collected** (optional user-initiated feedbac
 | Privacy Center, app lock, PIN, erase | 25 |
 | Backup & export (crypto, CSV, import/merge) | 20 |
 | Doctor Visit Pack | 30 |
+| **Fertility engine** (§11.11: prior, likelihoods, posterior, learning, planner, evidence trail) + property/back-tests | 45 |
+| **Conceive mode UI** (Today variant, LH card, Why sheet, calendar shading, two-week wait, Conceive charts) | 30 |
+| **Regulatory engineering** (requirements traceability, risk register, IEC 62304 docs, usability file, clinical-evaluation data from back-test) | 80 |
 | Widgets (home S/M, lock screen, redaction, snapshot) | 18 |
 | Notifications | 8 |
 | DE localisation + glossary review + DE screenshots | 20 |
@@ -831,13 +1017,13 @@ App Store privacy label: **Data Not Collected** (optional user-initiated feedbac
 | Website: privacy policy, support, Impressum, export schema | 10 |
 | App Store: screenshots EN/DE, metadata, age rating, privacy details, review notes, demo video | 15 |
 | TestFlight: Beta App Review, 2-cycle beta (calendar ~8 wks), fixes | 40 |
-| **Subtotal** | **543** |
-| Buffer 25% (rounded) | **~135** |
-| **Total** | **~680 h** |
+| **Subtotal** | **698** |
+| Buffer 25% (rounded) | **~175** |
+| **Total** | **~870 h** |
 
-At 20 h/week → **~34 weeks** (D4 default); at 17.5 h/week → ~39 weeks; at 25 h/week → ~27 weeks.
+At 20 h/week → **~44 weeks** (D4 default); at 17.5 h/week → ~50 weeks; at 25 h/week → ~35 weeks. Calendar-time dependencies (entity, regulatory opinion, clinician review, 2-cycle beta) run in parallel and are not the critical path if started in weeks 1–2.
 
-**Cut list** (≈ −78 h subtotal, ≈ −100 h incl. buffer → ~29 weeks at 20 h/week):
+**Cut list** (≈ −78 h subtotal, ≈ −100 h incl. buffer → ~39 weeks at 20 h/week):
 - move the pain map to v1.1 (−20);
 - drop the temperature chart (−8);
 - keep episodes UI to basic toggles (−5);
@@ -856,14 +1042,15 @@ The pain map is part of wedge 2, so cut it only if interviews don't confirm that
 | 5–7 | Core + Engine + Store | Engine tests pass; migration test harness |
 | 8–11 | Today, Log sheet, Calendar | Usability test #1 (n = 5): log ≤ 3 s |
 | 12–14 | HealthKit sync | Device integration checklist passes |
-| 15–16 | Insights, Onboarding, Episodes | — |
-| 17–18 | Privacy Center, lock/PIN, backup/export | **Internal TestFlight** |
-| 19–21 | Doctor Visit Pack, widgets, notifications | Clinician review of copy/PDF/templates |
-| 22–23 | DE, a11y, website, legal docs final | Audit checklists pass |
-| 24–34 | External TestFlight (Beta App Review) for ≥ 2 cycles; fixes; store assets; submission | Metrics §12.4 (beta rows); privacy report clean |
+| 15–17 | Fertility engine + Conceive UI | Engine property tests + synthetic robustness pass |
+| 18–20 | Insights, Onboarding, Episodes | — |
+| 21–22 | Privacy Center, lock/PIN, backup/export | **Internal TestFlight** (incl. on-device back-test screen) |
+| 23–26 | Doctor Visit Pack, widgets, notifications | Clinician review of copy/PDF/templates/fertility explainer |
+| 27–30 | DE, a11y, website, legal docs; regulatory technical file | Audit checklists pass; regulatory opinion received |
+| 31–44 | External TestFlight (Beta App Review) for ≥ 2 cycles; back-test aggregates; fixes; store assets; submission (fertility flag per region) | Metrics §12.4 + §11.11.8; privacy report clean |
 
 ### 13.3 Budget
-Apple Developer (Organization) €99/yr · Entity formation (UG) ~€800–1,200 · Regulatory qualification opinion €3–10k · Privacy/terms review ~€1–2k · Liability insurance (quote) · Clinician review €500–1,500 or pro bono · Servers €0.
+Apple Developer (Organization) €99/yr · FDA establishment registration fee if US fertility launch (~US$10k/yr, verify) · EU MDR costs per classification (Class I self-declaration: mainly own effort; IIa: notified body, five figures) · Entity formation (UG) ~€800–1,200 · Regulatory qualification opinion €3–10k · Privacy/terms review ~€1–2k · Liability insurance (quote) · Clinician review €500–1,500 or pro bono · Servers €0.
 
 ---
 
