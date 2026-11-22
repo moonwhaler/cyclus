@@ -1,0 +1,186 @@
+-- Cyclus store, schema v1 (DESIGN_SPEC §11.3, ANDROID_PLAN §2.4). Every change after v1 ships with a .sqm migration.
+-- Days are epoch days (civil date). Cycles are derived, never stored.
+
+CREATE TABLE day_log (
+    day INTEGER NOT NULL PRIMARY KEY,
+    flow TEXT,                      -- none | spotting | light | medium | heavy | unspecified
+    mood INTEGER,                   -- 1..5
+    energy INTEGER,                 -- 1..5
+    sleep INTEGER,                  -- 1..5
+    libido INTEGER,                 -- 1..5
+    mucus TEXT,                     -- dry | sticky | creamy | watery | eggwhite | unusual
+    lh TEXT,                        -- neg | pos | surge
+    bbt REAL,                       -- °C
+    sex INTEGER NOT NULL DEFAULT 0,
+    sex_protected INTEGER,
+    note TEXT,
+    nothing_else INTEGER NOT NULL DEFAULT 0,
+    updated_at INTEGER NOT NULL     -- epoch millis
+);
+
+CREATE TABLE day_symptom (
+    day INTEGER NOT NULL,
+    symptom TEXT NOT NULL,
+    severity INTEGER,               -- 1..3, optional
+    PRIMARY KEY (day, symptom)
+);
+
+CREATE TABLE day_emotion (
+    day INTEGER NOT NULL,
+    emotion TEXT NOT NULL,
+    PRIMARY KEY (day, emotion)
+);
+
+CREATE TABLE day_pain (
+    day INTEGER NOT NULL,
+    region TEXT NOT NULL,
+    score INTEGER NOT NULL,         -- 0..10
+    PRIMARY KEY (day, region)
+);
+
+CREATE TABLE day_tag (
+    day INTEGER NOT NULL,
+    tag_id TEXT NOT NULL,
+    PRIMARY KEY (day, tag_id)
+);
+
+-- Built-in tags use stable keys (Stress, Travel, Alcohol, Sport, Sick); user tags get UUIDs.
+CREATE TABLE tag (
+    id TEXT NOT NULL PRIMARY KEY,
+    name TEXT,                      -- null for built-ins (localized by the app)
+    symbol TEXT,
+    archived INTEGER NOT NULL DEFAULT 0,
+    builtin INTEGER NOT NULL DEFAULT 0
+);
+
+CREATE TABLE cycle_override (
+    day INTEGER NOT NULL PRIMARY KEY,
+    kind TEXT NOT NULL,             -- start | not | exclude
+    reason TEXT
+);
+
+CREATE TABLE episode (
+    id TEXT NOT NULL PRIMARY KEY,
+    kind TEXT NOT NULL,
+    start_day INTEGER NOT NULL,
+    end_day INTEGER
+);
+
+CREATE TABLE setting (
+    key TEXT NOT NULL PRIMARY KEY,
+    value TEXT NOT NULL
+);
+
+INSERT INTO tag (id, builtin) VALUES ('Stress', 1), ('Travel', 1), ('Alcohol', 1), ('Sport', 1), ('Sick', 1);
+
+-- day logs
+selectAllLogs:
+SELECT * FROM day_log ORDER BY day;
+
+selectAllSymptoms:
+SELECT * FROM day_symptom;
+
+selectAllEmotions:
+SELECT * FROM day_emotion;
+
+selectAllPains:
+SELECT * FROM day_pain;
+
+selectAllDayTags:
+SELECT * FROM day_tag;
+
+upsertLog:
+INSERT OR REPLACE INTO day_log (day, flow, mood, energy, sleep, libido, mucus, lh, bbt, sex, sex_protected, note, nothing_else, updated_at)
+VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
+
+insertSymptom:
+INSERT INTO day_symptom (day, symptom, severity) VALUES (?, ?, ?);
+
+insertEmotion:
+INSERT INTO day_emotion (day, emotion) VALUES (?, ?);
+
+insertPain:
+INSERT INTO day_pain (day, region, score) VALUES (?, ?, ?);
+
+insertDayTag:
+INSERT INTO day_tag (day, tag_id) VALUES (?, ?);
+
+deleteLog:
+DELETE FROM day_log WHERE day = ?;
+
+deleteSymptoms:
+DELETE FROM day_symptom WHERE day = ?;
+
+deleteEmotions:
+DELETE FROM day_emotion WHERE day = ?;
+
+deletePains:
+DELETE FROM day_pain WHERE day = ?;
+
+deleteDayTags:
+DELETE FROM day_tag WHERE day = ?;
+
+-- overrides
+selectAllOverrides:
+SELECT * FROM cycle_override ORDER BY day;
+
+upsertOverride:
+INSERT OR REPLACE INTO cycle_override (day, kind, reason) VALUES (?, ?, ?);
+
+deleteOverride:
+DELETE FROM cycle_override WHERE day = ?;
+
+-- episodes
+selectAllEpisodes:
+SELECT * FROM episode ORDER BY start_day;
+
+upsertEpisode:
+INSERT OR REPLACE INTO episode (id, kind, start_day, end_day) VALUES (?, ?, ?, ?);
+
+deleteEpisode:
+DELETE FROM episode WHERE id = ?;
+
+-- tags
+selectAllTags:
+SELECT * FROM tag;
+
+-- settings
+selectSetting:
+SELECT value FROM setting WHERE key = ?;
+
+selectAllSettings:
+SELECT * FROM setting;
+
+upsertSetting:
+INSERT OR REPLACE INTO setting (key, value) VALUES (?, ?);
+
+deleteSetting:
+DELETE FROM setting WHERE key = ?;
+
+-- erase (keeps built-in tags)
+deleteAllLogs:
+DELETE FROM day_log;
+
+deleteAllSymptoms:
+DELETE FROM day_symptom;
+
+deleteAllEmotions:
+DELETE FROM day_emotion;
+
+deleteAllPains:
+DELETE FROM day_pain;
+
+deleteAllDayTags:
+DELETE FROM day_tag;
+
+deleteAllOverrides:
+DELETE FROM cycle_override;
+
+deleteAllEpisodes:
+DELETE FROM episode;
+
+deleteUserTags:
+DELETE FROM tag WHERE builtin = 0;
+
+deleteAllSettings:
+DELETE FROM setting;
