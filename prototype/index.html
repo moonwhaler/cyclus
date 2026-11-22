@@ -217,8 +217,27 @@ textarea,.field{width:100%;border-radius:12px;border:1px solid var(--line);backg
 .heat .h{color:var(--ink2);text-align:center;font-variant-numeric:tabular-nums}
 .heat .r{color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;padding-right:4px;hyphens:manual}
 
+/* patterns & outlook */
+.pat h3{font-size:16px}
+.area{display:inline-flex;align-items:center;gap:6px;font-size:11px;font-weight:700;color:var(--ink2);text-transform:uppercase;letter-spacing:.06em}
+.area i{width:8px;height:8px;border-radius:50%;flex:0 0 auto}
+.adot{width:10px;height:10px;border-radius:50%;flex:0 0 auto}
+.badge.st-consistent{background:color-mix(in srgb,var(--period) 16%,var(--surface))}
+.badge.st-early{background:transparent;border:1px dashed var(--ink2)}
+.badge.st-stable{color:var(--success)}
+.badge.st-none,.badge.st-needs{color:var(--ink2)}
+.patfoot{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;margin-top:2px}
+.patfoot details{flex:1;min-width:0}
+.patfoot summary{cursor:pointer;color:var(--period);font-weight:600;font-size:13px}
+.hidebtn{color:var(--ink2);font-weight:600;flex:0 0 auto}
+.fgrid{display:grid;grid-template-columns:92px repeat(7,minmax(0,1fr));gap:3px;font-size:11px;align-items:center;margin-top:4px}
+.fh{display:flex;flex-direction:column;align-items:center;color:var(--ink2);font-size:10px;line-height:1.15;hyphens:manual}
+.fh b{font-family:var(--f-round);color:var(--ink);font-size:13px}
+.fr{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;hyphens:manual;color:var(--ink);padding-right:2px}
+.fc{height:18px;border-radius:4px}
+
 /* report preview */
-.paper{background:#fff;color:#1D1A1C;border-radius:6px;box-shadow:0 4px 18px rgba(0,0,0,.18);padding:18px 16px;font-size:10px;line-height:1.35;aspect-ratio:1/1.414;max-width:100%;display:flex;flex-direction:column;gap:9px;overflow:hidden}
+.paper{background:#fff;color:#1D1A1C;border-radius:6px;box-shadow:0 4px 18px rgba(0,0,0,.18);padding:18px 16px;font-size:10px;line-height:1.35;min-height:420px;max-width:100%;display:flex;flex-direction:column;gap:9px}
 .paper h4{margin:0;font-size:14px}
 .paper table{width:100%;border-collapse:collapse;font-variant-numeric:tabular-nums}
 .paper td{padding:3px 0;border-bottom:1px solid #eee;vertical-align:top}
@@ -277,10 +296,10 @@ const S = {
   lang:'de', mode:'track', showFertTrack:false, episode:null, tab:'today', logs:new Map(), overrides:new Map(),
   layer:null, push:null, logDate:0, dayDetail:null, calMonth:[2026,11], painSel:'lowC',
   lock:false, onb:null, toast:null, theme:'system',
-  report:{range:6, lang:'DE', inc:{bleed:true,lengths:true,sym:true,pain:true,mood:true,temp:false,notes:false,contra:false,sex:false}, questions:null, preview:false},
+  report:{range:6, lang:'DE', inc:{bleed:true,lengths:true,sym:true,pain:true,patterns:true,mood:true,temp:false,notes:false,contra:false,sex:false}, questions:null, preview:false},
   privacy:{appLock:true, pin:false, pinOnly:false, discreet:true, lockWidget:false, deviceOnly:false,
     hk:{flow:true,spotting:true,symptoms:true,bbt:true,mood:false,mucus:false,lh:false,sex:false,contra:false}},
-  eraseText:'', scen:'day12', lastChange:null
+  eraseText:'', scen:'day12', lastChange:null, rev:0, muted:new Set()
 };
 
 /* ============ i18n (German first) ============ */
@@ -294,8 +313,8 @@ const TX = {
   sc_conceive:{de:'Kinderwunsch · vor LH+',en:'Trying · before LH+'}, sc_conceive2ww:{de:'Kinderwunsch · nach Temperaturanstieg',en:'Trying · after temperature rise'},
   simOnb:{de:'Onboarding starten',en:'Run onboarding'}, simLock:{de:'App-Sperre zeigen',en:'Show app lock'},
   thSystem:{de:'System',en:'System'}, thLight:{de:'Hell',en:'Light'}, thDark:{de:'Dunkel',en:'Dark'},
-  tasks:{de:['Deine Periode hat heute begonnen. Trag sie ein.','Wann kommt deine nächste Periode, und wie sicher ist die App?','Trag Krämpfe, Kopfschmerzen und deinen Schlaf ein.','Kinderwunsch-Szenario: Trag den heutigen LH-Test als positiv ein. Was hat sich verändert?','Erstelle einen Arztbericht ohne Angaben zu Sex.','Sorg dafür, dass keine Periodendetails auf dem Sperrbildschirm erscheinen.'],
-         en:['Your period started today. Log it.','When is your next period expected, and how sure is the app?','Log cramps, a headache and how you slept.','Trying scenario: log today\'s LH test as positive. What changed?','Make a summary for your gynecologist without sexual activity in it.','Stop period details showing on your Lock Screen.']},
+  tasks:{de:['Deine Periode hat heute begonnen. Trag sie ein.','Wann kommt deine nächste Periode, und wie sicher ist die App?','Trag Krämpfe, Kopfschmerzen und deinen Schlaf ein.','Kinderwunsch-Szenario: Trag den heutigen LH-Test als positiv ein. Was hat sich verändert?','Erstelle einen Arztbericht ohne Angaben zu Sex.','Sorg dafür, dass keine Periodendetails auf dem Sperrbildschirm erscheinen.','Welche Muster hat Cyclus gefunden, und was erwartet dich laut Ausblick diese Woche? Verstehst du, warum?'],
+         en:['Your period started today. Log it.','When is your next period expected, and how sure is the app?','Log cramps, a headache and how you slept.','Trying scenario: log today\'s LH test as positive. What changed?','Make a summary for your gynecologist without sexual activity in it.','Stop period details showing on your Lock Screen.','Which patterns did Cyclus find, and what does the outlook expect this week? Do you understand why?']},
   pNote:{de:'Nur Beispieldaten, rund um den 22. Nov. 2026. Es wird nichts gespeichert oder gesendet. Kein Medizinprodukt. Fruchtbarkeitsschätzungen sind nicht zur Verhütung geeignet. Ohne Apple Watch: Handgelenkstemperatur wird hier nicht gezeigt.',
          en:'Sample data only, around 22 Nov 2026. Nothing is stored or sent. Not a medical device. Fertility estimates are not for birth control. No Apple Watch: wrist temperature is not shown here.'},
   // chrome
@@ -353,8 +372,6 @@ const TX = {
   tempT:{de:'Temperatur in diesem Zyklus',en:'Temperature this cycle'}, coverline:{de:'Hilfslinie',en:'coverline'},
   tempShift:{de:(c,d)=>`Drei höhere Werte ab Zyklustag ${c}. Eisprung wahrscheinlich um den ${d}.`, en:(c,d)=>`Three higher readings from cycle day ${c}. Ovulation likely occurred around ${d}.`},
   tempNo:{de:'Noch kein Temperaturanstieg. Miss weiter vor dem Aufstehen.',en:'No temperature rise yet. Keep measuring before getting up.'},
-  learnedT:{de:'Dein gelerntes Timing',en:'Your learned timing'},
-  learnedB:{de:(m,n)=>`Etwa <b style="color:var(--ink)">${m} Tage</b> vom Eisprung bis zur Periode (aus ${n} Zyklen mit klarer Schätzung). Dein LH-Anstieg kommt meist 1 Tag vor dem Eisprung.`, en:(m,n)=>`About <b style="color:var(--ink)">${m} days</b> from ovulation to your period (from ${n} cycles with a clear estimate). Your LH surge usually comes 1 day before ovulation.`},
   heatT:{de:'Symptome rund um deine Periode',en:'Symptoms around your period'}, heatB:{de:'Wie oft du ein Symptom eingetragen hast, an Tagen mit Einträgen.',en:'How often you logged each symptom, on days you logged.'},
   reportT:{de:'Arztbericht',en:'Doctor Visit Pack'}, reportB:{de:'Eine klare Übersicht für deine Gynäkologin, deinen Gynäkologen oder deine Hebamme. Du bestimmst, was ins PDF kommt.',en:'A clear summary for your gynecologist or midwife, as a PDF you choose what goes into.'},
   history:{de:'Zyklusverlauf',en:'Cycle history'}, histRow:{de:(n,m)=>`${n} Tage · Periode ${m} Tage`, en:(n,m)=>`${n} days · period ${m} days`},
@@ -376,6 +393,7 @@ const TX = {
   fertBadge:{de:a=>`${a} Fruchtbarkeit (Schätzung)`, en:a=>`${a} fertility (estimate)`}, symptoms:{de:'Symptome',en:'Symptoms'},
   // why sheet
   whyT:{de:'Warum dieses Fenster?',en:'Why this window?'}, fromCycles:{de:n=>`Aus deinen letzten ${n} Zyklen`, en:n=>`From your last ${n} cycles`},
+  fromCyclesSubPop:{de:m=>`Im Durchschnitt etwa ${m} Tage vom Eisprung bis zur Periode (Bevölkerungswert, bis Cyclus deine Werte kennt)`, en:m=>`On average about ${m} days from ovulation to period (population value until Cyclus learns yours)`},
   fromCyclesSub:{de:(m,n)=>`Meist etwa ${m} Tage vom Eisprung bis zur Periode (gelernt aus ${n} Zyklen)`, en:(m,n)=>`Usually about ${m} days from ovulation to period (learned from ${n} cycles)`},
   ev_lhpos:{de:'Positiver LH-Test',en:'Positive LH test'}, ev_lhneg:{de:'Negativer LH-Test',en:'Negative LH test'}, ev_surge:{de:'Östrogen-Anstieg im LH-Test',en:'Estrogen surge on LH test'},
   ev_ew:{de:'Spinnbarer Zervixschleim',en:'Egg-white mucus'}, ev_dry:{de:'Trockener oder klebriger Schleim',en:'Dry or sticky mucus'}, ev_peak:{de:'Schleim-Höhepunkt',en:'Mucus peak day'}, ev_shift:{de:'Temperaturanstieg (3 höhere Werte)',en:'Temperature rise (3 higher readings)'},
@@ -440,17 +458,73 @@ const TX = {
   turnOn:{de:'Einschalten',en:'Turn on'}, notNow:{de:'Jetzt nicht',en:'Not now'}, welcomeDlg:{de:'Willkommen',en:'Welcome'},
   // lock
   lockedT:{de:'Cyclus ist gesperrt',en:'Cyclus is locked'}, lockedB:{de:'Deine Daten bleiben verborgen, bis du entsperrst.',en:'Your data stays hidden until you unlock.'}, unlockBtn:{de:'Mit Face ID entsperren',en:'Unlock with Face ID'}, recognizing:{de:'Wird erkannt…',en:'Recognizing…'},
+  // patterns ("Deine Muster") and outlook ("Ausblick")
+  pwT:{de:'Deine Muster',en:'Your patterns'}, pwIntro:{de:'Cyclus vergleicht deine Einträge Zyklus für Zyklus und zeigt nur, was sich wiederholt.',en:'Cyclus compares your logs cycle by cycle and only shows what repeats.'},
+  pwNeedsT:{de:'Noch zu wenig Verlauf',en:'Not enough history yet'}, pwNeedsB:{de:(h,n)=>`Muster brauchen mindestens ${n} vollständige Zyklen. Bisher: ${h}.`, en:(h,n)=>`Patterns need at least ${n} complete cycles. So far: ${h}.`},
+  win_P:{de:'während der Periode',en:'during your period'}, win_PRE:{de:'in den Tagen vor der Periode',en:'in the days before your period'}, win_MIDC:{de:'um die Zyklusmitte',en:'around mid-cycle'},
+  itT:{de:(x,w)=>`${x} häufiger ${w}`, en:(x,w)=>`${x} more often ${w}`},
+  itB:{de:(a,b,m)=>`An ${a} % dieser Tage eingetragen, sonst an ${b} % · ${m} Zyklen`, en:(a,b,m)=>`Logged on ${a}% of these days vs ${b}% otherwise · ${m} cycles`},
+  itWhy:{de:p=>`Pro Zyklus verglichen, nur Tage mit Einträgen. Wahrscheinlichkeit für einen echten Unterschied: ${p} %.`, en:p=>`Compared cycle by cycle, only on days you logged. Probability of a real difference: ${p}%.`},
+  scT:{de:(s,d,w)=>`${s} ${w} ${d}`, en:(s,d,w)=>`${s} ${d} ${w}`},
+  scB:{de:(a,b,n)=>`Ø ${a} statt ${b} auf der Skala 1–5 · ${n} Zyklen`, en:(a,b,n)=>`Avg ${a} vs ${b} on the 1–5 scale · ${n} cycles`},
+  scWhy:{de:(k,n)=>`In ${k} von ${n} Zyklen in dieselbe Richtung.`, en:(k,n)=>`Same direction in ${k} of ${n} cycles.`},
+  noPattern:{de:'Kein festes Muster',en:'No clear pattern'},
+  tagT:{de:(x,g)=>`${x} häufiger am Tag nach „${g}“`, en:(x,g)=>`${x} more often the day after “${g}”`},
+  tagB:{de:(a,b,n,m)=>`${a} % an diesen Tagen, sonst ${b} % · ${n} Tage in ${m} Zyklen`, en:(a,b,n,m)=>`${a}% on these days vs ${b}% otherwise · ${n} days in ${m} cycles`},
+  tagWhy:{de:p=>`Vergleicht den Tag nach dem Stichwort mit allen anderen Tagen. Strengere Schwelle, weil viele Kombinationen geprüft werden, und das Muster muss auch halten, wenn man einzelne Zyklen weglässt. Wahrscheinlichkeit: ${p} %. Ein Zusammenhang ist kein Beweis für eine Ursache.`, en:p=>`Compares the day after the tag with all other days. Stricter threshold because many combinations are tested, and the pattern must hold when any single cycle is left out. Probability: ${p}%. A link is not proof of a cause.`},
+  stLenT:{de:'Periode kam nach stressigen Wochen später',en:'Period came later after stressful weeks'},
+  stLenB:{de:(a,b,n)=>`Ø ${a} Tage Zykluslänge statt ${b} · ${n} Zyklen mit viel Stress in der ersten Hälfte`, en:(a,b,n)=>`Avg cycle ${a} days vs ${b} · ${n} cycles with a lot of stress in the first half`},
+  stWhy:{de:'Erstes Signal aus wenigen Zyklen. Ein Zusammenhang ist kein Beweis für eine Ursache.',en:'Early signal from few cycles. A link is not proof of a cause.'},
+  fovT:{de:(a,b)=>`Eisprung meist an Zyklustag ${a}–${b}`, en:(a,b)=>`Ovulation usually on cycle day ${a}–${b}`},
+  fovB:{de:(k,n)=>`In ${k} von ${n} Zyklen mit klarer Schätzung.`, en:(k,n)=>`In ${k} of ${n} cycles with a clear estimate.`},
+  fovWhy:{de:'Nur Zyklen mit LH-Test oder Temperaturanstieg und einer Schätzung auf ±1 Tag genau.',en:'Only cycles with an LH test or temperature rise and an estimate within ±1 day.'},
+  flutT:{de:(a,b)=>`Nach dem Eisprung ${a}–${b} Tage bis zur Periode`, en:(a,b)=>`${a}–${b} days from ovulation to your period`},
+  flutB:{de:n=>`Stabil über ${n} Zyklen. Cyclus nutzt das, um deine Periode nach dem Eisprung genauer vorherzusagen.`, en:n=>`Stable over ${n} cycles. Cyclus uses this to predict your period more precisely after ovulation.`},
+  flutShort:{de:n=>`In ${n} Zyklus kürzer als 10 Tage. Im Arztbericht enthalten.`, en:n=>`Shorter than 10 days in ${n} cycle(s). Included in your Doctor Visit Pack.`},
+  flhT:{de:x=>`Eisprung meist ${x} ${x===1?'Tag':'Tage'} nach dem ersten positiven LH-Test`, en:x=>`Ovulation usually ${x} day${x===1?'':'s'} after your first positive LH test`},
+  flhB:{de:n=>`Aus ${n} Zyklen. Fließt in deine Schätzung ein.`, en:n=>`From ${n} cycles. Used in your estimate.`},
+  fmuT:{de:x=>`Spinnbarer Schleim meist ${x} Tage vor dem Eisprung`, en:x=>`Egg-white mucus usually ${x} days before ovulation`},
+  fmuB:{de:'Ein gutes Frühsignal, auch ohne LH-Tests.',en:'A good early signal, even without LH tests.'},
+  fstT:{de:'Eisprung in stressigen Zyklen später',en:'Ovulation later in stressful cycles'},
+  fstB:{de:(a,b,n)=>`Ø Zyklustag ${a} statt ${b} · ${n} Zyklen mit viel Stress`, en:(a,b,n)=>`Avg cycle day ${a} vs ${b} · ${n} stressful cycles`},
+  ftempT:{de:(k,n)=>`Temperaturanstieg in ${k} von ${n} gemessenen Zyklen`, en:(k,n)=>`Temperature rise in ${k} of ${n} measured cycles`},
+  ftempB:{de:'Ein Anstieg zeigt, dass ein Eisprung wahrscheinlich stattgefunden hat.',en:'A rise shows that ovulation likely happened.'},
+  fneedsT:{de:'Fruchtbarkeitsmuster',en:'Fertility patterns'}, fneedsB:{de:'Brauchen LH-Tests oder Basaltemperatur aus mindestens 2 Zyklen.',en:'Need LH tests or basal temperature from at least 2 cycles.'},
+  clenShort:{de:'Zyklen werden kürzer',en:'Cycles are getting shorter'}, clenLong:{de:'Zyklen werden länger',en:'Cycles are getting longer'},
+  clenTB:{de:(a,b,n)=>`Von etwa ${a} auf ${b} Tage über ${n} Zyklen. Im Arztbericht enthalten.`, en:(a,b,n)=>`From about ${a} to ${b} days over ${n} cycles. Included in your Doctor Visit Pack.`},
+  clenST:{de:(a,b)=>`Zykluslänge stabil: ${a}–${b} Tage`, en:(a,b)=>`Cycle length stable: ${a}–${b} days`}, clenSB:{de:n=>`Kein Trend über ${n} Zyklen.`, en:n=>`No trend over ${n} cycles.`},
+  painUpT:{de:'Stärkste Periodenschmerzen gestiegen',en:'Strongest period pain has increased'},
+  painUpB:{de:(a,b,n)=>`Von etwa ${a} auf ${b} (Skala 0–10) über ${n} Perioden.`, en:(a,b,n)=>`From about ${a} to ${b} (0–10 scale) over ${n} periods.`},
+  painST:{de:'Periodenschmerzen ohne Trend',en:'Period pain without a trend'}, painSB:{de:n=>`Über ${n} Perioden.`, en:n=>`Over ${n} periods.`},
+  plenT:{de:(a,b)=>`Periode meist ${a}–${b} Tage`, en:(a,b)=>`Period usually ${a}–${b} days`}, plenB:{de:n=>`Über ${n} Zyklen.`, en:n=>`Over ${n} cycles.`},
+  trendWhy:{de:'Trend über alle Zyklen gerechnet. Gezeigt nur, wenn er sich klar von „kein Trend“ unterscheidet. Keine Diagnose.',en:'Trend computed across all cycles. Shown only when it clearly differs from “no trend”. Not a diagnosis.'},
+  area_body:{de:'Körper',en:'Body'}, area_mood:{de:'Stimmung & Gefühle',en:'Mood & feelings'}, area_life:{de:'Lebensstil',en:'Lifestyle'}, area_fert:{de:'Fruchtbarkeit',en:'Fertility'}, area_health:{de:'Zyklusgesundheit',en:'Cycle health'},
+  st_consistent:{de:'Deutliches Muster',en:'Consistent pattern'}, st_early:{de:'Erstes Signal',en:'Early signal'}, st_stable:{de:'Stabil',en:'Stable'}, st_none:{de:'Kein Muster',en:'No pattern'}, st_needs:{de:'Braucht mehr Daten',en:'Needs more data'},
+  watching:{de:'Wird beobachtet',en:'Being watched'}, why:{de:'Warum?',en:'Why?'}, hide:{de:'Ausblenden',en:'Hide'}, hiddenN:{de:n=>`${n} ausgeblendet · Einblenden`, en:n=>`${n} hidden · Show`},
+  inReport:{de:'Im Arztbericht enthalten.',en:'Included in your Doctor Visit Pack.'}, nPatterns:{de:n=>`${n} Muster gefunden`, en:n=>`${n} pattern${n===1?'':'s'} found`},
+  fcT:{de:'Ausblick',en:'Outlook'}, fc7:{de:'nächste 7 Tage',en:'next 7 days'}, todayShort:{de:'heute',en:'today'},
+  fcItem:{de:x=>`${x} wahrscheinlicher`, en:x=>`${x} more likely`},
+  fcS_energy_lo:{de:'Weniger Energie',en:'Lower energy'}, fcS_energy_hi:{de:'Mehr Energie',en:'More energy'}, fcS_sleep_lo:{de:'Schlechterer Schlaf',en:'Worse sleep'}, fcS_sleep_hi:{de:'Besserer Schlaf',en:'Better sleep'},
+  fcS_mood_lo:{de:'Gedrücktere Stimmung',en:'Lower mood'}, fcS_mood_hi:{de:'Bessere Stimmung',en:'Better mood'}, fcS_libido_hi:{de:'Mehr Lust auf Sex',en:'Higher libido'}, fcS_libido_lo:{de:'Weniger Lust auf Sex',en:'Lower libido'},
+  fcToday:{de:'heute',en:'today'}, fcTomorrow:{de:'ab morgen',en:'from tomorrow'}, fcFrom:{de:d=>`ab ${d}`, en:d=>`from ${d}`}, fcAfter:{de:x=>`nach „${x}“`, en:x=>`after “${x}”`},
+  fcCalm:{de:'Keine auffälligen Tage erwartet.',en:'No notable days expected.'}, fcAria:{de:'Ausblick für die nächsten 7 Tage',en:'Outlook for the next 7 days'},
+  fcFoot:{de:n=>`Aus deinen Mustern über ${n} Zyklen. Je weiter weg, desto unsicherer. Dunkler heißt wahrscheinlicher.`, en:n=>`From your patterns over ${n} cycles. Further ahead is less certain. Darker means more likely.`},
+  feelings:{de:'Gefühle',en:'Feelings'}, libido:{de:'Lust auf Sex',en:'Libido'}, libLo:{de:'Wenig',en:'Low'}, libHi:{de:'Viel',en:'High'},
+  inc_patterns:{de:'Deine Muster',en:'Your patterns'},
   // toasts
   tSaved:{de:'Gespeichert',en:'Saved'}, tPeriod:{de:'Periodenbeginn eingetragen',en:'Period start logged'}, tFlow:{de:'Blutung eingetragen',en:'Flow logged'}, tEnded:{de:'Periode als beendet markiert',en:'Marked period as ended'},
   tLh:{de:'LH-Test eingetragen',en:'LH test logged'}, tLhPos:{de:'Positiver LH-Test eingetragen',en:'Positive LH test logged'}, tMarked:{de:'Als Periodenbeginn markiert',en:'Marked as period start'},
   tBackup:{de:'Verschlüsselte Sicherung gespeichert (Prototyp)',en:'Encrypted backup saved (prototype)'}, tShare:{de:'Öffnet in der App das iOS-Teilen-Menü',en:'Opens the iOS share sheet in the app'},
   tCond:{de:'Gespeichert. Die Bereiche werden für diese Erkrankung breiter.',en:'Saved. Ranges widen for this condition.'}, tNotif:{de:'Mitteilungen (Prototyp)',en:'Notifications (prototype)'},
 };
-const t = (k,...a) => { const e = TX[k]; if (!e) return k; const v = e[S.lang]; return typeof v==='function' ? v(...a) : v; };
+const tl = (lang,k,...a) => { const e = TX[k]; if (!e) return k; const v = e[lang]; return typeof v==='function' ? v(...a) : v; };
+const t = (k,...a) => tl(S.lang,k,...a);
 
 const SYM = {Cramps:['Krämpfe','Cramps'],Headache:['Kopfschmerzen','Headache'],Tired:['Müdigkeit','Tired'],Bloating:['Blähungen','Bloating'],'Breast tenderness':['Brustspannen','Breast tenderness'],Acne:['Pickel','Acne'],'Back pain':['Rückenschmerzen','Back pain'],Nausea:['Übelkeit','Nausea'],Cravings:['Heißhunger','Cravings'],Insomnia:['Schlaflosigkeit','Insomnia'],'Hot flashes':['Hitzewallungen','Hot flashes'],'Night sweats':['Nachtschweiß','Night sweats'],Dizziness:['Schwindel','Dizziness'],Diarrhea:['Durchfall','Diarrhea'],Constipation:['Verstopfung','Constipation']};
-const sym = k => SYM[k] ? SYM[k][S.lang==='de'?0:1] : k;
+const symL = (k,lang) => SYM[k] ? SYM[k][lang==='de'?0:1] : k;
+const sym = k => symL(k,S.lang);
 const SYMPTOMS = Object.keys(SYM);
+const EMO = {Irritable:['Gereizt','Irritable'],Sad:['Traurig','Sad'],Anxious:['Ängstlich','Anxious'],Sensitive:['Empfindlich','Sensitive'],Calm:['Ausgeglichen','Calm'],Happy:['Glücklich','Happy']};
 const PINNED = ['Cramps','Headache','Tired','Bloating'];
 const FLOWL = {none:['Keine','None'],spotting:['Schmier­blutung','Spotting'],light:['Leicht','Light'],medium:['Mittel','Medium'],heavy:['Stark','Heavy']};
 const FLOWS = ['none','spotting','light','medium','heavy'];
@@ -460,7 +534,8 @@ const MUCUS = Object.keys(MUCL);
 const mucL = k => MUCL[k][S.lang==='de'?0:1];
 const TAGL = {Stress:['Stress','Stress'],Travel:['Reise','Travel'],Alcohol:['Alkohol','Alcohol'],Sport:['Sport','Sport'],Sick:['Krank','Sick']};
 const TAGS = Object.keys(TAGL);
-const tagL = k => TAGL[k][S.lang==='de'?0:1];
+const tagLL = (k,lang) => TAGL[k][lang==='de'?0:1];
+const tagL = k => tagLL(k,S.lang);
 const REGIONS = [
   {id:'head',l:['Kopf','Head'],el:'<ellipse cx="60" cy="22" rx="15" ry="18"/>'},
   {id:'chest',l:['Brust','Breasts / chest'],el:'<rect x="36" y="48" width="48" height="30" rx="10"/>'},
@@ -499,51 +574,78 @@ function range(a,b){
 /* ============ seeded random ============ */
 function rng(seed){ return () => { seed |= 0; seed = seed + 0x6D2B79F5 | 0; let x = Math.imul(seed ^ seed >>> 15, 1 | seed); x = x + Math.imul(x ^ x >>> 7, 61 | x) ^ x; return ((x ^ x >>> 14) >>> 0) / 4294967296; }; }
 
-const getLog = d => S.logs.get(d) || {symptoms:[], pain:{}, tags:[]};
-function setLog(d, fn){ const l = structuredClone(getLog(d)); fn(l); S.logs.set(d, l); }
+const getLog = d => S.logs.get(d) || {symptoms:[], pain:{}, tags:[], emo:[]};
+function setLog(d, fn){ const l = structuredClone(getLog(d)); fn(l); S.logs.set(d, l); S.rev++; }
 
 /* ============ sample data ============ */
+// Planted patterns so Musterwache and Ausblick have something real to find:
+// cramps on period days 1–2 with pain slowly rising; headache before the period and the day after alcohol;
+// bloating, breast tenderness and irritability before the period; worse sleep and less energy before the period;
+// more energy, calm and libido around mid-cycle; stressful first halves lengthen the cycle and delay ovulation.
+const STRESS_CYCLES = [3,6];
 function genScenario(key){
-  S.logs = new Map(); S.overrides = new Map(); S.episode = null; S.mode = 'track'; S.showFertTrack=false;
+  S.logs = new Map(); S.overrides = new Map(); S.episode = null; S.mode = 'track'; S.showFertTrack=false; S.rev++;
   S.scen = key; S.tab = 'today'; S.layer = null; S.push = null; S.logDate = TODAY;
   if (key === 'empty') return;
-  const lens = [29,28,30,29,28,29,30,29], plen=[5,4,5,6,5,4,5,5];
+  const lens = [29,28,30,31,28,29,32,29], plen=[5,4,5,6,5,4,5,5];
   const cur = {day12:TODAY-11, expected:TODAY-27, period:TODAY-1, hbc:TODAY-11, conceive:TODAY-13, conceive2ww:TODAY-17}[key];
+  const conceive = key==='conceive'||key==='conceive2ww';
   const starts = []; let s = cur;
   for (let i=lens.length-1;i>=0;i--){ s -= lens[i]; starts.unshift(s); }
   const r = rng(11);
   const flowPat = ['medium','heavy','medium','light','light','spotting'];
-  const addDay = (day,k,toNext,pl) => {
-    const l = {symptoms:[], pain:{}, tags:[]};
-    const obs = k<pl || r()<0.55;
+  const clamp = (x,a,b) => Math.max(a,Math.min(b,x));
+  const addDay = (day,k,L,pl,ci) => {
+    const toNext = L-k, mid = k>=L-16 && k<=L-11;
+    const l = {symptoms:[], pain:{}, tags:[], emo:[]};
+    const obs = k<pl || r()<0.6;
     if (k<pl) l.flow = flowPat[k];
     if (!obs) { if (l.flow) S.logs.set(day,l); return; }
     const p = x => r()<x;
-    if (p(k<=1?0.85:toNext<=1?0.4:0.04)) { l.symptoms.push('Cramps'); l.pain.lowC = 3+Math.floor(r()*5); }
-    if (p(toNext<=2&&toNext>=1?0.5:0.06)) l.symptoms.push('Headache');
+    const prev = S.logs.get(day-1);
+    if (p(0.16)) l.tags.push('Alcohol');
+    if (STRESS_CYCLES.includes(ci) && k>=5 && k<=13 && p(0.6)) l.tags.push('Stress');
+    if (p(0.1)) l.tags.push('Sport');
+    if (p(k<=1?0.85:toNext<=1?0.4:0.04)) { l.symptoms.push('Cramps'); l.pain.lowC = clamp(Math.round(2 + ci*0.55 + r()*2),1,10); }
+    const afterAlc = !!(prev && prev.tags && prev.tags.includes('Alcohol'));
+    if (p(afterAlc?0.65:(toNext<=2&&toNext>=1?0.45:0.06))) l.symptoms.push('Headache');
     if (p((k<=2||toNext<=3)?0.55:0.14)) l.symptoms.push('Tired');
     if (p(toNext<=5&&toNext>=1?0.5:0.07)) l.symptoms.push('Bloating');
     if (p(toNext<=6&&toNext>=2?0.38:0.03)) l.symptoms.push('Breast tenderness');
     if (p(toNext<=4&&toNext>=1?0.3:0.04)) l.symptoms.push('Acne');
     if (p(k<=1?0.35:0.03)) l.symptoms.push('Back pain');
-    l.mood = toNext<=3 ? 2+Math.floor(r()*2) : 3+Math.floor(r()*2);
-    l.energy = (k<=1||toNext<=2) ? 2+Math.floor(r()*2) : 3+Math.floor(r()*2);
-    if (r()<0.5) l.sleep = 2+Math.floor(r()*3);
+    if (p(toNext<=5&&toNext>=1?0.45:0.07)) l.emo.push('Irritable');
+    if (p(toNext<=3&&toNext>=1?0.28:0.05)) l.emo.push('Sad');
+    if (p(mid?0.5:0.15)) l.emo.push('Calm');
+    if (p(mid?0.38:0.12)) l.emo.push('Happy');
+    l.mood = toNext<=3 ? 2+Math.floor(r()*2) : mid ? 4+Math.floor(r()*2) : 3+Math.floor(r()*2);
+    l.energy = (k<=1||toNext<=3) ? 2+Math.floor(r()*2) : mid ? 4+Math.floor(r()*2) : 3+Math.floor(r()*2);
+    if (r()<0.75) l.sleep = (toNext>=1&&toNext<=7) ? 1+Math.floor(r()*3) : 3+Math.floor(r()*3);
+    if (r()<0.6) l.libido = mid ? 4+Math.floor(r()*2) : (k<pl ? 1+Math.floor(r()*2) : 2+Math.floor(r()*2));
     if (r()<0.35) l.nothingElse = true;
     S.logs.set(day,l);
   };
-  starts.forEach((st,i) => { for (let k=0;k<lens[i];k++) addDay(st+k,k,lens[i]-k,plen[i]); });
+  starts.forEach((st,i) => { for (let k=0;k<lens[i];k++) addDay(st+k,k,lens[i],plen[i],i); });
+  if (conceive){ // past cycles with LH tests, mucus and basal temperature (ovulation = L − luteal length)
+    const LUTS = {2:13,3:13,4:13,5:14,6:13,7:12};
+    Object.entries(LUTS).forEach(([ci,lut]) => {
+      ci = Number(ci); const st = starts[ci], L = lens[ci], O = L - lut;
+      for (let cd=3; cd<=L; cd++){ const hi = cd>O; setLog(st+cd-1, l=>{ l.bbt = Math.round(((hi?36.68:36.30) + r()*(hi?0.12:0.15))*100)/100; }); }
+      for (let cd=O-4; cd<=O; cd++) setLog(st+cd-1, l=>{ l.lh = cd===O-1 ? 'pos' : 'neg'; });
+      for (let cd=O-5; cd<=O+3; cd++) setLog(st+cd-1, l=>{ l.mucus = cd<=O-4 ? 'creamy' : cd<=O-1 ? 'eggwhite' : 'sticky'; });
+    });
+  }
   for (let day=cur; day<=TODAY; day++){
     const k = day-cur;
-    if (key==='conceive'||key==='conceive2ww'){
-      const l = {symptoms:[], pain:{}, tags:[]};
+    if (conceive){
+      const l = {symptoms:[], pain:{}, tags:[], emo:[]};
       if (k<5) l.flow = flowPat[k];
-      if (k===0||k===1) { l.symptoms.push('Cramps'); l.pain.lowC=5; }
+      if (k===0||k===1) { l.symptoms.push('Cramps'); l.pain.lowC=6; }
       S.logs.set(day,l);
-    } else addDay(day,k,30-k,5);
+    } else addDay(day,k,29,5,8);
   }
   if (key==='hbc') S.episode = {kind:'hbc', start:TODAY-70};
-  if (key==='conceive'||key==='conceive2ww'){
+  if (conceive){
     S.mode='conceive';
     const cd = n => cur+n-1;
     const bbt = key==='conceive'
@@ -603,8 +705,9 @@ function predict(){
 
 /* ============ fertility engine (spec §11.11) ============ */
 const WILCOX = [0.10,0.16,0.14,0.27,0.31,0.33];
-const LUT = {mean:13.0, sd:1.3, lo:9, hi:17, learned:5};
-function lutPmf(){ const p={}; let z=0; for(let k=LUT.lo;k<=LUT.hi;k++){ p[k]=Math.exp(-0.5*((k-LUT.mean)/LUT.sd)**2); z+=p[k]; } for(const k in p) p[k]/=z; return p; }
+const POP_LUT = {mean:12.4, sd:2.4, lo:7, hi:17, learned:0}; // Bull et al. 2019; personalised by learnFromHistory
+let LEARN = null, LEARN_KEY = null;
+function lutPmf(lut){ const p={}; let z=0; for(let k=lut.lo;k<=lut.hi;k++){ p[k]=Math.exp(-0.5*((k-lut.mean)/lut.sd)**2); z+=p[k]; } for(const k in p) p[k]/=z; return p; }
 function evidenceFor(cs, uptoCd){
   const ev=[]; const bbt=[];
   for (let cd=1; cd<=uptoCd; cd++){
@@ -643,14 +746,17 @@ function likO(e,d){
   return 1;
 }
 const likA = {lhpos:.1,lhneg:.95,surge:.3,ew:.4,dry:.6,peak:.3,shift:.03};
-function fertility(pred, uptoCd){
+function fertility(pred, uptoCd, opt={}){
   if (!pred) return null;
-  const cs = pred.last, todayCd = TODAY-cs+1; uptoCd = uptoCd ?? todayCd;
+  // opt.cs + opt.knownL: retrospective run on a finished cycle (length known)
+  const cs = opt.cs ?? pred.last, todayCd = opt.knownL || (TODAY-cs+1); uptoCd = uptoCd ?? todayCd;
+  const lut = opt.lut || (LEARN && LEARN.lut) || POP_LUT;
   const Dmax = Math.max(60, Math.ceil(1.5*Math.exp(pred.mun)));
   const Lp={}; let z=0;
-  for (let L=Math.max(18,todayCd); L<=Dmax+17; L++){ Lp[L]=tpdf((Math.log(L)-pred.mun)/pred.scale,pred.df)/L; z+=Lp[L]; }
+  if (opt.knownL){ Lp[opt.knownL]=1; z=1; }
+  else for (let L=Math.max(18,todayCd); L<=Dmax+17; L++){ Lp[L]=tpdf((Math.log(L)-pred.mun)/pred.scale,pred.df)/L; z+=Lp[L]; }
   for (const L in Lp) Lp[L]/=z;
-  const lp = lutPmf(); const prior = {};
+  const lp = lutPmf(lut); const prior = {};
   for (const L in Lp) for (const k in lp){ const O=L-k; if (O>=6&&O<=Dmax) prior[O]=(prior[O]||0)+Lp[L]*lp[k]; }
   const pA0 = 0.05;
   const {ev, bbt, shift} = evidenceFor(cs, uptoCd);
@@ -687,7 +793,8 @@ function fertility(pred, uptoCd){
 }
 function trail(pred){
   const f0 = fertility(pred, 0); const out=[];
-  out.push({label:t('fromCycles',pred.used.length), sub:t('fromCyclesSub',String(LUT.mean).replace('.',S.lang==='de'?',':'.'),LUT.learned), band:f0.band, f:f0});
+  const lut = (LEARN && LEARN.lut) || POP_LUT;
+  out.push({label:t('fromCycles',pred.used.length), sub: lut.learned ? t('fromCyclesSub',nf(lut.mean,1,S.lang),lut.learned) : t('fromCyclesSubPop',nf(lut.mean,1,S.lang)), band:f0.band, f:f0});
   const full = fertility(pred);
   const cds = [...new Set(full.ev.map(e=>e.cd))].sort((a,b)=>a-b);
   let prevBand = f0.band ? f0.band.join('-') : '';
@@ -701,12 +808,218 @@ function trail(pred){
   return out;
 }
 
+/* ============ learning from past cycles (spec §11.11.5) ============ */
+const avg = a => a.reduce((x,y)=>x+y,0)/a.length;
+const nf = (x,d,lang) => Number(x).toLocaleString(lang==='de'?'de-DE':'en-US',{minimumFractionDigits:d,maximumFractionDigits:d});
+const pct = x => Math.round(x*100);
+function learnFromHistory(pred){
+  const st = pred.starts, cycles = [];
+  for (let i=0;i<st.length-1;i++){
+    const cs=st[i], L=st[i+1]-cs; if (L<18||L>60) continue;
+    const f = fertility(pred, L, {cs, knownL:L, lut:POP_LUT});
+    const w = f.hpd[1]-f.hpd[0]+1;
+    const lhpos = f.ev.find(e=>e.type==='lhpos');
+    const ews = f.ev.filter(e=>e.type==='ew').map(e=>e.cd);
+    let stress=0; for (let d=cs; d<cs+14; d++){ const l=S.logs.get(d); if (l && l.tags && l.tags.includes('Stress')) stress++; }
+    cycles.push({cs, L, O:f.mapD, hpd:f.hpd, good:(!!lhpos || !!f.shift) && w<=3, lag: lhpos ? f.mapD-lhpos.cd : null,
+      ewFirst: ews.length ? Math.min(...ews)-f.mapD : null, shift:!!f.shift, tracked:f.bbt.length>=10, stress:stress>=3});
+  }
+  const good = cycles.filter(c=>c.good);
+  let lut = POP_LUT;
+  if (good.length>=2){ // shrink personal luteal length toward the population prior
+    const luts = good.map(c=>c.L-c.O), n=luts.length, k0=2, m=avg(luts);
+    const pm = (k0*POP_LUT.mean+n*m)/(k0+n), ss = luts.reduce((a,x)=>a+(x-m)**2,0);
+    const sd = Math.max(1.0, Math.sqrt((k0*POP_LUT.sd**2+ss)/(k0+n)));
+    lut = {mean:Math.round(pm*10)/10, sd, lo:Math.max(7,Math.round(pm-3*sd)), hi:Math.min(17,Math.round(pm+3*sd)), learned:n};
+  }
+  return {cycles, good, lut};
+}
+
+/* ============ pattern watch (spec §11.12) ============ */
+function sampler(seed){
+  const u = rng(seed);
+  const norm = () => { let a=0; while (a===0) a=u(); return Math.sqrt(-2*Math.log(a))*Math.cos(2*Math.PI*u()); };
+  const gamma = k => { if (k<1) return gamma(k+1)*Math.pow(u(),1/k); const d=k-1/3, c=1/Math.sqrt(9*d);
+    for(;;){ let x,v; do { x=norm(); v=1+c*x; } while (v<=0); v=v*v*v; const U=u(); if (U<1-0.0331*x**4 || Math.log(U)<0.5*x*x+d*(1-v+Math.log(v))) return d*v; } };
+  return (a,b) => { const x=gamma(a), y=gamma(b); return x/(x+y); };
+}
+function rrPost(kin,nin,kout,nout,deff,seed){ // posterior of the risk ratio, Jeffreys priors, counts deflated by the design effect
+  const beta = sampler(seed), N=1000, dr=[];
+  for (let i=0;i<N;i++) dr.push(beta(0.5+kin/deff,0.5+(nin-kin)/deff)/beta(0.5+kout/deff,0.5+(nout-kout)/deff));
+  dr.sort((x,y)=>x-y);
+  const above = th => dr.filter(x=>x>th).length/N;
+  return {p125:above(1.25), p15:above(1.5), q10:dr[Math.floor(N*0.1)]};
+}
+function ols(ys){ const n=ys.length, mx=(n-1)/2, my=avg(ys); let sxx=0,sxy=0; ys.forEach((y,i)=>{ sxx+=(i-mx)**2; sxy+=(i-mx)*(y-my); });
+  const b=sxy/sxx, a=my-b*mx; let sse=0; ys.forEach((y,i)=>{ sse+=(y-(a+b*i))**2; }); return {b, se:Math.sqrt(sse/Math.max(1,n-2)/sxx), first:a, last:a+b*(n-1)}; }
+const EMOS = Object.keys(EMO);
+const itemL = (k,lang) => SYM[k] ? symL(k,lang) : EMO[k] ? EMO[k][lang==='de'?0:1] : k;
+const hasItem = (l,k) => !!l && ((l.symptoms||[]).includes(k) || (l.emo||[]).includes(k));
+const observed = l => !!(l && (l.nothingElse || (l.symptoms||[]).length || (l.emo||[]).length || l.mood || l.energy || l.sleep));
+const SCALES = ['mood','energy','sleep','libido'];
+const isPattern = p => p.status==='consistent' || p.status==='early';
+function pastCycles(starts){
+  const out=[];
+  for (let i=0;i<starts.length-1;i++){
+    const s=starts[i], e=starts[i+1], L=e-s; if (L<18||L>60) continue;
+    const pd = new Set(periodDays(s)), days=[];
+    for (let d=s; d<e; d++){ const k=d-s, l=S.logs.get(d);
+      days.push({d, k, l, rel:d-e, obs:observed(l), win: pd.has(d) ? 'P' : d>=e-7 ? 'PRE' : (k>=L-16 && k<=L-11) ? 'MIDC' : 'REST'}); }
+    out.push({s, e, L, days});
+  }
+  return out;
+}
+const PW = new Map();
+function patternWatch(v, lang){
+  lang = lang || S.lang;
+  const key = `${S.rev}|${lang}`;
+  if (PW.has(key)) return PW.get(key);
+  if (PW.size>4) PW.clear();
+  const L = (k,...a) => tl(lang,k,...a), winL = w => L('win_'+w);
+  const out = []; let seed = 7;
+  const cyc = v.pred ? pastCycles(v.starts) : [];
+  if (cyc.length < 2){ out.push({id:'needs', area:'body', status:'needs', title:L('pwNeedsT'), body:L('pwNeedsB',cyc.length,2)}); PW.set(key,out); return out; }
+  // 1) symptoms and feelings by cycle window (cycle = unit, logged days only)
+  const present = [...SYMPTOMS, ...EMOS].filter(x => cyc.some(c=>c.days.some(y=>hasItem(y.l,x))));
+  const best = {};
+  for (const x of present) for (const W of ['P','PRE','MIDC']){
+    let kin=0,nin=0,kout=0,nout=0,m=0,dir=0,sumN=0;
+    for (const c of cyc){ let a=0,na=0,b=0,nb=0;
+      c.days.forEach(y=>{ if (!y.obs) return; const h=hasItem(y.l,x); if (y.win===W){ na++; if(h) a++; } else { nb++; if(h) b++; } });
+      if (na>=2 && nb>=4){ m++; kin+=a; nin+=na; kout+=b; nout+=nb; sumN+=na; if (a/na > b/nb) dir++; } }
+    if (m<2) continue;
+    const post = rrPost(kin,nin,kout,nout,1+(sumN/m-1)*0.3,seed++), frac = dir/m;
+    const status = (m>=4 && post.p15>=0.9 && frac>=0.75) ? 'consistent' : (post.p125>=0.85 && frac>=0.75) ? 'early' : null;
+    if (status && (!best[x] || post.q10>best[x].post.q10)) best[x] = {x, W, m, status, post, pin:kin/nin, pout:kout/nout};
+  }
+  Object.values(best).sort((a,b)=>b.post.q10-a.post.q10).slice(0,6).forEach(r => out.push({
+    id:`it-${r.x}`, area: EMO[r.x] ? 'mood' : 'body', item:r.x, win:r.W, status:r.status,
+    title:L('itT',itemL(r.x,lang),winL(r.W)), body:L('itB',pct(r.pin),pct(r.pout),r.m), why:L('itWhy',pct(r.post.p125)) }));
+  // 2) mood, energy, sleep, libido by window (per-cycle mean differences)
+  for (const k of SCALES){
+    let b0 = null;
+    for (const W of ['P','PRE','MIDC']){
+      const diffs=[], aa=[], bb=[];
+      cyc.forEach(c=>{ const a=[], b=[]; c.days.forEach(y=>{ const val=y.l && y.l[k]; if (!val) return; (y.win===W?a:b).push(val); });
+        if (a.length>=2 && b.length>=4){ diffs.push(avg(a)-avg(b)); aa.push(avg(a)); bb.push(avg(b)); } });
+      if (diffs.length<2) continue;
+      const dbar=avg(diffs), same=diffs.filter(d=>Math.sign(d)===Math.sign(dbar)).length/diffs.length;
+      const status = (diffs.length>=4 && Math.abs(dbar)>=0.5 && same>=0.75) ? 'consistent' : (Math.abs(dbar)>=0.5 && same>=0.75) ? 'early' : null;
+      if (status && (!b0 || Math.abs(dbar)>Math.abs(b0.dbar))) b0 = {W, dbar, status, a:avg(aa), b:avg(bb), n:diffs.length, same};
+    }
+    if (b0) out.push({id:`sc-${k}`, area:'mood', scale:k, win:b0.W, dir:b0.dbar<0?'lo':'hi', status:b0.status,
+      title:L('scT',L(k),L(b0.dbar<0?'lower':'higher').toLowerCase(),winL(b0.W)), body:L('scB',nf(b0.a,1,lang),nf(b0.b,1,lang),b0.n), why:L('scWhy',Math.round(b0.same*b0.n),b0.n)});
+    else out.push({id:`sc-${k}`, area:'mood', status:'none', title:L(k), body:L('noPattern')});
+  }
+  // 3) lifestyle tags → symptoms/feelings on the next day. Exposures are rare, so instead of a per-cycle
+  //    direction check the pattern must survive leaving out any single cycle; stricter threshold (many combinations).
+  const tagRes = [];
+  for (const tag of TAGS) for (const x of present){
+    const per = cyc.map(c=>{ let a=0,na=0,b=0,nb=0; c.days.forEach(y=>{ if (!y.obs) return; const pl=S.logs.get(y.d-1);
+      const h=hasItem(y.l,x); if (pl && pl.tags && pl.tags.includes(tag)){ na++; if(h) a++; } else { nb++; if(h) b++; } }); return {a,na,b,nb}; });
+    const sum = arr => arr.reduce((o,q)=>({a:o.a+q.a,na:o.na+q.na,b:o.b+q.b,nb:o.nb+q.nb}),{a:0,na:0,b:0,nb:0});
+    const all = sum(per), m = per.filter(q=>q.na>0).length;
+    if (all.na<6 || m<3) continue;
+    const post = rrPost(all.a,all.na,all.b,all.nb,1.2,seed++);
+    if (post.p15<0.9) continue;
+    const robust = per.every((q,i)=>{ if (!q.na) return true; const o=sum(per.filter((_,j)=>j!==i)); return rrPost(o.a,o.na,o.b,o.nb,1.2,seed++).p125>=0.8; });
+    if (!robust) continue;
+    tagRes.push({tag, x, status:(m>=4 && post.p15>=0.95)?'consistent':'early', post, pe:all.a/all.na, pn:all.b/all.nb, ne:all.na, m});
+  }
+  tagRes.sort((a,b)=>b.post.q10-a.post.q10).slice(0,2).forEach(r => out.push({id:`tag-${r.tag}-${r.x}`, area:'life', item:r.x, tag:r.tag, status:r.status, pe:r.pe,
+    title:L('tagT',itemL(r.x,lang),tagLL(r.tag,lang)), body:L('tagB',pct(r.pe),pct(r.pn),r.ne,r.m), why:L('tagWhy',pct(r.post.p125))}));
+  // 4) stress → cycle length
+  const stressed = c => c.days.filter(y=>y.k<14 && y.l && (y.l.tags||[]).includes('Stress')).length>=3;
+  const ex = cyc.filter(stressed).map(c=>c.L), un = cyc.filter(c=>!stressed(c)).map(c=>c.L);
+  if (ex.length>=2 && un.length>=2 && avg(ex)-avg(un)>=2) out.push({id:'stress-len', area:'life', status: ex.length>=3 && Math.min(...ex)>Math.max(...un) ? 'consistent' : 'early',
+    title:L('stLenT'), body:L('stLenB',nf(avg(ex),1,lang),nf(avg(un),1,lang),ex.length), why:L('stWhy')});
+  // 5) fertility (from retrospective per-cycle ovulation estimates; shown only with the fertility flag on)
+  const Lr = LEARN;
+  if (Lr && Lr.good.length>=2){
+    const g=Lr.good, Os=g.map(c=>c.O).sort((a,b)=>a-b), need=Math.ceil(2*Os.length/3);
+    let wa=Os[0], wb=Os[Os.length-1];
+    for (let i=0; i+need-1<Os.length; i++) if (Os[i+need-1]-Os[i] < wb-wa){ wa=Os[i]; wb=Os[i+need-1]; }
+    out.push({id:'f-ov', area:'fert', status:(g.length>=4 && wb-wa<=2)?'consistent':'early', title:L('fovT',wa,wb), body:L('fovB',Os.filter(o=>o>=wa&&o<=wb).length,g.length), why:L('fovWhy')});
+    const luts=g.map(c=>c.L-c.O), lmin=Math.min(...luts), lmax=Math.max(...luts);
+    out.push({id:'f-lut', area:'fert', status:(lmax-lmin<=2 && lmin>=10)?'stable':'early', title:L('flutT',lmin,lmax), body: lmin<10 ? L('flutShort',luts.filter(x=>x<10).length) : L('flutB',g.length), report: lmin<10});
+    const lags=g.filter(c=>c.lag!=null).map(c=>c.lag).sort((a,b)=>a-b);
+    if (lags.length>=2) out.push({id:'f-lh', area:'fert', status:lags.length>=4?'consistent':'early', title:L('flhT',lags[Math.floor(lags.length/2)]), body:L('flhB',lags.length)});
+    const mus=g.filter(c=>c.ewFirst!=null).map(c=>-c.ewFirst).sort((a,b)=>a-b);
+    if (mus.length>=2) out.push({id:'f-mucus', area:'fert', status:mus.length>=4?'consistent':'early', title:L('fmuT',mus[Math.floor(mus.length/2)]), body:L('fmuB')});
+    const gx=g.filter(c=>c.stress), gu=g.filter(c=>!c.stress);
+    if (gx.length>=2 && gu.length>=2 && avg(gx.map(c=>c.O))-avg(gu.map(c=>c.O))>=2) out.push({id:'f-stress', area:'fert', status:'early', title:L('fstT'), body:L('fstB',nf(avg(gx.map(c=>c.O)),1,lang),nf(avg(gu.map(c=>c.O)),1,lang),gx.length), why:L('stWhy')});
+    const tr=Lr.cycles.filter(c=>c.tracked);
+    if (tr.length>=2){ const k=tr.filter(c=>c.shift).length; out.push({id:'f-temp', area:'fert', status:k===tr.length?'stable':'early', title:L('ftempT',k,tr.length), body:L('ftempB'), report:k<tr.length}); }
+  } else out.push({id:'f-needs', area:'fert', status:'needs', title:L('fneedsT'), body:L('fneedsB')});
+  // 6) cycle health trends: neutral wording, never pushed, included in the Doctor Visit Pack
+  const lens = cyc.map(c=>c.L);
+  if (lens.length>=6){ const r=ols(lens), q=tq(Math.max(3,lens.length-2));
+    if (r.b-q*r.se>0 || r.b+q*r.se<0) out.push({id:'c-len', area:'health', status:'early', title:L(r.b<0?'clenShort':'clenLong'), body:L('clenTB',Math.round(r.first),Math.round(r.last),lens.length), why:L('trendWhy'), report:true});
+    else out.push({id:'c-len', area:'health', status:'stable', title:L('clenST',Math.min(...lens),Math.max(...lens)), body:L('clenSB',lens.length)}); }
+  const pains = cyc.map(c=>Math.max(0,...c.days.filter(y=>y.win==='P' && y.l && y.l.pain).map(y=>Math.max(0,...Object.values(y.l.pain))))).filter(x=>x>0);
+  if (pains.length>=6){ const r=ols(pains), q=tq(Math.max(3,pains.length-2));
+    if (r.b-q*r.se>0) out.push({id:'c-pain', area:'health', status:pains.length>=8?'consistent':'early', title:L('painUpT'), body:L('painUpB',nf(r.first,0,lang),nf(r.last,0,lang),pains.length), why:L('trendWhy'), report:true});
+    else out.push({id:'c-pain', area:'health', status:'stable', title:L('painST'), body:L('painSB',pains.length)}); }
+  const pl = cyc.map(c=>periodDays(c.s).length);
+  out.push({id:'c-plen', area:'health', status:'stable', title:L('plenT',Math.min(...pl),Math.max(...pl)), body:L('plenB',pl.length)});
+  PW.set(key,out); return out;
+}
+
+/* ============ outlook / Ausblick (spec §11.13) ============ */
+function startPmf(pred, fromDay){ // P(next period starts on day s) from the posterior predictive, s >= fromDay
+  const out={}; let z=0;
+  for (let Lc=15; Lc<=70; Lc++){ const s=pred.last+Lc; if (s<fromDay) continue; const w=tpdf((Math.log(Lc)-pred.mun)/pred.scale,pred.df)/Lc; out[s]=w; z+=w; }
+  for (const s in out) out[s]/=z; return out;
+}
+const FC = new Map();
+function forecast(v){
+  const key = `${S.rev}|${S.lang}|${S.mode}|${S.showFertTrack}|${!!S.episode}`;
+  if (FC.has(key)) return FC.get(key);
+  if (FC.size>4) FC.clear();
+  const res = (() => {
+    if (!v.pred || v.paused) return null;
+    const cyc = pastCycles(v.starts); if (cyc.length<2) return null;
+    const pats = patternWatch(v).filter(isPattern);
+    const items = [...new Set(pats.filter(p=>p.item && !p.tag).map(p=>p.item))], scales = pats.filter(p=>p.scale);
+    if (!items.length && !scales.length) return null;
+    // learned day profiles: P0..P6 = period day, R-14..R-1 = days before the next start, X = earlier in the cycle
+    const prof = {};
+    const add = (k,b,val) => { const e=((prof[k]=prof[k]||{})[b]=prof[k][b]||{sum:0,n:0}); e.sum+=val; e.n++; };
+    cyc.forEach(c => c.days.forEach(y => { if (!y.obs) return; const b = y.win==='P' ? 'P'+Math.min(y.k,6) : (y.rel>=-14 ? 'R'+y.rel : 'X');
+      items.forEach(x=>add(x,b,hasItem(y.l,x)?1:0)); scales.forEach(p=>{ const val=y.l[p.scale]; if (val) add('s:'+p.scale,b,val); }); }));
+    const base = k => { let s=0,n=0; Object.values(prof[k]||{}).forEach(e=>{ s+=e.sum; n+=e.n; }); return n ? s/n : 0; };
+    const at = (k,b) => { const e=(prof[k]||{})[b], m=base(k); return e ? (e.sum+2*m)/(e.n+2) : m; }; // shrink to the person's overall rate
+    const rate = (k,b) => { if (b==='X') return at(k,b); const n=+b.slice(1), pre=b[0];
+      const nb = pre==='R' ? ['R'+(n-1),'R'+(n+1)] : ['P'+Math.max(0,n-1),'P'+Math.min(6,n+1)]; return 0.5*at(k,b)+0.25*at(k,nb[0])+0.25*at(k,nb[1]); };
+    const plMed = (()=>{ const a=cyc.map(c=>periodDays(c.s).length).sort((x,y)=>x-y); return a[Math.floor(a.length/2)]; })();
+    const sp = startPmf(v.pred, TODAY+1);
+    const rows = {};
+    for (let i=0;i<7;i++){
+      const d = TODAY+i;
+      // mixture over when the next period starts: uncertainty in timing flattens the outlook further ahead
+      const mix = fn => { if (v.inPeriod && d-v.pred.last < plMed) return fn('P'+Math.min(d-v.pred.last,6));
+        let acc=0; for (const s in sp){ const sd=+s; acc += sp[s]*fn(d>=sd ? 'P'+Math.min(d-sd,6) : (d-sd>=-14 ? 'R'+(d-sd) : 'X')); } return acc; };
+      const put = (id,obj,p) => { const r = rows[id] = rows[id] || {...obj, first:i, cells:Array(7).fill(0)}; r.cells[i]=Math.max(r.cells[i],p); };
+      items.forEach(x => { const p=mix(b=>rate(x,b)), m=base(x); if (p>=0.3 && p>=1.5*m) put('i:'+x,{k:x,kind:'item'},p); });
+      scales.forEach(sc => { const e=mix(b=>rate('s:'+sc.scale,b)), m=base('s:'+sc.scale), dl=e-m;
+        if (Math.abs(dl)>=0.5 && Math.sign(dl)===(sc.dir==='lo'?-1:1)) put('s:'+sc.scale,{k:sc.scale,kind:'scale',dir:sc.dir},Math.min(1,Math.abs(dl)/1.5)); });
+      if (i<=1) pats.filter(p=>p.tag).forEach(p => { const y=S.logs.get(d-1), td=S.logs.get(d);
+        if ((y && y.tags && y.tags.includes(p.tag)) || (i===0 && td && td.tags && td.tags.includes(p.tag))){ put('i:'+p.item,{k:p.item,kind:'item'},p.pe); rows['i:'+p.item].reason=p.tag; rows['i:'+p.item].first=Math.min(rows['i:'+p.item].first,i); } });
+    }
+    const list = Object.values(rows).sort((a,b)=>a.first-b.first || Math.max(...b.cells)-Math.max(...a.cells)).slice(0,5);
+    return {days:Array.from({length:7},(_,i)=>TODAY+i), rows:list, n:cyc.length};
+  })();
+  FC.set(key,res); return res;
+}
+
 /* ============ view model ============ */
 function vm(){
   const pred = predict();
+  if (!pred){ LEARN = null; LEARN_KEY = S.rev; }
   const paused = !!S.episode;
   const v = {pred, paused, starts: pred? pred.starts : []};
   if (!pred) return v;
+  if (LEARN_KEY!==S.rev){ LEARN = learnFromHistory(pred); LEARN_KEY = S.rev; }
   v.cd = TODAY - pred.last + 1;
   v.inPeriod = periodDays(pred.last).includes(TODAY) || (isBleed(S.logs.get(TODAY)) && TODAY-pred.last<8);
   if (v.inPeriod){ const pd = periodDays(pred.last); v.periodDay = pd.indexOf(TODAY)+1 || v.cd; }
@@ -798,10 +1111,11 @@ function header(title){
 const lhL = k => t('lh_'+k);
 function todayLogSummary(){
   const l = S.logs.get(TODAY);
-  if (!l || (!l.flow && !l.symptoms.length && !l.mood && !l.lh && !l.mucus && typeof l.bbt!=='number')) return `<p>${t('nothingYet')}</p>`;
+  if (!l || (!l.flow && !l.symptoms.length && !(l.emo||[]).length && !l.mood && !l.lh && !l.mucus && typeof l.bbt!=='number')) return `<p>${t('nothingYet')}</p>`;
   const bits=[];
   if (l.flow && l.flow!=='none') bits.push(`<b style="color:var(--period)">${t('flowWord',flowL(l.flow).replace('­',''))}</b>`);
   if (l.symptoms.length) bits.push(l.symptoms.slice(0,3).map(sym).join(' · ')+(l.symptoms.length>3?` +${l.symptoms.length-3}`:''));
+  if ((l.emo||[]).length) bits.push(l.emo.map(x=>itemL(x,S.lang)).join(' · '));
   if (l.mood) bits.push(t('moodN',l.mood));
   if (l.lh) bits.push(t('lhWord',lhL(l.lh)));
   if (l.mucus) bits.push(mucL(l.mucus));
@@ -809,12 +1123,42 @@ function todayLogSummary(){
   return `<p style="color:var(--ink)">${bits.join(' · ')}</p>`;
 }
 const fmtT = x => S.lang==='de' ? x.toFixed(2).replace('.',',') : x.toFixed(2);
-function insightPreview(v){
-  const starts = v.starts.slice(0,-1); if (starts.length<3) return '';
-  let hit=0; starts.forEach(s => { const a=S.logs.get(s), b=S.logs.get(s+1); if ((a&&a.symptoms.includes('Cramps'))||(b&&b.symptoms.includes('Cramps'))) hit++; });
-  const tier = hit/starts.length>=0.75 && starts.length>=4 ? t('consistent') : t('early');
-  return `<div class="card"><div class="row between" style="align-items:flex-start"><h3>${t('insCramps')}</h3><span class="badge">${tier}</span></div>
-  <p>${t('insCrampsBody',hit,starts.length)}</p><span class="tiny muted">${t('previewV15')}</span></div>`;
+const AREA_COL = {body:'var(--period)', mood:'var(--pre)', life:'var(--warning)', fert:'var(--fertile)', health:'var(--ink2)'};
+const visiblePatterns = v => patternWatch(v).filter(p=>(p.area!=='fert' || v.fertOn) && !S.muted.has(p.id));
+const statusChip = st => `<span class="badge st-${st}">${t('st_'+st)}</span>`;
+function forecastCard(v){
+  const fc = forecast(v); if (!fc) return '';
+  const head = fc.days.map((d,i)=>`<span class="fh">${i===0?t('todayShort'):F.w.format(asDate(d)).replace('.','')}<b>${asDate(d).getUTCDate()}</b></span>`).join('');
+  const lab = r => r.kind==='scale' ? `${t(r.k)} ${r.dir==='lo'?'↓':'↑'}` : itemL(r.k,S.lang);
+  const col = r => r.kind==='scale' || EMO[r.k] ? 'var(--pre)' : 'var(--period)';
+  const rows = fc.rows.length ? fc.rows.map(r=>`<span class="fr" title="${lab(r)}">${lab(r)}</span>${r.cells.map(c=>`<span class="fc" style="background:${col(r)};opacity:${c?(0.2+c*0.8).toFixed(2):'0.07'}"></span>`).join('')}`).join('')
+    : `<span class="fr" style="grid-column:1/-1">${t('fcCalm')}</span>`;
+  const sum = fc.rows.slice(0,2).map(r=>{ const what = r.kind==='scale' ? t(`fcS_${r.k}_${r.dir}`) : t('fcItem',itemL(r.k,S.lang));
+    const when = r.first===0 ? t('fcToday') : r.first===1 ? t('fcTomorrow') : t('fcFrom',F.w.format(asDate(fc.days[r.first])));
+    return `${what} ${when}${r.reason?` (${t('fcAfter',tagL(r.reason))})`:''}`; });
+  return `<div class="card"><div class="row between"><h3>${t('fcT')}</h3><span class="tiny muted">${t('fc7')}</span></div>
+    ${sum.length?`<p style="color:var(--ink)">${sum.join('<br>')}</p>`:''}
+    <div class="fgrid" role="img" aria-label="${t('fcAria')}. ${sum.join('. ')}"><span></span>${head}${rows}</div>
+    <p class="tiny">${t('fcFoot',fc.n)}</p></div>`;
+}
+function patternLink(v){
+  const n = visiblePatterns(v).filter(isPattern).length; if (!n) return '';
+  return `<button class="linkrow" data-act="tab" data-v="insights">${t('nPatterns',n)} ${I.chev}</button>`;
+}
+function patCard(p){
+  return `<div class="card pat"><div class="row between"><span class="area"><i style="background:${AREA_COL[p.area]}"></i>${t('area_'+p.area)}</span>${statusChip(p.status)}</div>
+    <h3>${p.title}</h3><p>${p.body}</p>${p.report?`<p class="tiny" style="color:var(--ink)">${t('inReport')}</p>`:''}
+    <div class="patfoot">${p.why?`<details><summary>${t('why')}</summary><p class="tiny">${p.why}</p></details>`:'<span></span>'}<button class="tiny hidebtn" data-act="mute" data-v="${p.id}">${t('hide')}</button></div></div>`;
+}
+function patternSection(v){
+  const all = patternWatch(v).filter(p=>p.area!=='fert' || v.fertOn), vis = all.filter(p=>!S.muted.has(p.id));
+  const order = {fert: S.mode==='conceive'?0:3, body:1, mood:2, life:4, health:5};
+  const found = vis.filter(isPattern).sort((a,b)=>(a.status==='consistent'?0:1)-(b.status==='consistent'?0:1) || order[a.area]-order[b.area]);
+  const watched = vis.filter(p=>!isPattern(p));
+  return `<div class="sec"><div class="lbl">${t('pwT')}</div><p class="tiny muted" style="margin:0 4px">${t('pwIntro')}</p>
+    ${found.map(patCard).join('')}
+    ${watched.length?`<div class="lbl" style="margin-top:6px">${t('watching')}</div><div class="list">${watched.map(p=>`<div class="li"><span class="adot" style="background:${AREA_COL[p.area]}"></span><div class="t"><b>${p.title}</b><span>${p.body}</span></div>${statusChip(p.status)}</div>`).join('')}</div>`:''}
+    ${all.length>vis.length?`<button class="tiny" style="color:var(--period);font-weight:600;align-self:flex-start;padding:4px" data-act="unmute">${t('hiddenN',all.length-vis.length)}</button>`:''}</div>`;
 }
 function renderToday(){
   const v = vm();
@@ -864,8 +1208,8 @@ function renderToday(){
     if (['pre','expected','later'].includes(v.status) && p.lo-TODAY<=3) under += `<button class="btn primary" data-act="periodStart">${t('periodStarted')}</button>`;
     if (S.showFertTrack && v.fert && v.fert.band) cards += `<div class="card"><h3>${t('fertWinTrack')}</h3><p>${range(v.fert.dateOf(v.fert.band[0]),v.fert.dateOf(v.fert.band[1]))}. ${t('notBC')}</p></div>`;
     if (v.status==='between') cards += `<div class="card"><h3>${t('preTitle',wmd(p.lo-7))}</h3><p>${t('preBody')}</p></div>`;
-    cards += insightPreview(v);
   }
+  if (v.pred && !v.paused){ const fc = forecastCard(v); cards = (S.mode==='conceive' && v.fertOn) ? cards.replace(`<button class="linkrow" data-act="sheet" data-v="why">`, fc+`<button class="linkrow" data-act="sheet" data-v="why">`) : fc + cards; cards += patternLink(v); }
   const center = `<div class="kicker">${kicker}</div><div class="big" data-max="${bigMax}" style="font-size:${bigMax}px${v.fertOn&&S.mode==='conceive'&&!v.paused&&!v.inPeriod&&v.fert&&v.fert.status!=='occurred'&&v.fert.days[v.fert.todayCd-1].tier?';color:var(--fertile)':''}">${big}</div>${sub?`<div class="sub">${sub}</div>`:''}${S.mode!=='conceive'||!v.fertOn?extra:''}`;
   return `${header(t('tabToday'))}
   <div class="ringwrap" role="img" aria-label="${ringLabel(v)}">${ringSVG(v)}<div class="ringcenter">${center}</div></div>
@@ -962,7 +1306,6 @@ function renderInsights(){
       g+=`</svg>`;
       conceive += `<div class="card chart"><h3>${t('tempT')}</h3>${g}<p class="tiny">${f.shift?t('tempShift',f.shift.cd,md(f.dateOf(f.mapD))):t('tempNo')}</p></div>`;
     }
-    conceive += `<div class="card"><h3>${t('learnedT')}</h3><p>${t('learnedB',S.lang==='de'?'13':'13',LUT.learned)}</p></div>`;
   }
   const hist = v.starts.slice(-7,-1).reverse().map(s=>{ const nx = v.starts[v.starts.indexOf(s)+1]; return `<div class="li"><div class="t"><b class="num" style="font-weight:700">${range(s,nx-1)}</b><span>${t('histRow',nx-s,periodDays(s).length)}</span></div>${I.chev}</div>`; }).join('');
   return `${header(t('tabIns'))}
@@ -972,6 +1315,7 @@ function renderInsights(){
       <div class="stat"><div class="v">${pmed}</div><div class="k">${t('statPeriod')}</div></div>
     </div>
     <div class="card"><h3>${t('varyT',spread)}</h3><div><span class="badge">${t('tier_'+p.tier)}</span></div><p>${t('varyB',p.used.length)} <button class="small" style="color:var(--period);font-weight:600" data-act="sheet" data-v="method">${t('howWorks')}</button></p></div>
+    ${patternSection(v)}
     <div class="card chart"><h3>${t('cycleLen')}</h3>${svg}<p class="tiny">${t('bandNote')}</p></div>
     ${conceive}
     <div class="card"><h3>${t('heatT')}</h3><p class="tiny" style="margin-bottom:6px">${t('heatB')}</p>${hm}</div>
@@ -1013,8 +1357,10 @@ function renderLogSheet(){
       <div class="painwrap"><svg viewBox="0 0 120 190" role="group" aria-label="${t('bodyMap')}">${REGIONS.map(r=>r.el.replace('/>',` class="region ${l.pain[r.id]?'on':''} ${S.painSel===r.id?'sel':''}" data-act="region" data-v="${r.id}" role="button" tabindex="0" aria-label="${regL(r.id)}: ${l.pain[r.id]||0}"/>`)).join('')}</svg>
       <div class="stack" style="gap:6px;min-width:0"><b>${regL(S.painSel)}</b><div class="row between"><span class="tiny muted">${t('painNone')}</span><span class="num" style="font-size:22px;font-weight:800;color:var(--period)">${l.pain[S.painSel]||0}</span><span class="tiny muted">${t('painMax')}</span></div><input type="range" id="pain" min="0" max="10" step="1" value="${l.pain[S.painSel]||0}" aria-label="${t('painL')}: ${regL(S.painSel)}"><span class="tiny muted">${painList}</span></div></div></div>
     <div class="lgroup"><div class="lbl">${t('mood')}</div>${scale('mood',t('moodLo'),t('moodHi'))}</div>
+    <div class="lgroup"><div class="lbl">${t('feelings')}</div><div class="chips">${EMOS.map(x=>`<button class="chip" data-act="emo" data-v="${x}" aria-pressed="${(l.emo||[]).includes(x)}">${itemL(x,S.lang)}</button>`).join('')}</div></div>
     <div class="lgroup"><div class="lbl">${t('energy')}</div>${scale('energy',t('enLo'),t('enHi'))}</div>
     <div class="lgroup"><div class="lbl">${t('sleep')}</div>${scale('sleep',t('slLo'),t('slHi'))}</div>
+    <div class="lgroup"><div class="lbl">${t('libido')}</div>${scale('libido',t('libLo'),t('libHi'))}</div>
     ${conceive ? '' : mucusBlock + bbtBlock(t('tempL'),t('optional'))}
     <div class="lgroup"><div class="lbl">${t('tags')}</div><div class="chips">${TAGS.map(x=>`<button class="chip" data-act="tag" data-v="${x}" aria-pressed="${l.tags.includes(x)}">${tagL(x)}</button>`).join('')}<button class="chip sugg">${t('newTag')}</button></div></div>
     <div class="lgroup"><div class="lbl">${t('note')}</div><textarea id="note" rows="2" placeholder="${t('notePh')}">${l.note||''}</textarea></div>
@@ -1030,6 +1376,8 @@ function renderDaySheet(){
     if (l.flow) bits.push([t('flowL'), flowL(l.flow)]);
     if (l.symptoms.length) bits.push([t('symptoms'), l.symptoms.map(sym).join(', ')]);
     const pe = Object.entries(l.pain||{}).filter(e=>e[1]); if (pe.length) bits.push([t('painL'), pe.map(([k,x])=>`${regL(k)} ${x}/10`).join(', ')]);
+    if ((l.emo||[]).length) bits.push([t('feelings'), l.emo.map(x=>itemL(x,S.lang)).join(', ')]);
+    if (l.libido) bits.push([t('libido'), l.libido+' / 5']);
     if (l.mood) bits.push([t('mood'), l.mood+' / 5']); if (l.energy) bits.push([t('energy'), l.energy+' / 5']); if (l.sleep) bits.push([t('sleep'), l.sleep+' / 5']);
     if (l.mucus) bits.push([t('discharge'), mucL(l.mucus)]);
     if (l.lh) bits.push([t('lhTest'), lhL(l.lh)]);
@@ -1129,14 +1477,14 @@ function renderSettings(){
 }
 function renderReport(){
   const R = S.report, v = vm();
-  const inc = ['bleed','lengths','sym','pain','mood','temp','notes','contra','sex'];
+  const inc = ['bleed','lengths','sym','pain','patterns','mood','temp','notes','contra','sex'];
   const qs = R.questions ?? t('qDefault');
   let preview='';
   if (R.preview && v.pred){
     const lens=v.pred.lens.slice(-R.range); const pl = v.starts.slice(-R.range-1,-1).map(s=>periodDays(s).length);
     const de = R.lang==='DE';
-    const T = de ? {title:'Zyklusbericht',name:'Name',cyc:'Zyklen',len:'Zykluslänge (Median, Spanne)',per:'Periodendauer (Median, Spanne)',top:'Häufigste Symptome',pain:'Max. Schmerz pro Periode (Median)',ref:'Referenz FIGO 2018: Häufigkeit 24–38 Tage, Dauer ≤ 8 Tage, Schwankung ≤ 7–9 Tage.',q:'Fragen',foot:'Vertrauliche Gesundheitsinformation · Selbst erfasste Daten aus Cyclus · Keine Diagnose',d:'Tage',loc:'de-DE',sym:0}
-                 : {title:'Cycle summary',name:'Name',cyc:'Cycles',len:'Cycle length (median, range)',per:'Period length (median, range)',top:'Most frequent symptoms',pain:'Max pain per period (median)',ref:'Reference FIGO 2018: frequency 24–38 days, duration ≤ 8 days, variation ≤ 7–9 days.',q:'Questions',foot:'Confidential health information · Self-reported records from Cyclus · Not a diagnosis',d:'days',loc:'en-US',sym:1};
+    const T = de ? {title:'Zyklusbericht',name:'Name',cyc:'Zyklen',len:'Zykluslänge (Median, Spanne)',per:'Periodendauer (Median, Spanne)',top:'Häufigste Symptome',pain:'Max. Schmerz pro Periode (Median)',pat:'Beobachtete Muster (selbst erfasst)',ref:'Referenz FIGO 2018: Häufigkeit 24–38 Tage, Dauer ≤ 8 Tage, Schwankung ≤ 7–9 Tage.',q:'Fragen',foot:'Vertrauliche Gesundheitsinformation · Selbst erfasste Daten aus Cyclus · Keine Diagnose',d:'Tage',loc:'de-DE',sym:0}
+                 : {title:'Cycle summary',name:'Name',cyc:'Cycles',len:'Cycle length (median, range)',per:'Period length (median, range)',top:'Most frequent symptoms',pain:'Max pain per period (median)',pat:'Observed patterns (self-reported)',ref:'Reference FIGO 2018: frequency 24–38 days, duration ≤ 8 days, variation ≤ 7–9 days.',q:'Questions',foot:'Confidential health information · Self-reported records from Cyclus · Not a diagnosis',d:'days',loc:'en-US',sym:1};
     const pmd = n => new Intl.DateTimeFormat(T.loc,{day:'numeric',month:'short',year:'numeric',timeZone:'UTC'}).format(asDate(n));
     const pmy = n => new Intl.DateTimeFormat(T.loc,{month:'long',year:'numeric',timeZone:'UTC'}).format(asDate(n));
     const med = a => { const s=[...a].sort((x,y)=>x-y); return s[Math.floor(s.length/2)]; };
@@ -1151,6 +1499,7 @@ function renderReport(){
       <table>${R.inc.lengths?`<tr><td>${T.cyc}</td><td>${lens.length}</td></tr><tr><td>${T.len}</td><td>${med(lens)} ${T.d} (${Math.min(...lens)}–${Math.max(...lens)})</td></tr><tr><td>${T.per}</td><td>${med(pl)} ${T.d} (${Math.min(...pl)}–${Math.max(...pl)})</td></tr>`:''}
       ${R.inc.sym?`<tr><td>${T.top}</td><td>${top}</td></tr>`:''}${R.inc.pain?`<tr><td>${T.pain}</td><td>6 / 10</td></tr>`:''}</table>
       <div class="ref">${T.ref}</div>
+      ${R.inc.patterns ? (()=>{ const ps = patternWatch(v, de?'de':'en').filter(p=>isPattern(p) && (p.area!=='fert'||v.fertOn) && !S.muted.has(p.id)).sort((a,b)=>(b.report?1:0)-(a.report?1:0)).slice(0,5); return ps.length ? `<div><b>${T.pat}</b><ul style="margin:2px 0 0;padding-left:14px">${ps.map(p=>`<li>${p.title}. ${p.body}</li>`).join('')}</ul></div>` : ''; })() : ''}
       ${R.inc.bleed?months.join(''):''}
       ${qs?`<div><b>${T.q}</b><br>${qs.replace(/</g,'&lt;')}</div>`:''}
       <div class="pf">${T.foot} · 1/3</div></div></div>
@@ -1246,7 +1595,7 @@ function toast(msg, undo){ S.toast={msg, undo}; render(); clearTimeout(toastTime
 
 /* ============ actions ============ */
 const snapshot = () => ({logs:new Map([...S.logs].map(([k,v])=>[k,structuredClone(v)])), overrides:new Map(S.overrides)});
-const restore = s => () => { S.logs=s.logs; S.overrides=s.overrides; };
+const restore = s => () => { S.logs=s.logs; S.overrides=s.overrides; S.rev++; };
 app.addEventListener('click', e => {
   const el = e.target.closest('[data-act]'); if (!el || el.disabled) return;
   const a = el.dataset.act, v = el.dataset.v;
@@ -1258,6 +1607,9 @@ app.addEventListener('click', e => {
     case 'logDay': S.logDate=Math.min(TODAY, S.logDate+Number(v)); render(); break;
     case 'flow': edit(l=>{ l.flow = l.flow===v?undefined:v; }); break;
     case 'sym': edit(l=>{ l.symptoms = l.symptoms.includes(v)? l.symptoms.filter(x=>x!==v) : [...l.symptoms, v]; }); break;
+    case 'emo': edit(l=>{ const e=l.emo||[]; l.emo = e.includes(v)? e.filter(x=>x!==v) : [...e, v]; }); break;
+    case 'mute': S.muted.add(v); render(); break;
+    case 'unmute': S.muted.clear(); render(); break;
     case 'tag': edit(l=>{ l.tags = l.tags.includes(v)? l.tags.filter(x=>x!==v) : [...l.tags, v]; }); break;
     case 'scale': edit(l=>{ const k=el.dataset.k, n=Number(v); l[k] = l[k]===n?undefined:n; }); break;
     case 'mucus': edit(l=>{ l.mucus = l.mucus===v?undefined:v; }); break;
@@ -1331,7 +1683,7 @@ if (document.fonts && document.fonts.ready) document.fonts.ready.then(fitRing);
 /* ============ boot ============ */
 setLocale();
 genScenario('day12');
-try { window.__cyclus = {S, vm, predict, fertility, trail, genScenario, render, t}; } catch(_){}
+try { window.__cyclus = {S, vm, predict, fertility, trail, genScenario, render, t, patternWatch, forecast, learn:()=>LEARN}; } catch(_){}
 const h = (location.hash||'').slice(1);
 if (['today','calendar','insights'].includes(h)) S.tab=h;
 render(false);

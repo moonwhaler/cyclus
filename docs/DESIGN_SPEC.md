@@ -16,10 +16,11 @@ Defaults are marked ✅. The rest of this spec is written against them. Changing
 | **D1** | Fertility features (fertile window, Conceive mode, ovulation estimate) | ✅ **IN v1 — owner decision 2026-11-22.** Multi-signal fertility engine (§11.11) + Conceive mode (§7.14). Shipped per region behind a feature flag once the regulatory path for that region is cleared (§1.4). Cycle-deviation nudges stay gated. | — (decided) |
 | **D2** | Positioning vs. iOS 27 Apple Health | ✅ Three wedges (§1.2): **deep fast logging**, **condition-first** (PCOS/endo/irregular), **Doctor Visit Pack**. Validate in week 1–2 with current Apple Health users. | Pick one wedge only |
 | **D3** | Publisher | ✅ **Legal entity + Organization developer account** before submission (UG (haftungsbeschränkt) or e.V.; D-U-N-S number). Start now, because it takes 4–8 weeks. | Individual account (rejection risk under guideline 5.1.1(ix), personal liability) |
-| **D4** | Schedule | ✅ **Honest ~44 weeks** for the full v1 scope incl. fertility at ~20 h/week (≈ 870 h incl. 25% buffer, §13.1). Internal TestFlight at ~week 22. Fertility can go live per region later than the core app (feature flag). | Apply the §13.1 cut list (≈ −100 h) → ~39 weeks; or 25 h/week → ~35 weeks |
+| **D4** | Schedule | ✅ **Honest ~47 weeks** for the full v1 scope incl. fertility, „Deine Muster“ and „Ausblick“ at ~20 h/week (≈ 940 h incl. 25% buffer, §13.1). Internal TestFlight at ~week 22. Fertility can go live per region later than the core app (feature flag). | Apply the §13.1 cut list (≈ −100 h) → ~39 weeks; or 25 h/week → ~35 weeks |
 | **D5** | Backup | ✅ Store **included** in device backups (so phone migration just works), with honest disclosure plus a "Device only" toggle that sets `isExcludedFromBackup`, plus **encrypted export**. | Exclude by default (max privacy, real data-loss risk) |
 | **D6** | Money | ✅ Strictly free. **No tip jar in v1** (it would make the developer a DSA trader, whose address is published). | Tip jar via IAP after the entity exists |
 | **D7** | Platform baseline | ✅ **Deployment target iOS 26.0, built with the iOS 27 SDK.** Use iOS 27 APIs behind `if #available`. | iOS 27 minimum (smaller audience, simpler code) |
+| **D9** | Patterns & outlook | ✅ **In v1 (owner decision 2026-11-22).** „Deine Muster“ (§11.12) watches body, mood & feelings, lifestyle, fertility and cycle health. „Ausblick“ (§11.13) turns patterns into a 7-day outlook. Fertility and cycle-health watchers follow the same regulatory gate as fertility (§1.4). | — (decided) |
 | **D8** | Markets & languages | ✅ **German first** (owner decision 2026-11-22): DACH is the primary market, all copy is authored in German (source language), App Store primary locale `de-DE`, German screenshots first, in-app language selector (Deutsch / English). English second. EU + US. | — (decided) |
 
 ### 0.2 What changed vs. PLAN.md (summary)
@@ -139,7 +140,7 @@ Contraception or conception support, diagnosis, community/social features, conte
 ## 2. Scope
 
 ### 2.1 Releases
-**v1.0 (≈ week 44 at 20 h/week; see D4)**
+**v1.0 (≈ week 47 at 20 h/week; see D4)**
 - Onboarding with Apple Health import.
 - Today, Log sheet (incl. pain map, tags, "nothing else today"), Calendar + Day detail, Insights (stats & charts, no pattern engine).
 - Period prediction (§11.5). Temperature *display*: BBT (logged) in v1. Wrist temperature (Apple Watch) is **read and displayed only if present, behind a flag, and not used by the fertility engine** until it has been tested on a real device (§14, owner has no Apple Watch). The fertility engine runs on cycle history + LH + mucus + BBT.
@@ -152,7 +153,9 @@ Contraception or conception support, diagnosis, community/social features, conte
 
 **v1.1 (+6 weeks):** Control Center control, App Intents (auth-required, no automatic App Shortcuts), StandBy widget, perimenopause symptom set refinements from iOS 27 HealthKit types, iPad layout.
 
-**v1.5 (+10 weeks):** Pattern engine (§11.7) with template insights; on-device LLM phrasing (§11.8); pill/patch/ring schedule within the hormonal-contraception episode; Apple Watch app (log + glance).
+**Also v1.0:** „Deine Muster“ (§11.12) and „Ausblick“ (§11.13) with template text; feelings and libido logging.
+
+**v1.5 (+10 weeks):** on-device LLM phrasing of pattern text (§11.8); HealthKit sleep/resting-HR watchers; pill/patch/ring schedule within the hormonal-contraception episode; Apple Watch app (log + glance).
 
 **Also v1.0 (behind the per-region fertility flag, §1.4):**
 - Fertility engine (§11.11);
@@ -668,6 +671,8 @@ struct LocalDate: Codable, Hashable, Comparable, Sendable { // civil date, no ti
     var symptoms: [SymptomEntry]     // id, severity?
     var pain: [PainEntry]            // region, score 0...10
     var mood: Int?                   // 1...5
+    var emotions: [Emotion]          // irritable, sad, anxious, sensitive, calm, happy (+ user-defined later)
+    var libido: Int?                 // 1...5
     var energy: Int?                 // 1...5
     var sleepQuality: Int?           // 1...5
     var discharge: Discharge?        // superset of HK cervical mucus
@@ -721,7 +726,8 @@ struct LocalDate: Codable, Hashable, Comparable, Sendable { // civil date, no ti
 | flow spotting | `intermenstrualBleeding` | On | Spotting is never written as `menstrualFlow` |
 | symptoms (severity) | Matching symptom category types, `HKCategoryValueSeverity` | On | Cyclus-only symptoms (custom) not mirrored |
 | moodChanges / sleepChanges (HK presence types) | Imported as symptom presence | — | Import-only mapping |
-| mood (1–5) | `HKStateOfMind` (dailyMood, valence mapped −1…+1) | **Off** | Labels not mapped in v1 |
+| mood (1–5) + emotions | `HKStateOfMind` (dailyMood, valence mapped −1…+1; emotions → `HKStateOfMind.Label` where one exists, e.g. irritated, sad, anxious, calm, happy) | **Off** | „Empfindlich“ has no HK label → Cyclus only |
+| libido | — | Not mirrored | Cyclus only |
 | energy, sleepQuality, pain map, tags, notes | — | Not mirrored | Shown in Privacy Center as "Cyclus only" |
 | discharge | `cervicalMucusQuality` (dry/sticky/creamy/watery/eggWhite) | Off | Cyclus-only options (e.g. "unusual") not mirrored |
 | LH test | `ovulationTestResult` (negative/LHSurge/estrogenSurge/indeterminate) | Off (Conceive status is sensitive; turning it on improves Apple Health's own estimates) | — |
@@ -790,7 +796,7 @@ Displayed as 7 days before the predicted **lower bound**. This is a calendar con
   - **Wrist:** an own detector on baseline-corrected deviations (persistent elevation ≥ 0.25 °C for ≥ 3 of 4 nights after ≥ 5 of 7 lower nights), labelled "possible temperature shift". Never fed into period prediction until back-tested on real wrist data.
   - **LH:** ovulation typically 24–48 h after the *first* positive.
 
-### 11.7 Pattern engine (v1.5; logging affordances in v1)
+### 11.7 Pattern engine — statistical core (used by „Deine Muster“, §11.12)
 - **Observed day** = any day with `observedComplete == true`, **or** with ≥ 3 logged fields across ≥ 2 sections (heuristic proxy, documented). The denominator is observed days only; symptom absence on non-observed days is *missing*.
 - **Windows (no ovulation dependence):** `P` = period days; `PRE` = days −7…−1 before next start (retrospective); `MID` = the rest.
 - **Unit of analysis = cycle**, which handles within-cycle autocorrelation. For symptom s, window W, cycle c: `k_cW` hits out of `n_cW` observed days.
@@ -960,6 +966,81 @@ The posterior over ≤ 60 days × ≤ 40 observations is < 1 ms. The full recomp
 
 ---
 
+### 11.12 „Deine Muster“ — pattern watching (v1, D9)
+User-facing name: **„Deine Muster“** / "Your patterns". (Rejected: „Musterwache“, which sounds odd in German.)
+
+**Principle.** Cyclus watches a fixed catalogue of patterns. Each watcher has a minimum amount of data, a statistical test and pre-written wording. A result is shown only if it repeats across cycles. Every result is a *description of the user's own records* with its evidence ("Warum?"), never a diagnosis.
+
+**Status per watcher:**
+- *Deutliches Muster* (consistent);
+- *Erstes Signal* (early);
+- *Stabil* (watched, nothing changes: also good news);
+- *Kein Muster*;
+- *Braucht mehr Daten*.
+
+Watchers without a pattern stay visible under „Wird beobachtet“, so the user sees what is being checked.
+
+**Windows** (no ovulation needed, so this also works in Track mode):
+- **P** = period days;
+- **PRE** = 7 days before the next start;
+- **MIDC** = cycle days L−16…L−11 ("um die Zyklusmitte");
+- **REST**.
+
+In Conceive mode with good ovulation estimates, MIDC can be replaced by an ovulation-relative window (v1.1).
+
+| Area | Watcher | Data | Method | Minimum | Category |
+|---|---|---|---|---|---|
+| Körper | Symptom × window (P / PRE / MIDC), best window per symptom, top 6 | symptoms, observed days | §11.7 cycle-unit beta-binomial risk ratio; consistent: ≥ 4 cycles, P(RR>1.5) ≥ 0.9, same direction ≥ 75%; early: P(RR>1.25) ≥ 0.85, direction ≥ 75% | 2 cycles with ≥ 2 window + ≥ 4 other observed days | A (wellness) |
+| Stimmung & Gefühle | Feelings (gereizt, traurig, ängstlich, empfindlich, ausgeglichen, glücklich) × window | emotions | as above | as above | A |
+| Stimmung & Gefühle | Mood / energy / sleep quality / libido × window | 1–5 scales | per-cycle mean difference window vs rest; consistent: ≥ 4 cycles, abs. diff ≥ 0.5, same sign ≥ 75% | 2 cycles | A |
+| Lebensstil | Tag → symptom/feeling **on the next day** (e.g. "Kopfschmerzen am Tag nach Alkohol") | tags | pooled risk ratio with design effect 1.2; stricter threshold P(RR>1.5) ≥ 0.9 (many combinations), plus **leave-one-cycle-out**: still P(RR>1.25) ≥ 0.8 without any single cycle. Top 2 | ≥ 6 exposure days in ≥ 3 cycles | A |
+| Lebensstil | Stress → cycle length | tags, lengths | ≥ 3 stress days in first 14 days = exposed; early: mean difference ≥ 2 days with ≥ 2 exposed cycles; consistent: ≥ 3 exposed, all longer than every unexposed | 2 + 2 cycles | A |
+| Fruchtbarkeit | Ovulation day range, luteal length, LH→ovulation lag, mucus early-signal offset, stress → later ovulation, temperature rise present | retrospective per-cycle posteriors (§11.11) | only *good* cycles (80% HPD ≤ 3 days, LH or temperature supported). Ovulation range = shortest window covering ≥ ⅔ of cycles | 2 good cycles | B (device scope) |
+| Zyklusgesundheit | Cycle length trend, strongest period pain trend, period length | lengths, pain map | OLS slope with t-based 80% interval; shown as a trend only if the interval excludes 0, otherwise "stabil" | 6 cycles | C (device scope, neutral) |
+
+**Wording & safety rules:**
+- Category **A** text may suggest nothing beyond self-knowledge.
+- **B** follows the fertility copy rules (§9.3).
+- **C** is strictly neutral ("gestiegen von etwa 3 auf 7"). It is **never pushed** as a notification, it is marked "Im Arztbericht enthalten", and it is listed in the Doctor Visit Pack.
+- No watcher says "abnormal", "zu kurz" or names a condition.
+- Every pattern card has „Warum?“ (method, number of cycles, probability) and „Ausblenden“. Hidden patterns stay hidden until the user shows them again; local only.
+- Correlation copy always includes „Ein Zusammenhang ist kein Beweis für eine Ursache.“
+
+**Release gates (CI, extends §11.7):**
+- Null simulation per watcher type with realistic logging sparsity: ≤ 5% of simulated users get any *Deutliches Muster*, ≤ 15% any *Erstes Signal*.
+- The tag watcher is simulated with all 5 default tags × all items.
+- Recall ≥ 70% for planted effects of RR 2 at 6 cycles.
+
+**Where it appears:**
+- Insights › „Deine Muster“: pattern cards, then „Wird beobachtet“.
+- Today: a link "N Muster gefunden".
+- Doctor Visit Pack: an optional section „Beobachtete Muster (selbst erfasst)“, C first.
+- No push notifications in v1. An optional weekly digest comes in v1.5.
+
+### 11.13 „Ausblick“ — 7-day outlook (v1, D9)
+Turns the patterns that passed §11.12 into a forecast for today + 6 days, so patterns become **predictions** the user can plan around ("Schlechterer Schlaf heute · Krämpfe ab Di.").
+
+- **Profiles:** for every item or scale with a pattern, learn a per-person day profile from past cycles:
+  - bins **P0…P6** (period days);
+  - **R−14…R−1** (days before the next start);
+  - **X** (earlier).
+
+  Each bin = (hits + 2·overall rate) / (observations + 2), smoothed 50/25/25 with its neighbours.
+- **Timing uncertainty:** for each future day, mix over the posterior-predictive distribution of the next period start (§11.5). So the outlook is sharp for tomorrow and soft for day 6, by construction and not by decoration.
+- **Inclusion:**
+  - an item appears on a day if p ≥ 0.30 **and** p ≥ 1.5 × the person's overall rate;
+  - a scale appears if the expected value differs from the person's mean by ≥ 0.5 in the pattern's direction;
+  - only items backed by a „Deine Muster“ result are eligible (no forecast without an explainable pattern).
+- **Lifestyle carry-over:** if yesterday (or today) has a tag with a next-day pattern, today/tomorrow show the item with the tag's observed rate and the reason („nach „Alkohol““).
+- **Fertility:** in Conceive mode the fertile window stays in its own cards (§7.14); the outlook covers body and mood items only.
+- **UI (Today card):**
+  - a two-line summary (first two rows, "ab Do.");
+  - a compact grid of 7 day columns × ≤ 5 rows, darker = more likely;
+  - a footnote with the number of cycles and "Je weiter weg, desto unsicherer";
+  - VoiceOver reads the summary sentences.
+  - Hidden when predictions are paused or there are < 2 complete cycles.
+- **Validation:** on-device back-test (§12.2) adds Brier score and calibration of outlook probabilities for day +1 and day +6, aggregate only.
+
 ## 12. Quality & validation
 
 ### 12.1 Testing
@@ -1024,6 +1105,7 @@ The posterior over ≤ 60 days × ≤ 40 observations is < 1 ms. The full recomp
 | Backup & export (crypto, CSV, import/merge) | 20 |
 | Doctor Visit Pack | 30 |
 | **Fertility engine** (§11.11: prior, likelihoods, posterior, learning, planner, evidence trail) + property/back-tests | 45 |
+| **„Deine Muster“ + „Ausblick“** (§11.12–11.13: watchers, null-simulation gates, profiles, Today/Insights UI, feelings & libido logging) | 55 |
 | **Conceive mode UI** (Today variant, LH card, Why sheet, calendar shading, two-week wait, Conceive charts) | 30 |
 | **Regulatory engineering** (requirements traceability, risk register, IEC 62304 docs, usability file, clinical-evaluation data from back-test) | 80 |
 | Widgets (home S/M, lock screen, redaction, snapshot) | 18 |
@@ -1033,11 +1115,11 @@ The posterior over ≤ 60 days × ≤ 40 observations is < 1 ms. The full recomp
 | Website: privacy policy, support, Impressum, export schema | 10 |
 | App Store: screenshots EN/DE, metadata, age rating, privacy details, review notes, demo video | 15 |
 | TestFlight: Beta App Review, 2-cycle beta (calendar ~8 wks), fixes | 40 |
-| **Subtotal** | **698** |
-| Buffer 25% (rounded) | **~175** |
-| **Total** | **~870 h** |
+| **Subtotal** | **753** |
+| Buffer 25% (rounded) | **~188** |
+| **Total** | **~940 h** |
 
-At 20 h/week → **~44 weeks** (D4 default); at 17.5 h/week → ~50 weeks; at 25 h/week → ~35 weeks. Calendar-time dependencies (entity, regulatory opinion, clinician review, 2-cycle beta) run in parallel and are not the critical path if started in weeks 1–2.
+At 20 h/week → **~47 weeks** (D4 default); at 17.5 h/week → ~54 weeks; at 25 h/week → ~38 weeks. Calendar-time dependencies (entity, regulatory opinion, clinician review, 2-cycle beta) run in parallel and are not the critical path if started in weeks 1–2.
 
 **Cut list** (≈ −78 h subtotal, ≈ −100 h incl. buffer → ~39 weeks at 20 h/week):
 - move the pain map to v1.1 (−20);
