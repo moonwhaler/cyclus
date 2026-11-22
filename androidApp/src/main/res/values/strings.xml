@@ -301,4 +301,5 @@
     <string name="cu_intensity">Intensität</string>
     <string name="cu_adjusted">Die Helligkeit wurde angepasst, damit Text und Schaltflächen gut lesbar bleiben.</string>
     <string name="cu_apply">Übernehmen</string>
+    <string name="on_phone_s_open">Verschlüsselt. Der Schlüssel liegt im Hardware-Schlüsselspeicher und verlässt dieses Gerät nie.</string>
 </resources>

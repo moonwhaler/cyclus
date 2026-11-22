@@ -109,7 +109,8 @@ fun PrivacyScreen(
         ) {
             Section(fmt.s("whereData")) {
                 Group {
-                    Info(fmt.s("onPhone"), fmt.s("onPhoneS"))
+                    // „only works while unlocked“ is true on Android 15+ only (ANDROID_PLAN §2.4); never claim more
+                    Info(fmt.s("onPhone"), if (Build.VERSION.SDK_INT >= 35) fmt.s("onPhoneS") else stringResource(R.string.on_phone_s_open))
                     Divider()
                     if (healthLine != null) { Info(stringResource(R.string.hc_in_health), healthLine); Divider() }
                     Info(fmt.s("inBackups"), backupLine(fmt, state))

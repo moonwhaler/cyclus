@@ -300,4 +300,5 @@
     <string name="cu_intensity">Intensity</string>
     <string name="cu_adjusted">Brightness was adjusted so text and buttons stay easy to read.</string>
     <string name="cu_apply">Apply</string>
+    <string name="on_phone_s_open">Encrypted. The key lives in the hardware keystore and never leaves this device.</string>
 </resources>

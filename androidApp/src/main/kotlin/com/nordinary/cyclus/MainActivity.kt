@@ -120,6 +120,9 @@ class MainActivity : FragmentActivity() {
         val locked by app.lock.locked.collectAsStateWithLifecycle()
         val config by app.lock.config.collectAsStateWithLifecycle()
         val fmt = rememberFmt()
+        // the app's UI state (tab, pushed screens, sheet, selected day, scroll) survives the lock screen: the content
+        // leaves composition while locked (nothing of it is drawn or readable behind the lock), its saved state stays
+        val unlockedState = androidx.compose.runtime.saveable.rememberSaveableStateHolder()
         when (locked) {
             null -> {}
             true -> config?.let { cfg ->
@@ -128,7 +131,7 @@ class MainActivity : FragmentActivity() {
                     onBiometric = ::authenticate, onPin = { vm.privacy.checkPin(it, cfg).also { ok -> if (ok) app.lock.unlock() } },
                 )
             }
-            false -> {
+            false -> unlockedState.SaveableStateProvider("app") {
                 // onboarding for a truly empty store; nothing is shown until the model is known (no flash)
                 val model by vm.model.collectAsStateWithLifecycle()
                 val active by vm.onboardingActive.collectAsStateWithLifecycle()
