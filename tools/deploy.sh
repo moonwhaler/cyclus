@@ -1,10 +1,12 @@
 #!/usr/bin/env bash
-# Build, install and launch the Cyclus debug app.
+# Build, install and launch Cyclus (debug app by default).
 #
 #   tools/deploy.sh            -> local emulator (AVD "cyclus-pixel9pro"), started if not running   [default]
 #   tools/deploy.sh --phone    -> physical phone over wireless adb
 #   ADB_TARGET=<serial> tools/deploy.sh   -> exactly that device
 #   --optimized                -> release code (R8, not debuggable) installed over the debug app, keeping its data
+#   --release                  -> the signed release build (com.nordinary.cyclus, needs keystore.properties); a separate
+#                                 app from the debug/optimized one, which keeps its own data
 #
 # Phone selection: $ADB_TARGET, then .deploy.local (one line, gitignored), then the single connected
 # physical device, then mDNS discovery (_adb-tls-connect) + adb connect.
@@ -28,6 +30,9 @@ for arg in "$@"; do
   case "$arg" in
     --phone) mode="phone" ;;
     --optimized) VARIANT_TASK=":androidApp:installOptimized" ;;
+    --release)
+      [[ -f "$ROOT/keystore.properties" ]] || die "--release needs keystore.properties (release signing key)"
+      VARIANT_TASK=":androidApp:installRelease"; APP_ID="com.nordinary.cyclus" ;;
     *) die "unknown option $arg" ;;
   esac
 done

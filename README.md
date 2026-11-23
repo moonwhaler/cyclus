@@ -91,6 +91,7 @@ app (`androidApp/`) is Jetpack Compose with Material 3 Expressive and is the ref
 tools/deploy.sh                  # debug build: build, install, launch on the emulator
 tools/deploy.sh --phone          # same on a phone paired over wireless adb
 tools/deploy.sh --phone --optimized   # release code with the debug key, installs over the debug app
+tools/deploy.sh --phone --release     # the signed release app (separate from the debug app and its data)
 ANDROID_SERIAL=emulator-5554 ./gradlew :androidApp:connectedDebugAndroidTest   # UI tests (emulator only)
 python3 tools/screens/capture.py # reference screenshots (emulator only)
 ```
