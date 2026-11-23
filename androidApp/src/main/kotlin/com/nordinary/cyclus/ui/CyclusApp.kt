@@ -116,6 +116,7 @@ import com.nordinary.cyclus.ui.sheets.MethodSheet
 import com.nordinary.cyclus.ui.sheets.WhySheet
 import com.nordinary.cyclus.ui.theme.Cyclus
 import com.nordinary.cyclus.ui.today.TodayContent
+import com.nordinary.cyclus.ui.today.QuestionOps
 import com.nordinary.cyclus.widget.MediumWidgetReceiver
 import com.nordinary.cyclus.widget.SmallWidgetReceiver
 import kotlinx.coroutines.delay
@@ -472,6 +473,11 @@ private fun MainScreen(
                     // wide screens show the calendar next to Today: no tab switch there
                     onOpenDay = { day -> calendarFocus = day; if (!expanded) tab = Tab.CALENDAR },
                     onMarkStart = vm::markStart,
+                    onInsights = { tab = Tab.INSIGHTS },
+                    questions = m.doctorQuestions,
+                    questionOps = remember(vm) {
+                        QuestionOps(vm::addQuestion, vm::editQuestion, vm::toggleQuestion, vm::deleteQuestion, vm::clearDoneQuestions)
+                    },
                 )
             }
             when (shownTab) {

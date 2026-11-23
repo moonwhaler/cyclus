@@ -12,13 +12,16 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.withContext
 
-/** Doctor Visit Pack builder. State lives in memory only (not saved state): the questions text never leaves it. */
+/**
+ * Doctor Visit Pack builder. Its state lives in memory only (not saved state). The questions text starts from the
+ * person's open „Fragen für die Ärztin“ (stored encrypted, see DoctorQuestions); what is typed here is not stored.
+ */
 class ReportActions internal constructor(private val c: VmContext, private val model: () -> AppModel?) {
     private val repo = c.repo
     private val app = c.app
 
 
-    /** Builder state lives here only (not saved state): the questions text never leaves memory. */
+    /** Builder state lives here only (not saved state): edits to the questions text are never stored. */
     val options = MutableStateFlow<ReportOptions?>(null)
     val file = MutableStateFlow<File?>(null)
     val working = MutableStateFlow(false)
@@ -27,7 +30,9 @@ class ReportActions internal constructor(private val c: VmContext, private val m
 
     fun start(defaultQuestions: String, uiLocale: java.util.Locale) {
         if (options.value == null) {
-            options.value = ReportOptions(questions = defaultQuestions)
+            // the open appointment questions, one per line; the sample question only when there are none
+            val open = model()?.doctorQuestions?.let { com.nordinary.cyclus.presenter.DoctorQuestions.open(it) }.orEmpty()
+            options.value = ReportOptions(questions = if (open.isEmpty()) defaultQuestions else open.joinToString("\n") { "– ${it.text}" })
             locale.value = if (uiLocale.language == "en") java.util.Locale.ENGLISH else java.util.Locale.GERMAN
             // the name is remembered on this device only (encrypted DB, never exported)
             c.launch {

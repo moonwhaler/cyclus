@@ -2,6 +2,13 @@
 
 Version scheme: `major.minor.patch`; Android `versionCode = major*10000 + minor*100 + patch`.
 
+## Unreleased
+
+- **Today, five new cards** (in „Karte hinzufügen“, off by default): **Zyklus vs. üblich**, **Temperaturkurve**,
+  **Stimmung & Energie** (7 days against your usual on the same cycle days), **Fragen für die Ärztin** (your own list,
+  tick off after the appointment; open questions prefill the Arztbericht; travels in backups, merged by question) and
+  **Phasen-Hinweis** (current phase, one neutral line, your own patterns for this part of the cycle).
+
 ## 1.0.1 — 2026-11-23
 
 - **Über Cyclus** (Einstellungen › Mehr): version, „Wichtiger Hinweis“ with every confirmation, how predictions

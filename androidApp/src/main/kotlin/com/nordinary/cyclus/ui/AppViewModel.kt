@@ -51,6 +51,9 @@ import com.nordinary.cyclus.surfaces.SystemSurfaces
 import java.time.LocalDate
 import java.time.ZonedDateTime
 import kotlin.uuid.ExperimentalUuidApi
+import com.nordinary.cyclus.presenter.DoctorQuestion
+import com.nordinary.cyclus.presenter.DoctorQuestions
+import kotlinx.coroutines.sync.withLock
 import kotlin.uuid.Uuid
 import kotlinx.coroutines.CoroutineExceptionHandler
 import kotlinx.coroutines.CoroutineScope
@@ -99,6 +102,8 @@ data class AppModel(
     val healthSamples: List<HealthSample> = emptyList(),
 ) {
     val logs: Map<Day, DayLog> get() = snapshot.data.logs
+    /** „Fragen für die Ärztin“: read from the settings (a change never recomputes the engine). */
+    val doctorQuestions: List<DoctorQuestion> by lazy { DoctorQuestions.from(settings) }
 }
 
 /** One-shot UI message (snackbar): a prototype text key or an app string resource, optionally undoable. */
@@ -259,6 +264,25 @@ class AppViewModel(
 
     fun setQuickPicks(picks: List<String>) = setSetting(SettingKeys.QUICK_PICKS, QuickPicks.value(picks))
 
+    /** One writer for the appointment questions: every change reads the stored list, so card and sheet never race. */
+    private val questionsLock = kotlinx.coroutines.sync.Mutex()
+
+    private fun changeQuestions(change: (List<DoctorQuestion>, Long) -> List<DoctorQuestion>) {
+        scope.launch(errors) {
+            questionsLock.withLock {
+                val now = System.currentTimeMillis()
+                val current = DoctorQuestions.parse(repo.setting(SettingKeys.DOCTOR_QUESTIONS))
+                repo.setSetting(SettingKeys.DOCTOR_QUESTIONS, DoctorQuestions.encode(change(current, now)))
+            }
+        }
+    }
+
+    fun addQuestion(text: String) { val id = Uuid.random().toString(); changeQuestions { l, now -> DoctorQuestions.add(l, id, text, now) } }
+    fun editQuestion(id: String, text: String) = changeQuestions { l, now -> DoctorQuestions.edit(l, id, text, now) }
+    fun toggleQuestion(id: String) = changeQuestions { l, now -> DoctorQuestions.toggle(l, id, now) }
+    fun deleteQuestion(id: String) = changeQuestions { l, _ -> DoctorQuestions.delete(l, id) }
+    fun clearDoneQuestions() = changeQuestions { l, _ -> DoctorQuestions.clearDone(l) }
+
     /** Today's card order, hidden cards and ring size (not engine settings: no recompute, no reminder replanning). */
     fun setTodayLayout(layout: TodayLayout) {
         scope.launch(errors) {
@@ -415,12 +439,15 @@ class AppViewModel(
         val today = LocalDate.now().toEpochDay().toInt()
         scope.launch(errors) {
             val s = SampleScenarios.generate(scenario, today)
+            // the Today layout is a view preference, not data: it stays when another scenario is loaded
+            val view = listOf(SettingKeys.TODAY_LAYOUT, SettingKeys.TODAY_RING, SettingKeys.QUICK_PICKS)
+                .mapNotNull { k -> repo.setting(k)?.let { k to it } }.toMap()
             repo.replaceAll(
                 logs = s.logs,
                 episodes = s.pausedSince?.let { listOf(Episode("demo-hbc", EpisodeKind.HORMONAL_CONTRACEPTION, it)) } ?: emptyList(),
                 // onboarding stays done: otherwise the empty moment inside the replace brings it back
                 settings = mapOf(Onboarding.DONE to "1", Consent.KEY to Consent.confirm(null, System.currentTimeMillis())) +
-                    (if (s.mode == Mode.CONCEIVE) mapOf(SettingKeys.MODE to "conceive") else emptyMap()),
+                    (if (s.mode == Mode.CONCEIVE) mapOf(SettingKeys.MODE to "conceive") else emptyMap()) + view,
             )
         }
     }
@@ -438,6 +465,7 @@ class AppViewModel(
         /** Device bookkeeping no system surface (reminders, widget, shortcut) depends on. */
         private fun isBookkeeping(k: String) = k.startsWith("hc.") || k == SettingKeys.LOCK_BACKOFF ||
             k == SettingKeys.EXPORT_COUNT || k == SettingKeys.REPORT_NAME || k == SettingKeys.CONSENT ||
-            k == SettingKeys.TODAY_LAYOUT || k == SettingKeys.TODAY_RING || k == SettingKeys.QUICK_PICKS
+            k == SettingKeys.TODAY_LAYOUT || k == SettingKeys.TODAY_RING || k == SettingKeys.QUICK_PICKS ||
+            k == SettingKeys.DOCTOR_QUESTIONS
     }
 }

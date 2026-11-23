@@ -27,6 +27,7 @@ const PLURALS = {
   windowOpens: { de: { one: 'Fenster öffnet in etwa %1$d Tag', other: 'Fenster öffnet in etwa %1$d Tagen' }, en: { one: 'Window opens in about %1$d day', other: 'Window opens in about %1$d days' } },
   flhT: { de: { one: 'Eisprung meist %1$d Tag nach dem ersten positiven LH-Test', other: 'Eisprung meist %1$d Tage nach dem ersten positiven LH-Test' }, en: { one: 'Ovulation usually %1$d day after your first positive LH test', other: 'Ovulation usually %1$d days after your first positive LH test' } },
   nPatterns: { de: { one: '%1$d Muster gefunden', other: '%1$d Muster gefunden' }, en: { one: '%1$d pattern found', other: '%1$d patterns found' } },
+  usPeriodLen: { de: { one: 'Periode: %1$d Tag', other: 'Periode: %1$d Tage' }, en: { one: 'Period: %1$d day', other: 'Period: %1$d days' } },
 };
 // Android overrides: prototype copy that is iOS-specific or not (yet) true on Android. Trust rule: never claim
 // something the app doesn't do. Extend when a screen with such copy is built (Privacy, onboarding: A3).

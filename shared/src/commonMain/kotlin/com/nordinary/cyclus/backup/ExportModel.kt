@@ -147,10 +147,12 @@ object SettingKeys {
     const val TODAY_RING = "today.ring"
     /** Today: one-tap chips ([com.nordinary.cyclus.presenter.QuickPicks]); "" = none, missing = default. */
     const val QUICK_PICKS = "quick.picks"
+    /** The person's questions for the next appointment, JSON ([com.nordinary.cyclus.presenter.DoctorQuestions]); merged by id. */
+    const val DOCTOR_QUESTIONS = "doctor.questions"
     /** The engine reads only these. */
     val ENGINE = setOf(MODE, SHOW_FERT, MUTED)
     /** In `.cyclus` exports and device snapshots. */
-    val USER_PREFS = ENGINE + setOf(TODAY_LAYOUT, TODAY_RING, QUICK_PICKS)
+    val USER_PREFS = ENGINE + setOf(TODAY_LAYOUT, TODAY_RING, QUICK_PICKS, DOCTOR_QUESTIONS)
 
     const val LOCK_ENABLED = "lock.enabled"
     const val LOCK_PIN_HASH = "lock.pin.hash"

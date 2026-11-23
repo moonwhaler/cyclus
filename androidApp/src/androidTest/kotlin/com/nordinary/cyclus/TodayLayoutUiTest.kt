@@ -14,17 +14,21 @@ import androidx.compose.ui.test.performTouchInput
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollTo
+import androidx.compose.ui.test.performTextInput
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.nordinary.cyclus.engine.CycleData
 import com.nordinary.cyclus.engine.CycleSnapshot
 import com.nordinary.cyclus.i18n.Fmt
 import com.nordinary.cyclus.i18n.rememberFmt
+import com.nordinary.cyclus.presenter.DoctorQuestion
+import com.nordinary.cyclus.presenter.DoctorQuestions
 import com.nordinary.cyclus.presenter.TodayCard
 import com.nordinary.cyclus.presenter.TodayLayout
 import com.nordinary.cyclus.presenter.TodayPresenter
 import com.nordinary.cyclus.sample.SampleScenario
 import com.nordinary.cyclus.sample.SampleScenarios
 import com.nordinary.cyclus.ui.theme.CyclusTheme
+import com.nordinary.cyclus.ui.today.QuestionOps
 import com.nordinary.cyclus.ui.today.TodayContent
 import com.nordinary.cyclus.ui.today.TodayEditor
 import com.nordinary.cyclus.ui.today.cardTitle
@@ -80,6 +84,39 @@ class TodayLayoutUiTest {
         rule.setContent { CyclusTheme { fmt = rememberFmt(); TodayContent(state, fmt!!, PaddingValues(), null, {}, {}, {}, {}, {}, layout = allHidden) } }
         rule.onNodeWithText(fmt!!.s("notBC")).performScrollTo().assertExists()
         rule.onNodeWithText(fmt!!.s("whyLink")).performScrollTo().assertExists()
+    }
+
+    /** Step 2–3: a library card added back appears on Today; a doctor question is added, ticked off and listed as done. */
+    @Test fun phaseCardAndDoctorQuestions() {
+        val today = LocalDate.now().toEpochDay().toInt()
+        val d = SampleScenarios.generate(SampleScenario.DAY12, today)
+        val snap = CycleSnapshot.compute(CycleData(d.logs, emptyMap(), today), d.mode)
+        val state = TodayPresenter.present(snap, null)
+        check(state.phase != null)
+        val layout = TodayLayout.DEFAULT.show(TodayCard.PHASE).show(TodayCard.DOCTOR)
+        var questions by mutableStateOf(emptyList<DoctorQuestion>())
+        var n = 0
+        val ops = QuestionOps(
+            add = { t -> questions = DoctorQuestions.add(questions, "q${n++}", t, n.toLong()) },
+            toggle = { id -> questions = DoctorQuestions.toggle(questions, id, 99) },
+        )
+        var fmt: Fmt? = null
+        rule.setContent {
+            CyclusTheme {
+                fmt = rememberFmt()
+                TodayContent(state, fmt!!, PaddingValues(), null, {}, {}, {}, {}, {}, layout = layout, questions = questions, questionOps = ops)
+            }
+        }
+        val f = fmt!!
+        rule.onNodeWithText(f.s("ph_${state.phase!!.phase.key}")).performScrollTo().assertExists()
+        rule.onNodeWithText(f.s("dqEmpty")).performScrollTo().assertExists()
+        rule.onNodeWithText("+ " + f.s("dqAdd")).performScrollTo().performClick()
+        rule.onNode(androidx.compose.ui.test.hasSetTextAction()).performTextInput("Ist das normal?")
+        rule.onNode(hasText(f.s("dqAdd")) and androidx.compose.ui.test.hasClickAction() and !hasText("+ " + f.s("dqAdd"))).performClick()
+        rule.runOnIdle { check(questions.single().text == "Ist das normal?") }
+        rule.onAllNodes(hasText("Ist das normal?"))[0].performClick()
+        rule.runOnIdle { check(questions.single().done) }
+        check(rule.onAllNodes(hasText(f.s("dqDone", 1), substring = true)).fetchSemanticsNodes().isNotEmpty())
     }
 
     /** Drag regressions: every drag sees the current order (no stale order after the first drop), fast drags cross several rows. */

@@ -10,6 +10,7 @@ the prototype scenarios. Never point it at a real phone: it erases the app's dat
 (tools/deploy.sh) and Pillow (python3 -m pip install pillow).
 """
 import argparse
+import html
 import io
 import re
 import subprocess
@@ -36,18 +37,22 @@ T = {
         export="Verschlüsselte Sicherung erstellen", notifications="Mitteilungen", custom="Eigene", pin="Cyclus-PIN",
         appLock="App-Sperre", why="Warum dieses Fenster", preview="Vorschau", back="Zurück", close="Schließen",
         about="Über Cyclus", oss="Open-Source-Lizenzen", sqlc="SQLCipher",
+        cards=["Zyklus vs. üblich", "Temperaturkurve", "Stimmung & Energie", "Fragen für die Ärztin", "Phasen-Hinweis"],
+        showCard="Hinzufügen", dqPlus="+ Frage hinzufügen", dqAdd="Frage hinzufügen", question="Ist das noch normal?",
     ),
     "en": dict(
         start="Get started", cont="Continue", read="I have read", agree="Agree and continue", skip="Skip",
         noMemory="remember", notNow="Not now", today="Today", calendar="Calendar", insights="Insights",
-        day12="Tag 12", expected="Periode fällig", period="Periodentag 2", hbc="Mit Pille", conceive="Kinderwunsch · vor LH+",
-        twoww="Kinderwunsch · nach Temperaturanstieg", ringHelp="Explain the ring", done="Done", cancel="Cancel",
+        day12="Day 12", expected="Period due", period="Period day 2", hbc="On the pill", conceive="Trying · before LH+",
+        twoww="Trying · after temperature rise", ringHelp="Explain the ring", done="Done", cancel="Cancel",
         customize="Customize", compact="Compact", large="Large", addWeek="Add: This week", editQuick="Edit quick picks",
         reset="Reset to default", log="Log", more="More details", allPatterns="patterns", how="How it works",
         report="Doctor Visit Pack", privacy="Privacy", settings="Settings", notice="Important notice", erase="Erase everything",
         export="Create encrypted backup", notifications="Notifications", custom="Custom", pin="Cyclus PIN",
         appLock="App lock", why="Why this window", preview="Preview", back="Back", close="Close",
         about="About Cyclus", oss="Open-source licenses", sqlc="SQLCipher",
+        cards=["Cycle vs. usual", "Temperature curve", "Mood & energy", "Questions for your doctor", "Cycle phase"],
+        showCard="Add", dqPlus="+ Add question", dqAdd="Add question", question="Is this still normal?",
     ),
 }
 
@@ -74,7 +79,7 @@ class Emu:
             n = m.group(0)
             b = list(map(int, re.findall(r"\d+", re.search(r'bounds="([^"]*)"', n).group(1))))
             # attribute values may be single-quoted when they contain a double quote (e.g. a license name)
-            attr = lambda k: (lambda m: m.group(2) if m else "")(re.search(rf' {k}=(["\'])(.*?)\1', n))
+            attr = lambda k: (lambda m: html.unescape(m.group(2)) if m else "")(re.search(rf' {k}=(["\'])(.*?)\1', n))
             yield attr("text"), attr("content-desc"), b
 
     def find(self, label, desc=False, tries=3):
@@ -219,6 +224,28 @@ def run(e: Emu, lang: str, only: str | None, dark: bool):
         # back to the default layout for the rest
         e.tap(t["customize"], wait=1.8); e.scroll(6); e.tap(t["reset"], required=False)
         e.top(); e.tap(t["large"], required=False); e.tap(t["done"])
+    if want("cards"):
+        # step 2–3 cards: add all five from the library, then a question; reset afterwards
+        e.home(t)
+        e.scroll(5); e.tap(t["customize"], wait=1.8)
+        for name in t["cards"]:
+            e.tap(f"{t['showCard']}: {name}", desc=True, seek=12)
+        e.shot("03-edit-4-step23")
+        e.top(); e.tap(t["done"]); e.top()
+        for i in range(1, 4):
+            e.scroll(); e.shot(f"08-cards-{i}")
+        e.tap(t["dqPlus"], seek=8, wait=2.5)
+        e.sh("input text " + t["question"].replace(" ", "%s")); time.sleep(0.8)
+        e.tap_exact(t["dqAdd"], wait=1.2); e.key("KEYCODE_BACK")
+        e.shot("08-cards-questions-sheet")
+        e.key("KEYCODE_BACK")
+        demo(e, t, t["twoww"])
+        e.home(t); e.top()
+        for i in range(1, 4):
+            e.scroll(); e.shot(f"08-cards-conceive-{i}")
+        demo(e, t, t["day12"])
+        e.home(t); e.scroll(6); e.tap(t["customize"], wait=1.8); e.scroll(8); e.tap(t["reset"], required=False)
+        e.top(); e.tap(t["done"])
     if want("log"):
         e.home(t)
         e.top(); e.tap(t["log"], wait=1.8)

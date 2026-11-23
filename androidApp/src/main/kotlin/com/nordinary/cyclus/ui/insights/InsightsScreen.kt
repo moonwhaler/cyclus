@@ -225,7 +225,7 @@ private fun CycleLengthChart(bars: List<CycleBar>, typLo: Int, typHi: Int, fmt: 
 
 /** BBT chart (prototype SVG 320×150: 36.1–36.9 °C, coverline, filled points after the shift). */
 @Composable
-private fun TemperatureChartView(t: TemperatureChart, fmt: Fmt) {
+internal fun TemperatureChartView(t: TemperatureChart, fmt: Fmt) {
     val c = Cyclus.colors
     val density = LocalDensity.current
     val a11y = fmt.s("tempT") + ". " + (if (t.shiftCd != null && t.ovulationDay != null) fmt.s("tempShift", t.shiftCd!!, fmt.md(t.ovulationDay!!)) else fmt.s("tempNo"))

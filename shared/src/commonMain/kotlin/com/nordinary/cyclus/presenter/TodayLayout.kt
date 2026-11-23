@@ -20,6 +20,12 @@ enum class TodayCard(val key: String, val defaultOn: Boolean = true, val conceiv
     UPCOMING("upcoming", timed = true),
     PATTERNS("patterns", timed = true),
     WEEK("week", defaultOn = false),
+    // step 2–3: all wait in the library until the person adds them
+    USUAL("usual", defaultOn = false, timed = true),
+    TEMP("temp", defaultOn = false, timed = true),
+    MOOD("mood", defaultOn = false, timed = true),
+    DOCTOR("doctor", defaultOn = false),
+    PHASE("phase", defaultOn = false, timed = true),
     ;
 
     companion object {

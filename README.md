@@ -20,7 +20,7 @@ No servers, no accounts, no tracking; all intelligence runs on the device. **And
 **Android: first stable milestone, feature-complete for v1 (phases A0–A5)**:
 - engines ported from the prototype and checked against its golden vectors (prediction, fertility, learning, „Deine Muster“, „Ausblick“);
 - encrypted store (SQLCipher, hardware-held key, automatic recovery after unlock), app lock (biometrics + Cyclus PIN, keeps your place);
-- Today (customizable: card order, hide/library, Groß/Kompakt ring, Deine Schnellauswahl, Demnächst, Woche, ring explainer), Log sheet, Calendar, Insights + Muster, Kinderwunsch mode;
+- Today (customizable: card order, hide/library, Groß/Kompakt ring, Deine Schnellauswahl, Demnächst, Woche, Zyklus vs. üblich, Temperaturkurve, Stimmung & Energie, Fragen für die Ärztin, Phasen-Hinweis, ring explainer), Log sheet, Calendar, Insights + Muster, Kinderwunsch mode;
 - onboarding with the required „Bevor du startest“ notice and recorded consent (re-asked yearly and before fertility is shown);
 - Über Cyclus: version, the notice with its confirmations, how predictions work, open-source licenses (generated at build time);
 - Arztbericht (PDF, DE/EN), Datenschutz-Center, encrypted export/import (cross-platform), E2E-only device backup with restore, crypto-shred erase;

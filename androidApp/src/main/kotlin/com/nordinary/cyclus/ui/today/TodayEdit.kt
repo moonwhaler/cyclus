@@ -86,6 +86,7 @@ fun cardTitle(card: TodayCard, fmt: Fmt): String = fmt.s(
         TodayCard.LH_PLAN -> "lhTests"; TodayCard.LH_TODAY -> "lhToday"; TodayCard.FORECAST -> "fcT"
         TodayCard.FERTILE -> "card_fertile"; TodayCard.PRE -> "lgPre"; TodayCard.UPCOMING -> "card_upcoming"
         TodayCard.PATTERNS -> "card_patterns"; TodayCard.WEEK -> "card_week"
+        TodayCard.USUAL, TodayCard.TEMP, TodayCard.MOOD, TodayCard.DOCTOR, TodayCard.PHASE -> "card_${card.key}"
     },
 )
 

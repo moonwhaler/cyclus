@@ -117,7 +117,31 @@ data class TodayUiState(
     val week: List<CalendarCell> = emptyList(),
     /** „Demnächst“ from the engine; the next reminder is added where settings are known ([Upcoming.merge]). */
     val upcoming: List<UpcomingItem> = emptyList(),
-)
+    /** Step 2–3 cards; null = nothing to say right now. „Fragen für die Ärztin“ comes from the settings, not from here. */
+    val usual: UsualCard? = null,
+    val temperature: TemperatureChart? = null,
+    val mood: MoodWeek? = null,
+    val phase: PhaseCard? = null,
+) {
+    /** Which cards have something to say right now (timed cards are skipped while they don't). */
+    fun available(upcoming: List<UpcomingItem> = this.upcoming): Set<TodayCard> = buildSet {
+        add(TodayCard.LOG); add(TodayCard.WEEK); add(TodayCard.DOCTOR)
+        val cc = conceive
+        if (cc?.earliestTest != null) add(TodayCard.TEST)
+        if (cc != null && cc.bestDays.isNotEmpty()) add(TodayCard.BEST_DAYS)
+        if (cc?.lhPlanStart != null) add(TodayCard.LH_PLAN)
+        if (cc?.lhToday == true) add(TodayCard.LH_TODAY)
+        if (forecast != null) add(TodayCard.FORECAST)
+        if (trackFertileWindow != null) add(TodayCard.FERTILE)
+        if (preWindowFrom != null) add(TodayCard.PRE)
+        if (upcoming.isNotEmpty()) add(TodayCard.UPCOMING)
+        if (patternCount > 0) add(TodayCard.PATTERNS)
+        if (usual != null) add(TodayCard.USUAL)
+        if (temperature != null) add(TodayCard.TEMP)
+        if (mood != null) add(TodayCard.MOOD)
+        if (phase != null) add(TodayCard.PHASE)
+    }
+}
 
 /** Data for the ring's single accessibility sentence. */
 data class RingA11y(val cycleDay: Int?, val lo: Day?, val hi: Day?, val fertile: Pair<Day, Day>?, val paused: EpisodeKind?)
@@ -131,6 +155,7 @@ object TodayPresenter {
             return TodayUiState(
                 today, TodayHero.Empty, RingModel.EMPTY, RingA11y(null, null, null, null, null), todaysLog, null, null, null, 0, false,
                 week = CalendarPresenter.week(snap),
+                mood = TodayExtras.moodWeek(snap),
             )
         }
         val cd = snap.cycleDay
@@ -170,6 +195,10 @@ object TodayPresenter {
             conceive = conceive,
             week = CalendarPresenter.week(snap),
             upcoming = Upcoming.items(snap),
+            usual = TodayExtras.usual(snap),
+            temperature = InsightsPresenter.temperatureChart(snap),
+            mood = TodayExtras.moodWeek(snap),
+            phase = TodayExtras.phase(snap, mutedPatterns),
         )
     }
 

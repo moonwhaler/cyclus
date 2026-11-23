@@ -41,6 +41,7 @@ import com.nordinary.cyclus.core.Day
 import com.nordinary.cyclus.presenter.TodayCard
 import com.nordinary.cyclus.presenter.TodayLayout
 import com.nordinary.cyclus.presenter.UpcomingItem
+import com.nordinary.cyclus.presenter.DoctorQuestion
 import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.selected
@@ -75,6 +76,15 @@ import com.nordinary.cyclus.ui.common.CyclusChip
 import com.nordinary.cyclus.ui.common.Droplet
 import com.nordinary.cyclus.ui.theme.Cyclus
 import com.nordinary.cyclus.ui.theme.Nunito
+
+/** Changes to „Fragen für die Ärztin“ (each is applied to the stored list by the view model). */
+data class QuestionOps(
+    val add: (String) -> Unit = {},
+    val edit: (String, String) -> Unit = { _, _ -> },
+    val toggle: (String) -> Unit = {},
+    val delete: (String) -> Unit = {},
+    val clearDone: () -> Unit = {},
+)
 
 fun episodeKey(kind: EpisodeKind?) = when (kind) {
     EpisodeKind.HORMONAL_CONTRACEPTION -> "ep_hbc"; EpisodeKind.PREGNANCY -> "ep_preg"; EpisodeKind.POSTPARTUM -> "ep_pp"
@@ -111,11 +121,24 @@ fun TodayContent(
     /** Week strip / Demnächst tap: show that day in the calendar. */
     onOpenDay: (Day) -> Unit = {},
     onMarkStart: (Day) -> Unit = {},
+    /** „Zyklus vs. üblich“ / „Temperaturkurve“ tap. */
+    onInsights: () -> Unit = {},
+    /** „Fragen für die Ärztin“ (from the settings) and its changes. */
+    questions: List<DoctorQuestion> = emptyList(),
+    questionOps: QuestionOps = QuestionOps(),
 ) {
     val c = Cyclus.colors
     var editing by androidx.compose.runtime.saveable.rememberSaveable { androidx.compose.runtime.mutableStateOf(false) }
     var quickSheet by androidx.compose.runtime.saveable.rememberSaveable { androidx.compose.runtime.mutableStateOf(false) }
     if (quickSheet) QuickPicksSheet(quickPicks, fmt, onQuickPicks) { quickSheet = false }
+    // null = closed; true = opened to add (input focused)
+    var questionSheet by androidx.compose.runtime.saveable.rememberSaveable { androidx.compose.runtime.mutableStateOf<Boolean?>(null) }
+    questionSheet?.let { add ->
+        DoctorQuestionsSheet(
+            questions, fmt, questionOps.add, questionOps.edit, questionOps.toggle, questionOps.delete, questionOps.clearDone,
+            onDismiss = { questionSheet = null }, focusInput = add,
+        )
+    }
     val scroll = rememberScrollState()
     // entering or leaving edit mode starts at the top: the ring (size preview) and the editor's header
     androidx.compose.runtime.LaunchedEffect(editing) { scroll.animateScrollTo(0) }
@@ -197,8 +220,15 @@ fun TodayContent(
                         PrimaryButton(androidx.compose.ui.res.stringResource(R.string.offer_yes), { onReminderOffer(true) }, Modifier.weight(1f))
                     }
                 }
-                for (card in layout.visible(available(state, upcoming))) androidx.compose.runtime.key(card) {
-                    TodayCardContent(card, state, fmt, upcoming, quickPicks, onOpenLog, onPatterns, onLh, onToggleQuick, onOpenDay, onMarkStart)
+                for (card in layout.visible(state.available(upcoming))) androidx.compose.runtime.key(card) {
+                    when (card) {
+                        TodayCard.USUAL -> state.usual?.let { UsualCardView(it, fmt, onInsights) }
+                        TodayCard.TEMP -> state.temperature?.let { TempCardView(it, fmt, onInsights) }
+                        TodayCard.MOOD -> state.mood?.let { MoodCardView(it, fmt, onOpenDay) }
+                        TodayCard.DOCTOR -> DoctorCardView(questions, fmt, questionOps.toggle) { add -> questionSheet = add }
+                        TodayCard.PHASE -> state.phase?.let { PhaseCardView(it, fmt, onPatterns) }
+                        else -> TodayCardContent(card, state, fmt, upcoming, quickPicks, onOpenLog, onPatterns, onLh, onToggleQuick, onOpenDay, onMarkStart)
+                    }
                 }
             }
             // fixed, never part of the layout: the explanation link and the intended-purpose line
@@ -417,21 +447,6 @@ fun LinkRow(text: String, onClick: () -> Unit, modifier: Modifier = Modifier, fi
     }
 }
 
-/** Which cards have something to say right now (timed cards are skipped while they don't). */
-private fun available(state: TodayUiState, upcoming: List<UpcomingItem>): Set<TodayCard> = buildSet {
-    add(TodayCard.LOG); add(TodayCard.WEEK)
-    val cc = state.conceive
-    if (cc?.earliestTest != null) add(TodayCard.TEST)
-    if (cc != null && cc.bestDays.isNotEmpty()) add(TodayCard.BEST_DAYS)
-    if (cc?.lhPlanStart != null) add(TodayCard.LH_PLAN)
-    if (cc?.lhToday == true) add(TodayCard.LH_TODAY)
-    if (state.forecast != null) add(TodayCard.FORECAST)
-    if (state.trackFertileWindow != null) add(TodayCard.FERTILE)
-    if (state.preWindowFrom != null) add(TodayCard.PRE)
-    if (upcoming.isNotEmpty()) add(TodayCard.UPCOMING)
-    if (state.patternCount > 0) add(TodayCard.PATTERNS)
-}
-
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
 private fun TodayCardContent(
@@ -498,6 +513,8 @@ private fun TodayCardContent(
         TodayCard.UPCOMING -> UpcomingCard(upcoming, state.today, fmt, onOpenDay)
         TodayCard.PATTERNS -> LinkRow(fmt.plural("nPatterns", state.patternCount), onPatterns)
         TodayCard.WEEK -> WeekCard(state.week, fmt, onOpenDay, onMarkStart)
+        // step 2–3 cards are drawn by the caller (they need more than this function's parameters)
+        TodayCard.USUAL, TodayCard.TEMP, TodayCard.MOOD, TodayCard.DOCTOR, TodayCard.PHASE -> Unit
     }
 }
 

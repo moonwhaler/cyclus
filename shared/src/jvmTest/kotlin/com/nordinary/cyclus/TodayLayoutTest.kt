@@ -38,17 +38,17 @@ class TodayLayoutTest {
         val l = TodayLayout.from(emptyMap())
         assertEquals(TodayLayout.DEFAULT, l)
         assertTrue(TodayCard.UPCOMING in l.shown)
-        assertEquals(setOf(TodayCard.WEEK), l.hidden)
+        assertEquals(setOf(TodayCard.WEEK, TodayCard.USUAL, TodayCard.TEMP, TodayCard.MOOD, TodayCard.DOCTOR, TodayCard.PHASE), l.hidden)
         assertNull(l.layoutValue())
         assertFalse(l.ringCompact)
     }
 
     @Test fun roundTripKeepsAnEmptyHiddenSet() {
-        // showing WEEK empties the hidden set: it must not fall back to the default (WEEK hidden)
-        val shown = TodayLayout.DEFAULT.show(TodayCard.WEEK)
+        // showing every library card empties the hidden set: it must not fall back to the default (library hidden)
+        val shown = TodayLayout.DEFAULT.hidden.fold(TodayLayout.DEFAULT) { l, c -> l.show(c) }
         val back = TodayLayout.from(mapOf(SettingKeys.TODAY_LAYOUT to shown.layoutValue()!!))
         assertEquals(emptySet(), back.hidden)
-        assertEquals(TodayCard.WEEK, back.shown.last())
+        assertEquals(TodayLayout.DEFAULT.hidden.last(), back.shown.last())
     }
 
     @Test fun unknownKeysDroppedAndNewCardsGetTheirDefaultPlace() {

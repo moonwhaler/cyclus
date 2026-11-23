@@ -46,7 +46,8 @@ See `cyclus-export.schema.json`. Summary:
   - `mode` (`conceive`), `showFertTrack` (`1`), `mutedPatterns` (comma list of pattern ids);
   - `today.layout`: Today's card order, comma list of card keys, `!` before a hidden card (e.g. `log,upcoming,!forecast,…,!week`); cards a newer app adds are placed at their default position;
   - `today.ring`: `compact`, or absent for the large ring;
-  - `quick.picks`: comma list of up to 8 symptom, feeling or tag keys; `""` means none, absent means the default (Cramps, Headache, Tired, Bloating).
+  - `quick.picks`: comma list of up to 8 symptom, feeling or tag keys; `""` means none, absent means the default (Cramps, Headache, Tired, Bloating);
+  - `doctor.questions`: the person's questions for the next appointment, a JSON array as a string: `[{"id":"…","text":"…","done":false,"at":1732370000000}]` (`at` = epoch ms of the last change; ≤ 30 items, text ≤ 300 characters, the encoded value always ≤ 20 000 characters: writers drop the oldest done questions first). **Merge:** union by `id`, the newer `at` wins (an `at` in the future counts as now); there are no tombstones, so a question deleted on one phone comes back when an older file that still has it is merged. Replace takes the file's list.
 - Unknown fields must be ignored by readers.
 
 ## Test vectors

@@ -300,7 +300,7 @@ textarea,.field{width:100%;border-radius:12px;border:1px solid var(--line);backg
 "use strict";
 /* ============ state ============ */
 const S = {
-  layout:{order:['log','test','best','lhPlan','lhToday','forecast','fertile','pre','upcoming','patterns','week'], hidden:['week'], compact:false}, quick:null, editToday:false,
+  layout:{order:['log','test','best','lhPlan','lhToday','forecast','fertile','pre','upcoming','patterns','week','usual','temp','mood','doctor','phase'], hidden:['week','usual','temp','mood','doctor','phase'], compact:false}, quick:null, editToday:false, questions:[], qText:'',
   lang:'de', mode:'track', showFertTrack:false, episode:null, tab:'today', logs:new Map(), overrides:new Map(),
   layer:null, push:null, logDate:0, dayDetail:null, calMonth:[2026,11], painSel:'lowC',
   lock:false, onb:null, toast:null, theme:'system',
@@ -388,6 +388,36 @@ const TX = {
   ch_upcoming:{de:'Was als Nächstes kommt, mit Datum',en:'What’s next, with dates'},
   ch_patterns:{de:'Erscheint, wenn Cyclus Muster gefunden hat',en:'Appears when Cyclus has found patterns'},
   ch_week:{de:'Sieben Tage rund um heute',en:'Seven days around today'},
+  card_usual:{de:'Zyklus vs. üblich',en:'Cycle vs. usual'}, card_temp:{de:'Temperaturkurve',en:'Temperature curve'}, card_mood:{de:'Stimmung & Energie',en:'Mood & energy'}, card_doctor:{de:'Fragen für die Ärztin',en:'Questions for your doctor'}, card_phase:{de:'Phasen-Hinweis',en:'Cycle phase'},
+  ch_usual:{de:'Erscheint ab 2 Zyklen',en:'Appears after 2 cycles'},
+  ch_temp:{de:'Bei eingeschalteter Fruchtbarkeit, ab 3 Temperaturen',en:'With fertility turned on, from 3 temperatures'},
+  ch_mood:{de:'Ab 3 Einträgen in 7 Tagen',en:'From 3 entries in 7 days'},
+  ch_doctor:{de:'Deine Liste für den nächsten Termin',en:'Your list for the next appointment'},
+  ch_phase:{de:'Deine aktuelle Zyklusphase und deine Muster dazu',en:'Your current cycle phase and your patterns in it'},
+  usCd:{de:(n,a,b)=>`Zyklustag ${n} · üblich ${a}–${b} Tage`,en:(n,a,b)=>`Cycle day ${n} · usually ${a}–${b} days`},
+  usLast:{de:n=>`Letzter Zyklus: ${n} Tage`,en:n=>`Last cycle: ${n} days`},
+  us_IN:{de:'im üblichen Bereich',en:'within your usual range'}, us_SHORTER:{de:'kürzer als üblich',en:'shorter than usual'}, us_LONGER:{de:'länger als üblich',en:'longer than usual'},
+  usPeriodLen:{de:n=>`Periode: ${n} ${n===1?'Tag':'Tage'}`,en:n=>`Period: ${n} ${n===1?'day':'days'}`},
+  usPeriodDay:{de:n=>`Periodentag ${n}`,en:n=>`Period day ${n}`},
+  usTyp:{de:n=>`üblich ${n}`,en:n=>`usually ${n}`},
+  usA:{de:'Balken: deine übliche Zykluslänge, Punkt: heute',en:'Bar: your usual cycle length, dot: today'},
+  mwLegend:{de:'Punkt = dein Eintrag · Strich = üblich an diesen Zyklustagen',en:'Dot = your entry · line = usual on these cycle days'},
+  mwA11y:{de:(d,m,e)=>`${d}: Stimmung ${m}, Energie ${e}`,en:(d,m,e)=>`${d}: mood ${m}, energy ${e}`},
+  mwUsualA:{de:(m,e)=>`, üblich ${m} und ${e}`,en:(m,e)=>`, usually ${m} and ${e}`},
+  dqEmpty:{de:'Notiere, was du beim nächsten Termin fragen möchtest.',en:'Note what you want to ask at your next appointment.'},
+  dqHint:{de:'Offene Fragen kommen in deinen Arztbericht.',en:'Open questions go into your Doctor Visit Pack.'},
+  dqAdd:{de:'Frage hinzufügen',en:'Add question'}, dqPh:{de:'Deine Frage …',en:'Your question …'},
+  dqAll:{de:n=>`Alle Fragen (${n})`,en:n=>`All questions (${n})`}, dqDone:{de:n=>`Erledigt (${n})`,en:n=>`Done (${n})`},
+  dqClear:{de:'Erledigte entfernen',en:'Remove done'}, dqEdit:{de:'Bearbeiten',en:'Edit'}, dqDel:{de:'Löschen',en:'Delete'}, dqSave:{de:'Speichern',en:'Save'},
+  dqFull:{de:'Höchstens 30 offene Fragen.',en:'At most 30 open questions.'},
+  dqCheckA:{de:'Erledigt',en:'Done'},
+  ph_period:{de:'Periode',en:'Period'}, ph_foll:{de:'Follikelphase',en:'Follicular phase'}, ph_ov:{de:'Rund um den Eisprung',en:'Around ovulation'}, ph_lut:{de:'Lutealphase',en:'Luteal phase'},
+  phL_period:{de:'Die Gebärmutterschleimhaut wird abgestoßen; Östrogen und Progesteron sind niedrig.',en:'The uterine lining is shed; oestrogen and progesterone are low.'},
+  phL_foll:{de:'Östrogen steigt, ein Eibläschen reift heran.',en:'Oestrogen rises while a follicle matures.'},
+  phL_ov:{de:'Ein LH-Anstieg löst den Eisprung aus. Geschätzt, nicht sicher.',en:'An LH surge triggers ovulation. Estimated, not certain.'},
+  phL_lut:{de:'Progesteron ist erhöht; vor der Periode sinken beide Hormone.',en:'Progesterone is raised; before the period both hormones fall.'},
+  phPat:{de:'Deine Muster in dieser Phase',en:'Your patterns in this phase'}, phMore:{de:'Mehr zu deinen Mustern',en:'More about your patterns'},
+  phInfo:{de:'Allgemeine Information, keine Diagnose.',en:'General information, not a diagnosis.'},
   editQuick:{de:'Schnellauswahl bearbeiten',en:'Edit quick picks'}, quickT:{de:'Deine Schnellauswahl',en:'Your quick picks'},
   quickB:{de:'Bis zu 8 Einträge, die du auf „Heute“ mit einem Tipp setzt, in der Reihenfolge deiner Auswahl.',en:'Up to 8 items you can set on Today with one tap, in the order you pick them.'},
   quickN:{de:(n,m)=>`${n} von ${m}`,en:(n,m)=>`${n} of ${m}`},
@@ -1277,6 +1307,7 @@ function renderToday(){
   }
   if (v.pred && !v.paused){ C.forecast = forecastCard(v); C.patterns = patternLink(v); C.upcoming = upcomingCard(v); }
   C.week = weekCard(v);
+  Object.assign(C, extraCards(v));
   const center = `<div class="kicker">${kicker}</div><div class="big" data-max="${bigMax}" style="font-size:${bigMax}px${v.fertOn&&S.mode==='conceive'&&!v.paused&&!v.inPeriod&&v.fert&&v.fert.status!=='occurred'&&v.fert.days[v.fert.todayCd-1].tier?';color:var(--fertile)':''}">${big}</div>${sub?`<div class="sub">${sub}</div>`:''}${S.mode!=='conceive'||!v.fertOn?extra:''}`;
   const quick = S.quick || PINNED, tl = S.logs.get(TODAY)||{};
   C.log = `<div class="card"><button data-act="openLog" style="all:unset;display:block;cursor:pointer"><div class="row between"><h3>${t('todaysLog')}</h3><span class="muted">${I.chev}</span></div>${todayLogSummary()}</button>${quick.length?`<div class="chips" style="margin-top:8px">${quick.map(k=>`<button class="chip" data-act="quickToggle" data-v="${k}" aria-pressed="${(tl.symptoms||[]).includes(k)||(tl.emo||[]).includes(k)||(tl.tags||[]).includes(k)}">${qL(k)}</button>`).join('')}</div>`:''}</div>`;
@@ -1292,7 +1323,7 @@ function renderToday(){
   ${body}`;
 }
 const qL = k => SYM[k]||EMO[k] ? itemL(k,S.lang) : tagLL(k,S.lang);
-const CARD_TITLE = {log:'todaysLog',test:'testTitle',best:'bestDays',lhPlan:'lhTests',lhToday:'lhToday',forecast:'fcT',fertile:'card_fertile',pre:'lgPre',upcoming:'card_upcoming',patterns:'card_patterns',week:'card_week'};
+const CARD_TITLE = {log:'todaysLog',test:'testTitle',best:'bestDays',lhPlan:'lhTests',lhToday:'lhToday',forecast:'fcT',fertile:'card_fertile',pre:'lgPre',upcoming:'card_upcoming',patterns:'card_patterns',week:'card_week',usual:'card_usual',temp:'card_temp',mood:'card_mood',doctor:'card_doctor',phase:'card_phase'};
 function todayEditor(){
   const L = S.layout, shown = L.order.filter(k=>!L.hidden.includes(k)), hidden = L.order.filter(k=>L.hidden.includes(k));
   const quick = S.quick || PINNED;
@@ -1316,6 +1347,39 @@ function upcomingCard(v){
     const when = ongoing ? t('upNow',md(x.to)) : x.likely ? `${t('around',md(x.likely))} · ${t('possibleR',range(x.from,x.to))}` : x.to!=null ? range(x.from,x.to) : wmd(x.from);
     const rel = ongoing ? '' : d<=0 ? t('todayShort') : d===1 ? t('tomorrow') : t('upInDays',d);
     return `<div class="row between" style="padding:6px 0"><span style="display:flex;gap:10px;align-items:center"><i style="width:10px;height:10px;border-radius:5px;background:${lab[x.k][1]}"></i><span><b>${t(lab[x.k][0])}</b><br><span class="tiny muted">${when}</span></span></span><span class="tiny muted"><b>${rel}</b></span></div>`; }).join('')}</div>`;
+}
+const escH = x => String(x).replace(/[&<>"]/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+/* step 2–3 cards (spec §7.2); text stand-ins for the app's charts */
+function extraCards(v){
+  const C = {}, p = v.pred;
+  if (p && !v.paused && p.used.length>=2){
+    const last = p.lens[p.lens.length-1], ok = last>=15 && last<=90;
+    const verdict = !ok ? '' : last<p.typLo ? 'SHORTER' : last>p.typHi ? 'LONGER' : 'IN';
+    const pls = v.starts.slice(0,-1).map(s=>periodDays(s).length).sort((a,b)=>a-b), ptyp = pls[Math.floor(pls.length/2)];
+    const pd = v.inPeriod ? v.periodDay : periodDays(p.last).length;
+    C.usual = `<div class="card"><h3>${t('card_usual')}</h3><p><b style="color:var(--ink)">${t('usCd',v.cd,p.typLo,p.typHi)}</b></p>${ok?`<p>${t('usLast',last)}, ${t('us_'+verdict)}</p>`:''}${pd?`<p>${v.inPeriod?t('usPeriodDay',pd):t('usPeriodLen',pd)}${ptyp?' · '+t('usTyp',ptyp):''}</p>`:''}</div>`;
+  }
+  if (v.fertOn && v.fert && v.fert.bbt && v.fert.bbt.length>=3)
+    C.temp = `<div class="card"><h3>${t('card_temp')}</h3><p>${v.fert.bbt.map(b=>nf(b.v,2,S.lang)).join(' · ')}</p></div>`;
+  if (!v.paused){
+    const days=[]; for (let d=TODAY-6; d<=TODAY; d++) days.push(d);
+    const ls = days.map(d=>S.logs.get(d)||{});
+    if (ls.filter(l=>l.mood!=null||l.energy!=null).length>=3)
+      C.mood = `<div class="card"><h3>${t('card_mood')}</h3><div style="display:flex">${days.map((d,i)=>`<button data-act="calFocus" data-v="${d}" style="all:unset;flex:1;text-align:center;cursor:pointer"><div class="tiny muted">${F.w.format(asDate(d))}</div><div><b>${ls[i].mood??'–'}</b></div><div class="tiny">${ls[i].energy??'–'}</div></button>`).join('')}</div><p class="tiny muted">${t('mood')} · ${t('energy')}</p></div>`;
+  }
+  const open = S.questions.filter(q=>!q.done);
+  C.doctor = `<div class="card"><h3>${t('card_doctor')}</h3>${S.questions.length?'':`<p>${t('dqEmpty')}</p>`}${open.slice(0,3).map(q=>`<label style="display:flex;gap:8px;padding:6px 0"><input type="checkbox" data-act="dqToggle" data-v="${q.id}"> ${escH(q.text)}</label>`).join('')}
+    <div class="row" style="gap:8px;margin-top:6px"><input id="dq" placeholder="${t('dqPh')}" maxlength="300" value="${escH(S.qText)}" style="flex:1"><button class="btn secondary small" data-act="dqAdd">${t('dqAdd')}</button></div><p class="tiny muted">${t('dqHint')}</p></div>`;
+  if (p && !v.paused){
+    const f = v.fertOn ? v.fert : null;
+    const ph = v.inPeriod ? 'period' : f ? (f.todayCd>=f.hpd[0] && f.todayCd<=f.hpd[1] ? 'ov' : f.todayCd>f.hpd[1] ? 'lut' : 'foll')
+      : TODAY > p.likely - Math.round((LEARN && LEARN.lut ? LEARN.lut.mean : 12.4)) ? 'lut' : 'foll';
+    const len = p.likely - p.last;
+    const w = v.inPeriod ? 'P' : (TODAY>=p.likely-7 && TODAY<p.likely) ? 'PRE' : (v.cd-1>=len-16 && v.cd-1<=len-11) ? 'MIDC' : null;
+    const pats = w ? visiblePatterns(v).filter(isPattern).filter(x=>x.win===w).slice(0,2) : [];
+    C.phase = `<div class="card"><div class="kicker">${t('card_phase')}</div><h3>${t('ph_'+ph)}</h3><p>${t('phL_'+ph)}</p>${pats.length?`<p><b style="color:var(--ink)">${t('phPat')}</b><br>${pats.map(x=>'• '+x.title).join('<br>')}</p>`:''}<p class="tiny muted">${t('phInfo')}${v.fertOn?'':' '+t('notBC')}</p></div>`;
+  }
+  return C;
 }
 function weekCard(v){
   const bleed = new Set(); v.starts.forEach(s=>periodDays(s).forEach(d=>bleed.add(d)));
@@ -1626,7 +1690,8 @@ function renderAbout(){
 function renderReport(){
   const R = S.report, v = vm();
   const inc = ['bleed','lengths','sym','pain','patterns','mood','temp','notes','contra','sex'];
-  const qs = R.questions ?? t('qDefault');
+  const openQ = S.questions.filter(q=>!q.done);
+  const qs = R.questions ?? (openQ.length ? openQ.map(q=>'– '+q.text).join('\n') : t('qDefault'));
   let preview='';
   if (R.preview && v.pred){
     const lens=v.pred.lens.slice(-R.range); const pl = v.starts.slice(-R.range-1,-1).map(s=>periodDays(s).length);
@@ -1762,8 +1827,10 @@ app.addEventListener('click', e => {
       if (j>=0 && j<shown.length){ [shown[i],shown[j]]=[shown[j],shown[i]]; L.order=[...shown, ...L.order.filter(x=>L.hidden.includes(x))]; } render(); break; }
     case 'cardHide': S.layout.hidden=[...S.layout.hidden, v]; render(); break;
     case 'cardShow': { const L=S.layout; L.hidden=L.hidden.filter(x=>x!==v); L.order=[...L.order.filter(x=>!L.hidden.includes(x) && x!==v), v, ...L.order.filter(x=>L.hidden.includes(x))]; render(); break; }
-    case 'cardReset': S.layout={order:['log','test','best','lhPlan','lhToday','forecast','fertile','pre','upcoming','patterns','week'], hidden:['week'], compact:S.layout.compact}; render(); break;
+    case 'cardReset': S.layout={order:['log','test','best','lhPlan','lhToday','forecast','fertile','pre','upcoming','patterns','week','usual','temp','mood','doctor','phase'], hidden:['week','usual','temp','mood','doctor','phase'], compact:S.layout.compact}; render(); break;
     case 'quickPick': { const q=[...(S.quick||PINNED)]; S.quick = q.includes(v) ? q.filter(x=>x!==v) : q.length<8 ? [...q, v] : q; render(); break; }
+    case 'dqAdd': { const tx=(S.qText||'').trim().slice(0,300); if (tx && S.questions.filter(q=>!q.done).length<30){ S.questions=[{id:String(Date.now()),text:tx,done:false,at:Date.now()},...S.questions]; S.qText=''; } render(); break; }
+    case 'dqToggle': S.questions=S.questions.map(q=>q.id===v?{...q,done:!q.done,at:Date.now()}:q); render(); break;
     case 'quickToggle': setLog(TODAY, l=>{ const f = EMO[v]?'emo':TAGS.includes(v)?'tags':'symptoms'; l[f]=l[f]||[]; l[f]=l[f].includes(v)?l[f].filter(x=>x!==v):[...l[f],v]; }); render(); break;
     case 'calFocus': { const dt=asDate(Number(v)); S.calMonth=[dt.getUTCFullYear(), dt.getUTCMonth()+1]; S.tab='calendar'; S.dayDetail=Number(v); S.layer='day'; render(); break; }
     case 'close': S.layer=null; if (S.lastChange){ S.lastChange=null; toast('tSaved'); } else render(); break;
@@ -1832,6 +1899,7 @@ app.addEventListener('input', e => {
   if (x.id==='pain'){ setLog(S.logDate, l=>{ l.pain[S.painSel]=Number(x.value); if(!l.pain[S.painSel]) delete l.pain[S.painSel]; }); S.lastChange=true; render(); const n=document.getElementById('pain'); if(n) n.focus(); }
   if (x.id==='note'){ setLog(S.logDate, l=>{ l.note=x.value; }); S.lastChange=true; }
   if (x.id==='rq'){ S.report.questions=x.value; }
+  if (x.id==='dq'){ S.qText=x.value; }
   if (x.id==='erase'){ S.eraseText=x.value; const b=app.querySelector('[data-act="doErase"]'); const ok=x.value.trim().toUpperCase()===t('eraseWord'); if (b){ b.disabled=!ok; b.style.opacity=ok?1:.4; } }
 });
 app.addEventListener('change', e => {

@@ -11,6 +11,8 @@ import com.nordinary.cyclus.core.Flow
 import com.nordinary.cyclus.core.LhResult
 import com.nordinary.cyclus.core.Mucus
 import com.nordinary.cyclus.core.OverrideKind
+import com.nordinary.cyclus.presenter.DoctorQuestion
+import com.nordinary.cyclus.presenter.DoctorQuestions
 import com.nordinary.cyclus.sample.SampleScenario
 import com.nordinary.cyclus.sample.SampleScenarios
 import com.nordinary.cyclus.store.CyclusRepository
@@ -92,6 +94,26 @@ class RepositoryTest {
         // merging the older data back changes nothing
         newer.importMerge(old.exportAll("t", "x", false))
         assertEquals(5, newer.observeLogs().first()[20_000]?.mood)
+    }
+
+    @Test fun mergeImportUnitesDoctorQuestions(): Unit = runBlocking {
+        val a = repo(now = 5_000); val b = repo(now = 5_000)
+        a.setSetting(SettingKeys.DOCTOR_QUESTIONS, DoctorQuestions.encode(listOf(
+            DoctorQuestion("1", "Mine", at = 100), DoctorQuestion("2", "Shared old", at = 100),
+        )))
+        b.setSetting(SettingKeys.DOCTOR_QUESTIONS, DoctorQuestions.encode(listOf(
+            DoctorQuestion("2", "Shared new", done = true, at = 200), DoctorQuestion("3", "Theirs", at = 99_999_999),
+        )))
+        a.importMerge(b.exportAll("t", "x", false))
+        val merged = DoctorQuestions.from(a.observeSettings().first())
+        assertEquals(setOf("1", "2", "3"), merged.map { it.id }.toSet())
+        assertEquals("Shared new", merged.single { it.id == "2" }.text) // newer wins
+        assertEquals(5_000, merged.single { it.id == "3" }.at) // a clock from the future counts as now
+        // a file without questions leaves them alone; replace takes the file's list
+        a.importMerge(repo().exportAll("t", "x", false))
+        assertEquals(3, DoctorQuestions.from(a.observeSettings().first()).size)
+        a.importReplace(b.exportAll("t", "x", false))
+        assertEquals(setOf("2", "3"), DoctorQuestions.from(a.observeSettings().first()).map { it.id }.toSet())
     }
 
     private val full = DayLog(

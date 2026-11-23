@@ -51,22 +51,14 @@ object InsightsPresenter {
         val starts = snap.starts
         val data = snap.data
 
-        val plens = starts.dropLast(1).map { data.periodDays(it).size }.sorted()
-        val pmed = plens.getOrNull(plens.size / 2)
+        val pmed = periodTypical(snap)
         val spread = max(1, Js.roundInt((p.hiL - p.loL) / 2))
 
         val bars = p.lens.takeLast(8)
         val startsUsed = starts.takeLast(bars.size + 1)
         val barModels = bars.mapIndexed { i, l -> CycleBar(l, startsUsed[i], i == bars.size - 1) }
 
-        val f = if (snap.fertilityOn) snap.fertility else null
-        val temperature = if (f != null && f.bbt.size >= 3) {
-            TemperatureChart(
-                points = f.bbt.map { TempPoint(it.cd, it.v, f.shift != null && it.cd >= f.shift.cd) },
-                shiftCd = f.shift?.cd, cover = f.shift?.cover, ovulationDay = if (f.shift != null) f.dateOf(f.mapD) else null,
-                maxCd = max(28, f.todayCd),
-            )
-        } else null
+        val temperature = temperatureChart(snap)
 
         val rates = heatRates(snap, starts.drop(1))
 
@@ -79,6 +71,23 @@ object InsightsPresenter {
             typLo = p.typLo, typHi = p.typHi, periodTypical = pmed, spread = spread, tier = p.tier, cyclesUsed = p.used.size,
             patterns = patternSection(snap, muted), bars = barModels, temperature = temperature,
             heat = HeatMap(HEAT_SYMPTOMS, HEAT_REL, rates), history = history,
+        )
+    }
+
+    /** Typical period length of finished cycles (prototype: sorted[floor(n/2)]); null before the first one. */
+    fun periodTypical(snap: CycleSnapshot): Int? {
+        val plens = snap.starts.dropLast(1).map { snap.data.periodDays(it).size }.sorted()
+        return plens.getOrNull(plens.size / 2)
+    }
+
+    /** Current cycle's BBT curve (Insights and Today): only with fertility shown and at least 3 temperatures. */
+    fun temperatureChart(snap: CycleSnapshot): TemperatureChart? {
+        val f = if (snap.fertilityOn) snap.fertility else null
+        if (f == null || f.bbt.size < 3) return null
+        return TemperatureChart(
+            points = f.bbt.map { TempPoint(it.cd, it.v, f.shift != null && it.cd >= f.shift.cd) },
+            shiftCd = f.shift?.cd, cover = f.shift?.cover, ovulationDay = if (f.shift != null) f.dateOf(f.mapD) else null,
+            maxCd = max(28, f.todayCd),
         )
     }
 

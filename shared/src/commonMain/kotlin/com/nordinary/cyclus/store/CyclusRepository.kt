@@ -21,6 +21,7 @@ import com.nordinary.cyclus.health.HealthLink
 import com.nordinary.cyclus.health.HealthSample
 import com.nordinary.cyclus.health.HealthType
 import com.nordinary.cyclus.health.LinkState
+import com.nordinary.cyclus.presenter.DoctorQuestions
 import com.nordinary.cyclus.store.db.CyclusDatabase
 import com.nordinary.cyclus.store.db.Day_log
 import com.nordinary.cyclus.store.db.Day_pain
@@ -229,7 +230,14 @@ class CyclusRepository(
         db.transaction {
             insertAll(file, onlyIfNewer = true)
             val existing = q.selectAllSettings().executeAsList().map { it.key }.toSet()
-            file.prefs.filterKeys { it in SettingKeys.USER_PREFS && it !in existing }.forEach { (k, v) -> q.upsertSetting(k, v) }
+            file.prefs.filterKeys { it in SettingKeys.USER_PREFS && it !in existing && it != SettingKeys.DOCTOR_QUESTIONS }
+                .forEach { (k, v) -> q.upsertSetting(k, v) }
+            // the appointment questions are a list: union by id, newer change wins
+            file.prefs[SettingKeys.DOCTOR_QUESTIONS]?.let { theirs ->
+                val mine = DoctorQuestions.parse(q.selectSetting(SettingKeys.DOCTOR_QUESTIONS).executeAsOneOrNull())
+                val merged = DoctorQuestions.encode(DoctorQuestions.merge(mine, DoctorQuestions.parse(theirs), nowMillis()))
+                if (merged == null) q.deleteSetting(SettingKeys.DOCTOR_QUESTIONS) else q.upsertSetting(SettingKeys.DOCTOR_QUESTIONS, merged)
+            }
         }
         changes++
     }
