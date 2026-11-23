@@ -27,6 +27,7 @@ import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
@@ -69,6 +70,9 @@ fun CalendarContent(
     onMarkStart: (Int) -> Unit,
     /** The selected day's detail, shown under the grid (a tap selects; today is selected at first). */
     detail: @Composable (day: Int) -> Unit,
+    /** One-time request to show a day (from Today); [onFocused] clears it so later browsing isn't overridden. */
+    focus: Int? = null,
+    onFocused: () -> Unit = {},
 ) {
     val c = Cyclus.colors
     val todayDate = LocalDate.ofEpochDay(snap.today.toLong())
@@ -79,6 +83,13 @@ fun CalendarContent(
     var dragged by remember { mutableFloatStateOf(0f) }
     var selected by rememberSaveable { mutableStateOf(snap.today) }
     val onDay: (Int) -> Unit = { selected = it }
+    LaunchedEffect(focus) {
+        val d = focus ?: return@LaunchedEffect
+        val date = LocalDate.ofEpochDay(d.toLong())
+        ym = date.year * 12 + date.monthValue - 1
+        selected = d
+        onFocused()
+    }
 
     Column(
         Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(contentPadding).padding(horizontal = 16.dp)
@@ -119,7 +130,7 @@ private fun NavArrow(symbol: String, label: String, onClick: () -> Unit) {
 
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
-private fun DayCell(cell: CalendarCell, fmt: Fmt, modifier: Modifier, selected: Boolean, onDay: (Int) -> Unit, onMarkStart: (Int) -> Unit) {
+internal fun DayCell(cell: CalendarCell, fmt: Fmt, modifier: Modifier, selected: Boolean, onDay: (Int) -> Unit, onMarkStart: (Int) -> Unit) {
     val c = Cyclus.colors
     var menu by remember { mutableStateOf(false) }
     val markLabel = fmt.s("markStart")

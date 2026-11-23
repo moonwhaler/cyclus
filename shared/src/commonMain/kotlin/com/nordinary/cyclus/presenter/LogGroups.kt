@@ -12,8 +12,9 @@ import com.nordinary.cyclus.core.DayLog
 enum class LogGroup {
     MORE_SYMPTOMS, PAIN, FEELINGS, ENERGY, SLEEP, LIBIDO, DISCHARGE, TEMPERATURE, TAGS, NOTE;
 
-    fun has(l: DayLog): Boolean = when (this) {
-        MORE_SYMPTOMS -> l.symptoms.any { it !in Catalog.PINNED }
+    /** [pinned]: the symptoms in the sheet's „Schnellauswahl“ row (the person's quick picks). */
+    fun has(l: DayLog, pinned: Collection<String> = Catalog.PINNED): Boolean = when (this) {
+        MORE_SYMPTOMS -> l.symptoms.any { it !in pinned }
         PAIN -> l.pain.values.any { it > 0 }
         FEELINGS -> l.emotions.isNotEmpty()
         ENERGY -> l.energy != null
@@ -27,9 +28,9 @@ enum class LogGroup {
 
     companion object {
         /** Sections used on any day of the last [window] days. */
-        fun used(logs: Map<Day, DayLog>, today: Day, window: Int = 120): Set<LogGroup> {
+        fun used(logs: Map<Day, DayLog>, today: Day, window: Int = 120, pinned: Collection<String> = Catalog.PINNED): Set<LogGroup> {
             val recent = logs.filterKeys { it in today - window + 1..today }.values
-            return entries.filter { g -> recent.any { g.has(it) } }.toSet()
+            return entries.filter { g -> recent.any { g.has(it, pinned) } }.toSet()
         }
     }
 }

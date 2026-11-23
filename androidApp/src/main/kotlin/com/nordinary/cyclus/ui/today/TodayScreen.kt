@@ -34,6 +34,11 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.compositeOver
 import androidx.compose.ui.semantics.Role
+import androidx.compose.material3.TextButton
+import com.nordinary.cyclus.core.Day
+import com.nordinary.cyclus.presenter.TodayCard
+import com.nordinary.cyclus.presenter.TodayLayout
+import com.nordinary.cyclus.presenter.UpcomingItem
 import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.selected
@@ -92,17 +97,43 @@ fun TodayContent(
     /** In-context opt-in for „Periode bald“ (nothing is armed before the user says yes, on every API level). */
     reminderOffer: Boolean = false,
     onReminderOffer: (Boolean) -> Unit = {},
-    /** One-tap pinned symptoms on the „Heute eingetragen“ card (null: not shown). */
-    onToggleSymptom: ((String) -> Unit)? = null,
+    /** One-tap quick picks on the „Heute eingetragen“ card (null: not shown). */
+    onToggleQuick: ((String) -> Unit)? = null,
+    /** Card order, hidden cards, ring size ([TodayLayout]); edits are saved through [onLayout]. */
+    layout: TodayLayout = TodayLayout.DEFAULT,
+    onLayout: (TodayLayout) -> Unit = {},
+    quickPicks: List<String> = Catalog.PINNED,
+    onQuickPicks: (List<String>) -> Unit = {},
+    /** „Demnächst“ rows, the next reminder already merged in ([Upcoming.merge]). */
+    upcoming: List<UpcomingItem> = state.upcoming,
+    /** Week strip / Demnächst tap: show that day in the calendar. */
+    onOpenDay: (Day) -> Unit = {},
+    onMarkStart: (Day) -> Unit = {},
 ) {
     val c = Cyclus.colors
+    var editing by androidx.compose.runtime.saveable.rememberSaveable { androidx.compose.runtime.mutableStateOf(false) }
+    var quickSheet by androidx.compose.runtime.saveable.rememberSaveable { androidx.compose.runtime.mutableStateOf(false) }
+    if (quickSheet) QuickPicksSheet(quickPicks, fmt, onQuickPicks) { quickSheet = false }
+    val scroll = rememberScrollState()
+    // entering or leaving edit mode starts at the top: the ring (size preview) and the editor's header
+    androidx.compose.runtime.LaunchedEffect(editing) { scroll.animateScrollTo(0) }
     Column(
-        Modifier.fillMaxWidth().verticalScroll(rememberScrollState()).padding(contentPadding).padding(horizontal = 16.dp),
+        Modifier.fillMaxWidth().verticalScroll(scroll).padding(contentPadding).padding(horizontal = 16.dp),
         verticalArrangement = Arrangement.spacedBy(0.dp),
     ) {
         val hero = state.hero
         var ringHelp by androidx.compose.runtime.saveable.rememberSaveable { androidx.compose.runtime.mutableStateOf(false) }
-        CycleRing(
+        if (layout.ringCompact) Row(
+            Modifier.fillMaxWidth().padding(top = 8.dp, bottom = 10.dp), verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(16.dp),
+        ) {
+            // compact: the same ring, small, with its text beside it (the ring stays a tap target for the explainer)
+            CycleRing(
+                state.ring, ringA11y(state, fmt), Modifier.size(116.dp),
+                onExplain = { ringHelp = true }, explainLabel = fmt.s("ringHelpA"), showInfo = false,
+            ) {}
+            Column(Modifier.weight(1f)) { RingCenter(hero, fmt, alignStart = true) }
+        } else CycleRing(
             state.ring, ringA11y(state, fmt),
             Modifier.fillMaxWidth(.82f).align(Alignment.CenterHorizontally).padding(top = 4.dp),
             onExplain = { ringHelp = true }, explainLabel = fmt.s("ringHelpA"),
@@ -144,77 +175,33 @@ fun TodayContent(
             }
         }
 
-        Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-            if (reminderOffer) CyclusCard {
-                CardTitle(androidx.compose.ui.res.stringResource(R.string.offer_t))
-                CardBody(androidx.compose.ui.res.stringResource(R.string.offer_b))
-                Row(Modifier.fillMaxWidth().padding(top = 10.dp), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                    SecondaryButton(androidx.compose.ui.res.stringResource(R.string.offer_no), { onReminderOffer(false) }, Modifier.weight(1f))
-                    PrimaryButton(androidx.compose.ui.res.stringResource(R.string.offer_yes), { onReminderOffer(true) }, Modifier.weight(1f))
+        if (editing) {
+            TodayEditor(
+                layout, fmt, onLayout = onLayout, onEditQuickPicks = { quickSheet = true }, onDone = { editing = false },
+                modifier = Modifier.padding(top = 8.dp),
+            )
+        } else {
+            Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                if (reminderOffer) CyclusCard {
+                    CardTitle(androidx.compose.ui.res.stringResource(R.string.offer_t))
+                    CardBody(androidx.compose.ui.res.stringResource(R.string.offer_b))
+                    Row(Modifier.fillMaxWidth().padding(top = 10.dp), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                        SecondaryButton(androidx.compose.ui.res.stringResource(R.string.offer_no), { onReminderOffer(false) }, Modifier.weight(1f))
+                        PrimaryButton(androidx.compose.ui.res.stringResource(R.string.offer_yes), { onReminderOffer(true) }, Modifier.weight(1f))
+                    }
+                }
+                for (card in layout.visible(available(state, upcoming))) androidx.compose.runtime.key(card) {
+                    TodayCardContent(card, state, fmt, upcoming, quickPicks, onOpenLog, onPatterns, onLh, onToggleQuick, onOpenDay, onMarkStart)
                 }
             }
-            CyclusCard(onClick = onOpenLog) {
-                Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                    CardTitle(fmt.s("todaysLog"))
-                    Text("›", color = c.ink2, fontSize = 18.sp)
-                }
-                TodayLogSummary(state.todaysLog, fmt)
-                // the most common entries in one tap, without opening the sheet
-                if (onToggleSymptom != null) {
-                    @OptIn(ExperimentalLayoutApi::class)
-                    FlowRow(Modifier.padding(top = 8.dp), horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                        for (s in Catalog.PINNED) CyclusChip(fmt.item(s), state.todaysLog?.symptoms?.contains(s) == true, { onToggleSymptom(s) })
-                    }
-                }
+            // fixed, never part of the layout: the explanation link and the intended-purpose line
+            if (state.conceive != null) LinkRow(fmt.s("whyLink"), onWhy)
+            if (state.fertilityFooter) {
+                Text(fmt.s("notBC"), Modifier.fillMaxWidth().padding(top = 6.dp), fontSize = 12.sp, color = c.ink2, textAlign = TextAlign.Center)
             }
-            val conceive = state.conceive
-            if (conceive != null) {
-                conceive.earliestTest?.let { test ->
-                    CyclusCard { CardTitle(fmt.s("testTitle")); Text(fmt.rich("testBody", fmt.wmd(test)), fontSize = 14.sp, color = c.ink2) }
-                }
-                if (conceive.bestDays.isNotEmpty()) CyclusCard {
-                    CardTitle(fmt.s("bestDays"))
-                    Text(
-                        conceive.bestDays.joinToString(" · ") { d -> when (d) { state.today -> fmt.s("today"); state.today + 1 -> fmt.s("tomorrow"); else -> fmt.wmd(d) } },
-                        fontSize = 14.sp, fontWeight = FontWeight.SemiBold, color = c.ink,
-                    )
-                    CardBody(fmt.s("bestTip"))
-                }
-                conceive.lhPlanStart?.let { start ->
-                    CyclusCard { CardTitle(fmt.s("lhTests")); Text(fmt.rich("lhPlan", fmt.wmd(start), conceive.cyclesUsed), fontSize = 14.sp, color = c.ink2) }
-                }
-                if (conceive.lhToday) CyclusCard {
-                    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
-                        CardTitle(fmt.s("lhToday"))
-                        Text(fmt.s("lhNegSoFar", conceive.lhNegativesSoFar), fontSize = 12.sp, color = c.ink2)
-                    }
-                    FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                        for (r in LhResult.entries) CyclusChip(
-                            fmt.s("lh_${r.key}"), conceive.todaysLh == r, { onLh(r) }, accent = c.fertile,
-                        )
-                    }
-                }
-                state.forecast?.let { ForecastCard(it, fmt) }
-                LinkRow(fmt.s("whyLink"), onWhy)
-            } else {
-                state.forecast?.let { ForecastCard(it, fmt) }
-                state.trackFertileWindow?.let { (a, b) ->
-                    CyclusCard {
-                        CardTitle(fmt.s("fertWinTrack"))
-                        CardBody("${fmt.range(a, b)}. ${fmt.s("notBC")}")
-                    }
-                }
-                state.preWindowFrom?.let { from ->
-                    CyclusCard {
-                        CardTitle(fmt.s("preTitle", fmt.wmd(from)))
-                        CardBody(fmt.s("preBody"))
-                    }
-                }
+            TextButton(onClick = { editing = true }, Modifier.align(Alignment.CenterHorizontally).padding(top = 10.dp)) {
+                Text(fmt.s("customize"), color = c.ink2, fontWeight = FontWeight.SemiBold, fontSize = 14.sp)
             }
-            if (state.patternCount > 0) LinkRow(fmt.plural("nPatterns", state.patternCount), onPatterns)
-        }
-        if (state.fertilityFooter) {
-            Text(fmt.s("notBC"), Modifier.fillMaxWidth().padding(top = 6.dp), fontSize = 12.sp, color = c.ink2, textAlign = TextAlign.Center)
         }
         if (debugNote != null) {
             Text(debugNote, Modifier.fillMaxWidth().padding(top = 12.dp), fontSize = 11.sp, color = c.ink2, textAlign = TextAlign.Center)
@@ -224,7 +211,8 @@ fun TodayContent(
 }
 
 @Composable
-private fun RingCenter(hero: TodayHero, fmt: Fmt) {
+private fun RingCenter(hero: TodayHero, fmt: Fmt, alignStart: Boolean = false) {
+    val align = if (alignStart) TextAlign.Start else TextAlign.Center
     val c = Cyclus.colors
     var kicker = ""; var big = ""; var bigMax = 40; var sub: String? = null; var range: String? = null; var subBelow: String? = null
     var bigColor = c.ink
@@ -261,12 +249,12 @@ private fun RingCenter(hero: TodayHero, fmt: Fmt) {
     Text(kicker, fontSize = 13.sp, fontWeight = FontWeight.SemiBold, color = c.ink2, maxLines = 1, overflow = TextOverflow.Ellipsis)
     Text(
         big, fontFamily = Nunito, fontWeight = FontWeight.ExtraBold, color = bigColor, maxLines = 1, softWrap = false,
-        lineHeight = (bigMax * 1.05).sp, letterSpacing = (-0.4).sp, textAlign = TextAlign.Center,
+        lineHeight = (bigMax * 1.05).sp, letterSpacing = (-0.4).sp, textAlign = align,
         autoSize = TextAutoSize.StepBased(minFontSize = 18.sp, maxFontSize = bigMax.sp, stepSize = 1.sp),
     )
-    sub?.let { Text(it, fontSize = 13.sp, color = c.ink2, lineHeight = 17.sp, maxLines = 2, textAlign = TextAlign.Center, overflow = TextOverflow.Ellipsis) }
-    range?.let { Text(it, fontFamily = Nunito, fontWeight = FontWeight.Bold, fontSize = 18.sp, color = c.ink, maxLines = 1, softWrap = false) }
-    subBelow?.let { Text(it, fontSize = 13.sp, color = c.ink2, maxLines = 2, textAlign = TextAlign.Center) }
+    sub?.let { Text(it, fontSize = 13.sp, color = c.ink2, lineHeight = 17.sp, maxLines = 2, textAlign = align, overflow = TextOverflow.Ellipsis) }
+    range?.let { Text(it, fontFamily = Nunito, fontWeight = FontWeight.Bold, fontSize = 18.sp, color = c.ink, maxLines = 1, softWrap = false, textAlign = align) }
+    subBelow?.let { Text(it, fontSize = 13.sp, color = c.ink2, maxLines = 2, textAlign = align) }
 }
 
 private fun ringA11y(state: TodayUiState, fmt: Fmt): String {
@@ -384,10 +372,10 @@ private fun ForecastCard(fc: Forecast, fmt: Fmt) {
 }
 
 @Composable
-private fun CardTitle(text: String) = Text(text, fontSize = 15.sp, fontWeight = FontWeight.SemiBold, color = Cyclus.colors.ink)
+internal fun CardTitle(text: String) = Text(text, fontSize = 15.sp, fontWeight = FontWeight.SemiBold, color = Cyclus.colors.ink)
 
 @Composable
-private fun CardBody(text: String) = Text(text, fontSize = 14.sp, color = Cyclus.colors.ink2)
+internal fun CardBody(text: String) = Text(text, fontSize = 14.sp, color = Cyclus.colors.ink2)
 
 @Composable
 fun PrimaryButton(text: String, onClick: () -> Unit, modifier: Modifier = Modifier, enabled: Boolean = true) {
@@ -419,5 +407,89 @@ fun LinkRow(text: String, onClick: () -> Unit, modifier: Modifier = Modifier, fi
         Text(text, fontWeight = FontWeight.SemiBold, color = c.accent, fontSize = 15.sp)
         Spacer(Modifier.size(8.dp))
         Text("›", fontWeight = FontWeight.SemiBold, color = c.accent, fontSize = 18.sp)
+    }
+}
+
+/** Which cards have something to say right now (timed cards are skipped while they don't). */
+private fun available(state: TodayUiState, upcoming: List<UpcomingItem>): Set<TodayCard> = buildSet {
+    add(TodayCard.LOG); add(TodayCard.WEEK)
+    val cc = state.conceive
+    if (cc?.earliestTest != null) add(TodayCard.TEST)
+    if (cc != null && cc.bestDays.isNotEmpty()) add(TodayCard.BEST_DAYS)
+    if (cc?.lhPlanStart != null) add(TodayCard.LH_PLAN)
+    if (cc?.lhToday == true) add(TodayCard.LH_TODAY)
+    if (state.forecast != null) add(TodayCard.FORECAST)
+    if (state.trackFertileWindow != null) add(TodayCard.FERTILE)
+    if (state.preWindowFrom != null) add(TodayCard.PRE)
+    if (upcoming.isNotEmpty()) add(TodayCard.UPCOMING)
+    if (state.patternCount > 0) add(TodayCard.PATTERNS)
+}
+
+@OptIn(ExperimentalLayoutApi::class)
+@Composable
+private fun TodayCardContent(
+    card: TodayCard, state: TodayUiState, fmt: Fmt, upcoming: List<UpcomingItem>, quickPicks: List<String>,
+    onOpenLog: () -> Unit, onPatterns: () -> Unit, onLh: (LhResult) -> Unit, onToggleQuick: ((String) -> Unit)?,
+    onOpenDay: (Day) -> Unit, onMarkStart: (Day) -> Unit,
+) {
+    val c = Cyclus.colors
+    val cc = state.conceive
+    when (card) {
+        TodayCard.LOG -> CyclusCard(onClick = onOpenLog) {
+            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+                CardTitle(fmt.s("todaysLog"))
+                Text("›", color = c.ink2, fontSize = 18.sp)
+            }
+            TodayLogSummary(state.todaysLog, fmt)
+            // the person's quick picks in one tap, without opening the sheet
+            if (onToggleQuick != null && quickPicks.isNotEmpty()) {
+                FlowRow(Modifier.padding(top = 8.dp), horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    val l = state.todaysLog
+                    for (k in quickPicks) {
+                        val on = l != null && (k in l.symptoms || k in l.emotions || k in l.tags)
+                        CyclusChip(fmt.item(k), on, { onToggleQuick(k) })
+                    }
+                }
+            }
+        }
+        TodayCard.TEST -> cc?.earliestTest?.let { test ->
+            CyclusCard { CardTitle(fmt.s("testTitle")); Text(fmt.rich("testBody", fmt.wmd(test)), fontSize = 14.sp, color = c.ink2) }
+        }
+        TodayCard.BEST_DAYS -> if (cc != null) CyclusCard {
+            CardTitle(fmt.s("bestDays"))
+            Text(
+                cc.bestDays.joinToString(" · ") { d -> when (d) { state.today -> fmt.s("today"); state.today + 1 -> fmt.s("tomorrow"); else -> fmt.wmd(d) } },
+                fontSize = 14.sp, fontWeight = FontWeight.SemiBold, color = c.ink,
+            )
+            CardBody(fmt.s("bestTip"))
+        }
+        TodayCard.LH_PLAN -> cc?.lhPlanStart?.let { start ->
+            CyclusCard { CardTitle(fmt.s("lhTests")); Text(fmt.rich("lhPlan", fmt.wmd(start), cc.cyclesUsed), fontSize = 14.sp, color = c.ink2) }
+        }
+        TodayCard.LH_TODAY -> if (cc != null) CyclusCard {
+            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
+                CardTitle(fmt.s("lhToday"))
+                Text(fmt.s("lhNegSoFar", cc.lhNegativesSoFar), fontSize = 12.sp, color = c.ink2)
+            }
+            FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                for (r in LhResult.entries) CyclusChip(fmt.s("lh_${r.key}"), cc.todaysLh == r, { onLh(r) }, accent = c.fertile)
+            }
+        }
+        TodayCard.FORECAST -> state.forecast?.let { ForecastCard(it, fmt) }
+        TodayCard.FERTILE -> state.trackFertileWindow?.let { (a, b) ->
+            CyclusCard {
+                CardTitle(fmt.s("fertWinTrack"))
+                CardBody("${fmt.range(a, b)}. ${fmt.s("notBC")}")
+            }
+        }
+        TodayCard.PRE -> state.preWindowFrom?.let { from ->
+            CyclusCard {
+                CardTitle(fmt.s("preTitle", fmt.wmd(from)))
+                CardBody(fmt.s("preBody"))
+            }
+        }
+        TodayCard.UPCOMING -> UpcomingCard(upcoming, state.today, fmt, onOpenDay)
+        TodayCard.PATTERNS -> LinkRow(fmt.plural("nPatterns", state.patternCount), onPatterns)
+        TodayCard.WEEK -> WeekCard(state.week, fmt, onOpenDay, onMarkStart)
     }
 }

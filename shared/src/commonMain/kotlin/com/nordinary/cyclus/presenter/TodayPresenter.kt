@@ -113,6 +113,10 @@ data class TodayUiState(
     val patternCount: Int,
     val fertilityFooter: Boolean,
     val conceive: ConceiveCards? = null,
+    /** „Woche“: three days back, today, three ahead (same cells as the calendar). */
+    val week: List<CalendarCell> = emptyList(),
+    /** „Demnächst“ from the engine; the next reminder is added where settings are known ([Upcoming.merge]). */
+    val upcoming: List<UpcomingItem> = emptyList(),
 )
 
 /** Data for the ring's single accessibility sentence. */
@@ -124,7 +128,10 @@ object TodayPresenter {
         val p = snap.prediction
         val todaysLog = snap.data.log(today)
         if (p == null || snap.cycleDay == null || snap.status == null) {
-            return TodayUiState(today, TodayHero.Empty, RingModel.EMPTY, RingA11y(null, null, null, null, null), todaysLog, null, null, null, 0, false)
+            return TodayUiState(
+                today, TodayHero.Empty, RingModel.EMPTY, RingA11y(null, null, null, null, null), todaysLog, null, null, null, 0, false,
+                week = CalendarPresenter.week(snap),
+            )
         }
         val cd = snap.cycleDay
         val f = if (snap.fertilityOn) snap.fertility else null
@@ -161,6 +168,8 @@ object TodayPresenter {
             patternCount = patternCount,
             fertilityFooter = snap.fertilityOn,
             conceive = conceive,
+            week = CalendarPresenter.week(snap),
+            upcoming = Upcoming.items(snap),
         )
     }
 
@@ -228,13 +237,13 @@ object TodayPresenter {
     }
 
     /** "Often around this time" symptom suggestions for the log sheet (prototype `renderLogSheet`). */
-    fun suggestions(snap: CycleSnapshot, day: Day): List<String> {
+    fun suggestions(snap: CycleSnapshot, day: Day, pinned: Collection<String> = Catalog.PINNED): List<String> {
         val p = snap.prediction ?: return emptyList()
         if (snap.starts.size <= 2) return emptyList()
         val cand = LinkedHashMap<String, Int>()
         val off = day - p.last
         for (s in snap.starts.dropLast(1)) for (k in -1..1) {
-            snap.data.log(s + off + k)?.symptoms?.forEach { y -> if (y !in Catalog.PINNED) cand[y] = (cand[y] ?: 0) + 1 }
+            snap.data.log(s + off + k)?.symptoms?.forEach { y -> if (y !in pinned) cand[y] = (cand[y] ?: 0) + 1 }
         }
         return cand.entries.sortedByDescending { it.value }.take(3).filter { it.value >= 2 }.map { it.key }
     }

@@ -36,6 +36,8 @@ import com.nordinary.cyclus.presenter.LifeStage
 import com.nordinary.cyclus.presenter.NotifyKeys
 import com.nordinary.cyclus.presenter.NotifyKind
 import com.nordinary.cyclus.presenter.Consent
+import com.nordinary.cyclus.presenter.QuickPicks
+import com.nordinary.cyclus.presenter.TodayLayout
 import com.nordinary.cyclus.presenter.Onboarding
 import com.nordinary.cyclus.presenter.OnboardingChoices
 import com.nordinary.cyclus.presenter.TodayPresenter
@@ -241,12 +243,27 @@ class AppViewModel(
         scope.launch(errors) { repo.updateLog(day, transform) }
     }
 
-    /** Pinned symptom chip on Today: toggles it for today in one tap. */
-    fun toggleSymptomToday(symptom: String) {
+    /** Quick-pick chip on Today: toggles that symptom, feeling or tag for today in one tap. */
+    fun toggleQuickPick(key: String) {
         val today = model.value?.snapshot?.today ?: return
         updateLog(today) { l ->
-            if (symptom in l.symptoms) l.copy(symptoms = l.symptoms - symptom, symptomSeverity = l.symptomSeverity - symptom)
-            else l.copy(symptoms = l.symptoms + symptom)
+            when (QuickPicks.kind(key)) {
+                QuickPicks.Kind.EMOTION -> l.copy(emotions = if (key in l.emotions) l.emotions - key else l.emotions + key)
+                QuickPicks.Kind.TAG -> l.copy(tags = if (key in l.tags) l.tags - key else l.tags + key)
+                QuickPicks.Kind.SYMPTOM ->
+                    if (key in l.symptoms) l.copy(symptoms = l.symptoms - key, symptomSeverity = l.symptomSeverity - key)
+                    else l.copy(symptoms = l.symptoms + key)
+            }
+        }
+    }
+
+    fun setQuickPicks(picks: List<String>) = setSetting(SettingKeys.QUICK_PICKS, QuickPicks.value(picks))
+
+    /** Today's card order, hidden cards and ring size (not engine settings: no recompute, no reminder replanning). */
+    fun setTodayLayout(layout: TodayLayout) {
+        scope.launch(errors) {
+            repo.setSetting(SettingKeys.TODAY_LAYOUT, layout.layoutValue())
+            repo.setSetting(SettingKeys.TODAY_RING, layout.ringValue())
         }
     }
 
@@ -416,10 +433,11 @@ class AppViewModel(
 
     companion object {
         /** Settings the engine and presenters read; any other change only refreshes the cheap part of the model. */
-        private val ENGINE_KEYS = SettingKeys.USER_PREFS
+        private val ENGINE_KEYS = SettingKeys.ENGINE
 
         /** Device bookkeeping no system surface (reminders, widget, shortcut) depends on. */
         private fun isBookkeeping(k: String) = k.startsWith("hc.") || k == SettingKeys.LOCK_BACKOFF ||
-            k == SettingKeys.EXPORT_COUNT || k == SettingKeys.REPORT_NAME || k == SettingKeys.CONSENT
+            k == SettingKeys.EXPORT_COUNT || k == SettingKeys.REPORT_NAME || k == SettingKeys.CONSENT ||
+            k == SettingKeys.TODAY_LAYOUT || k == SettingKeys.TODAY_RING || k == SettingKeys.QUICK_PICKS
     }
 }

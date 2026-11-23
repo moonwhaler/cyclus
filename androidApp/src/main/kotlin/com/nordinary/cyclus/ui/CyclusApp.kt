@@ -98,6 +98,9 @@ import com.nordinary.cyclus.presenter.NotifyKeys
 import com.nordinary.cyclus.presenter.NotifyPrefs
 import com.nordinary.cyclus.presenter.ReportPresenter
 import com.nordinary.cyclus.presenter.TodayPresenter
+import com.nordinary.cyclus.presenter.QuickPicks
+import com.nordinary.cyclus.presenter.TodayLayout
+import com.nordinary.cyclus.presenter.Upcoming
 import com.nordinary.cyclus.sample.SampleScenario
 import com.nordinary.cyclus.ui.calendar.CalendarContent
 import com.nordinary.cyclus.ui.calendar.DayDetail
@@ -301,12 +304,13 @@ fun CyclusApp(vm: AppViewModel) {
             LaunchedEffect(stored) { if (stored == shown) shown = null }
             LaunchedEffect(shown) { if (shown != null) { delay(2_000); shown = null } }
             val log = shown ?: stored
+            val pinned = remember(m.settings) { QuickPicks.symptoms(QuickPicks.from(m.settings)) }
             LogSheet(
             day = day, today = m.snapshot.today, log = log, mode = m.mode,
-            suggestions = remember(m, day) { TodayPresenter.suggestions(m.snapshot, day) }, fmt = fmt,
+            suggestions = remember(m, day, pinned) { TodayPresenter.suggestions(m.snapshot, day, pinned) }, fmt = fmt, pinned = pinned,
             onDayChange = { sheetDay = it },
             onUpdate = { t -> logChanged = true; shown = t(shown ?: stored); vm.updateLog(day, t) },
-            used = remember(m.userLogs, m.snapshot.today) { LogGroup.used(m.userLogs, m.snapshot.today) },
+            used = remember(m.userLogs, m.snapshot.today, pinned) { LogGroup.used(m.userLogs, m.snapshot.today, pinned = pinned) },
             onDone = { sheet = Sheet.NONE; if (logChanged) vm.saved(); logChanged = false },
             onDismiss = { sheet = Sheet.NONE; if (logChanged) vm.saved(); logChanged = false },
             )
@@ -342,6 +346,8 @@ private fun MainScreen(
     val windowWidth = with(LocalDensity.current) { LocalWindowInfo.current.containerSize.width.toDp() }
     val expanded = windowWidth >= 840.dp
     val shownTab = if (expanded && tab == Tab.CALENDAR) Tab.TODAY else tab
+    /** A day Today asked the calendar to show (week strip, Demnächst); consumed once applied. */
+    var calendarFocus by remember { mutableStateOf<Int?>(null) }
 
     val itemColors = NavigationSuiteDefaults.itemColors(
         navigationBarItemColors = NavigationBarItemDefaults.colors(
@@ -433,15 +439,24 @@ private fun MainScreen(
                     reminderOffer = NotifyPrefs.from(m.settings).let { !it.consent && !it.asked } &&
                         m.snapshot.prediction != null && !m.snapshot.paused,
                     onReminderOffer = onReminderOffer,
-                    onToggleSymptom = vm::toggleSymptomToday,
+                    onToggleQuick = vm::toggleQuickPick,
+                    layout = remember(m.settings) { TodayLayout.from(m.settings) }, onLayout = vm::setTodayLayout,
+                    quickPicks = remember(m.settings) { QuickPicks.from(m.settings) }, onQuickPicks = vm::setQuickPicks,
+                    upcoming = remember(m.today, m.settings) {
+                        val reminder = Upcoming.nextReminder(m.snapshot, m.settings, kotlin.time.Clock.System.now(), kotlinx.datetime.TimeZone.currentSystemDefault())
+                        Upcoming.merge(m.today.upcoming, reminder, m.snapshot.today)
+                    },
+                    // wide screens show the calendar next to Today: no tab switch there
+                    onOpenDay = { day -> calendarFocus = day; if (!expanded) tab = Tab.CALENDAR },
+                    onMarkStart = vm::markStart,
                 )
             }
             when (shownTab) {
                 Tab.TODAY -> if (expanded) Row(Modifier.fillMaxSize(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     Box(Modifier.weight(1f)) { today() }
-                    Box(Modifier.weight(1f)) { CalendarContent(m.snapshot, fmt, padding, onMarkStart = vm::markStart, detail = dayDetail) }
+                    Box(Modifier.weight(1f)) { CalendarContent(m.snapshot, fmt, padding, onMarkStart = vm::markStart, detail = dayDetail, focus = calendarFocus, onFocused = { calendarFocus = null }) }
                 } else Centered { today() }
-                Tab.CALENDAR -> Centered { CalendarContent(m.snapshot, fmt, padding, onMarkStart = vm::markStart, detail = dayDetail) }
+                Tab.CALENDAR -> Centered { CalendarContent(m.snapshot, fmt, padding, onMarkStart = vm::markStart, detail = dayDetail, focus = calendarFocus, onFocused = { calendarFocus = null }) }
                 Tab.INSIGHTS -> Centered(if (expanded) 1100.dp else 640.dp) {
                     InsightsContent(
                         m.insights, fmt, padding, onMethod = onMethod, onMute = vm::mute, onAllPatterns = onPatterns,

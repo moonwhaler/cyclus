@@ -43,6 +43,8 @@ fun CycleRing(
     model: RingModel, a11y: String, modifier: Modifier = Modifier,
     /** Opens the explainer: the whole ring is a tap target, the ⓘ in its bottom gap makes that discoverable. */
     onExplain: (() -> Unit)? = null, explainLabel: String = "",
+    /** The ⓘ in the bottom gap (off for the compact ring: too small for a 44 dp target). */
+    showInfo: Boolean = true,
     center: @Composable () -> Unit,
 ) {
     val c = Cyclus.colors
@@ -94,7 +96,7 @@ fun CycleRing(
             contentAlignment = Alignment.Center,
         ) { Column(horizontalAlignment = Alignment.CenterHorizontally) { center() } }
         // the gap at the bottom of the ring (45°–135°) is empty: a quiet ⓘ sits there
-        if (onExplain != null && model.segments.isNotEmpty()) IconButton(
+        if (onExplain != null && showInfo && model.segments.isNotEmpty()) IconButton(
             onClick = onExplain,
             modifier = Modifier.align(Alignment.BottomCenter).size(44.dp).semantics { contentDescription = explainLabel },
         ) { Icon(CyclusIcons.Info, null, Modifier.size(18.dp), tint = c.ink2.copy(alpha = .75f)) }

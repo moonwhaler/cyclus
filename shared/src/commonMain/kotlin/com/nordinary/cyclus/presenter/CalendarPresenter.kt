@@ -63,36 +63,52 @@ object CalendarPresenter {
 
     /** Month grid, Monday first, 5 or 6 weeks (prototype `renderCalendar`). */
     fun month(snap: CycleSnapshot, year: Int, month: Int): CalendarMonth {
-        val today = snap.today
         val first = epoch(LocalDate(year, month, 1))
         val wd = (LocalDate.fromEpochDays(first).dayOfWeek.ordinal - DayOfWeek.MONDAY.ordinal + 7) % 7
-        val bleed = snap.starts.flatMap { snap.data.periodDays(it) }.toSet()
-        val p = snap.prediction
-        val f = if (snap.fertilityOn) snap.fertility else null
+        val ctx = CellContext(snap)
         val cells = mutableListOf<CalendarCell>()
         for (i in 0 until 42) {
             val day = first - wd + i
-            val date = LocalDate.fromEpochDays(day)
             if (i >= 35 && LocalDate.fromEpochDays(first - wd + 35).month.number != month) break
-            val l = snap.data.log(day)
-            val isBleed = day in bleed
-            val predicted = p != null && !snap.paused && day >= p.lo && day <= p.hi && day > today && !isBleed
-            val pre = p != null && !snap.paused && day >= p.lo - 7 && day < p.lo && day >= today
-            var tier = 0
-            var marker = DayMarker.NONE
-            if (f != null) {
-                val cd = day - f.cs + 1
-                val fd = if (cd >= 1) f.days.getOrNull(cd - 1) else null
-                if (fd != null && fd.tier > 0 && !isBleed) tier = fd.tier
-                if (cd == f.mapD) marker = DayMarker.OVULATION else if (fd != null && fd.tier == 3) marker = DayMarker.PEAK
-            }
-            cells += CalendarCell(
-                day = day, dayOfMonth = date.day, inMonth = date.month.number == month,
-                bleed = isBleed, spotting = !isBleed && l?.flow == Flow.SPOTTING, predicted = predicted, prePeriod = pre,
-                fertTier = tier, marker = marker, today = day == today, logged = isLogged(l), canMarkStart = day <= today,
-            )
+            cells += cell(ctx, day, inMonth = LocalDate.fromEpochDays(day).month.number == month)
         }
-        return CalendarMonth(year, month, first, cells, f != null)
+        return CalendarMonth(year, month, first, cells, ctx.f != null)
+    }
+
+    /** What every cell needs, computed once per grid. */
+    private class CellContext(val snap: CycleSnapshot) {
+        val bleed = snap.starts.flatMap { snap.data.periodDays(it) }.toSet()
+        val p = snap.prediction
+        val f = if (snap.fertilityOn) snap.fertility else null
+    }
+
+    /** One day, same rules for the month grid and Today's week strip. */
+    private fun cell(ctx: CellContext, day: Day, inMonth: Boolean): CalendarCell {
+        val snap = ctx.snap; val p = ctx.p; val f = ctx.f
+        val today = snap.today
+        val l = snap.data.log(day)
+        val isBleed = day in ctx.bleed
+        val predicted = p != null && !snap.paused && day >= p.lo && day <= p.hi && day > today && !isBleed
+        val pre = p != null && !snap.paused && day >= p.lo - 7 && day < p.lo && day >= today
+        var tier = 0
+        var marker = DayMarker.NONE
+        if (f != null) {
+            val cd = day - f.cs + 1
+            val fd = if (cd >= 1) f.days.getOrNull(cd - 1) else null
+            if (fd != null && fd.tier > 0 && !isBleed) tier = fd.tier
+            if (cd == f.mapD) marker = DayMarker.OVULATION else if (fd != null && fd.tier == 3) marker = DayMarker.PEAK
+        }
+        return CalendarCell(
+            day = day, dayOfMonth = LocalDate.fromEpochDays(day).day, inMonth = inMonth,
+            bleed = isBleed, spotting = !isBleed && l?.flow == Flow.SPOTTING, predicted = predicted, prePeriod = pre,
+            fertTier = tier, marker = marker, today = day == today, logged = isLogged(l), canMarkStart = day <= today,
+        )
+    }
+
+    /** Today's week strip: three days back, today, three ahead. */
+    fun week(snap: CycleSnapshot): List<CalendarCell> {
+        val ctx = CellContext(snap)
+        return (snap.today - 3..snap.today + 3).map { cell(ctx, it, inMonth = true) }
     }
 
     private fun isLogged(l: DayLog?) = l != null && (l.symptoms.isNotEmpty() || l.mood != null || l.lh != null || l.mucus != null || l.note != null)

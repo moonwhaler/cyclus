@@ -141,8 +141,16 @@ object SettingKeys {
     const val MODE = "mode"
     const val SHOW_FERT = "showFertTrack"
     const val MUTED = "mutedPatterns"
+    /** Today: card order with `!` marking hidden cards ([com.nordinary.cyclus.presenter.TodayLayout]). */
+    const val TODAY_LAYOUT = "today.layout"
+    /** Today: `compact` ring, missing = large. */
+    const val TODAY_RING = "today.ring"
+    /** Today: one-tap chips ([com.nordinary.cyclus.presenter.QuickPicks]); "" = none, missing = default. */
+    const val QUICK_PICKS = "quick.picks"
+    /** The engine reads only these. */
+    val ENGINE = setOf(MODE, SHOW_FERT, MUTED)
     /** In `.cyclus` exports and device snapshots. */
-    val USER_PREFS = setOf(MODE, SHOW_FERT, MUTED)
+    val USER_PREFS = ENGINE + setOf(TODAY_LAYOUT, TODAY_RING, QUICK_PICKS)
 
     const val LOCK_ENABLED = "lock.enabled"
     const val LOCK_PIN_HASH = "lock.pin.hash"

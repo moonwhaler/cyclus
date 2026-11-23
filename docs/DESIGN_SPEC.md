@@ -397,6 +397,21 @@ SF Symbols (hierarchical rendering). Custom symbols (SF Symbols template format)
 ```
 
 **Ring explainer (2026-11-23).** The ring is a tap target; a quiet ⓘ (18 dp glyph, 44 dp touch target, `ink2` at 75 %) sits in its empty bottom gap so the tap is discoverable without adding a row. Both open „So liest du den Ring“: one intro line (one segment per day, clockwise, starting bottom left with day 1) and a legend of only the elements the ring shows right now, each swatch a slice of the ring drawn with the same colours, strokes and dashes, then a link to „So funktionieren Prognosen“. TalkBack: the ring node is a button „Ring erklären“; its description stays the spoken summary.
+
+**Customizable Today (2026-11-23, step 1 of 3).** Below the ring (always on top; size Groß or Kompakt — a 116 dp ring with its text beside it) Today is a list of cards in the person's order:
+
+| Card | Default | Appears |
+|---|---|---|
+| Heute eingetragen (+ Deine Schnellauswahl) | on | always |
+| Frühester Test · Beste Tage · LH-Tests · LH-Test heute | on | Kinderwunsch only, when relevant |
+| Ausblick | on | once the outlook has rows |
+| Fruchtbares Fenster | on | track mode with the window switched on |
+| Tage vor der Periode | on | between periods |
+| Demnächst | on | with a prediction, not paused |
+| Gefundene Muster (link) | on | once patterns exist |
+| Woche | library | always |
+
+A quiet „Ansicht anpassen“ link at the bottom opens edit mode in place: ring size, every card that isn't hidden (whether or not it applies today, with a one-line hint such as „Nur bei Kinderwunsch …“), a drag handle and an eye per card, the „Karte hinzufügen“ library and „Auf Standard zurücksetzen“. Nothing is ever deleted, only hidden. Not cards and never hideable: the one-time reminder offer, „Warum dieses Fenster?“ and the „Nicht zur Verhütung geeignet“ line whenever fertility is shown. **Demnächst** lists up to four rows in date order (pre-period days, fertile window, estimated ovulation, next period as „um den X · möglich: A–B“, and the next backup or „später als sonst“ reminder if notifications are on; daily reminders and ones that only echo a row are left out); a row stays while its end is today or later and reads „jetzt bis X“ once it has begun; a tap opens that day in the calendar. **Woche** shows three days back, today and three ahead with the calendar's cell rules; a tap opens the day in the calendar (next to Today on wide screens). **Deine Schnellauswahl**: up to 8 symptoms, feelings or tags, in the order picked; they are Today's one-tap chips and the symptom ones form the log sheet's „Schnellauswahl“ row. Steps 2–3 add Zyklus vs. üblich, Temperaturkurve, Stimmung & Energie, Fragen für die Ärztin, Phasen-Hinweis.
 States:
 | State | Ring centre | Subtitle |
 |---|---|---|

@@ -42,6 +42,11 @@ See `cyclus-export.schema.json`. Summary:
 - Dates are civil dates `YYYY-MM-DD` (no time zone). `updatedAt` is epoch milliseconds (merge: newer wins).
 - Item keys (symptoms, emotions, tags, pain regions, flow, mucus, LH) are stable English keys, not display text.
 - `prefs` holds user preferences only. App-lock settings are **never** in a user export; a device backup (mode 2) may carry them in `security`.
+- Known `prefs` keys (all strings; unknown keys are ignored, unknown values fall back to the default):
+  - `mode` (`conceive`), `showFertTrack` (`1`), `mutedPatterns` (comma list of pattern ids);
+  - `today.layout`: Today's card order, comma list of card keys, `!` before a hidden card (e.g. `log,upcoming,!forecast,…,!week`); cards a newer app adds are placed at their default position;
+  - `today.ring`: `compact`, or absent for the large ring;
+  - `quick.picks`: comma list of up to 8 symptom, feeling or tag keys; `""` means none, absent means the default (Cramps, Headache, Tired, Bloating).
 - Unknown fields must be ignored by readers.
 
 ## Test vectors

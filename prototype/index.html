@@ -109,6 +109,7 @@ button:focus-visible,input:focus-visible,textarea:focus-visible,select:focus-vis
 /* ring — container-sized text, max three lines, details live below the ring (spec §6 CycleRing) */
 .ringwrap{position:relative;width:min(300px,82%);margin:4px auto 0;aspect-ratio:1;max-width:100%;container-type:inline-size}
 .ringwrap svg{width:100%;height:100%;display:block}
+.ringcompact{display:flex;align-items:center;gap:16px;margin:8px 0 10px}.ringwrap.small{width:116px;margin:0;flex:0 0 auto}.ringtext{flex:1;text-align:left}
 .ringinfo{position:absolute;left:50%;bottom:0;transform:translateX(-50%);width:44px;height:44px;display:grid;place-items:center;color:var(--ink2);opacity:.75;background:none;border:0}
 .ringinfo svg{width:18px;height:18px}
 .rlegend{display:flex;flex-direction:column;gap:2px;background:var(--surface);border-radius:14px;padding:6px 0}
@@ -298,6 +299,7 @@ textarea,.field{width:100%;border-radius:12px;border:1px solid var(--line);backg
 "use strict";
 /* ============ state ============ */
 const S = {
+  layout:{order:['log','test','best','lhPlan','lhToday','forecast','fertile','pre','upcoming','patterns','week'], hidden:['week'], compact:false}, quick:null, editToday:false,
   lang:'de', mode:'track', showFertTrack:false, episode:null, tab:'today', logs:new Map(), overrides:new Map(),
   layer:null, push:null, logDate:0, dayDetail:null, calMonth:[2026,11], painSel:'lowC',
   lock:false, onb:null, toast:null, theme:'system',
@@ -367,6 +369,29 @@ const TX = {
   calTip:{de:'Tippe auf einen Tag für Details. In der App: lange drücken, um einen Periodenbeginn zu markieren.',en:'Tap a day for details. In the app: long-press to mark a period start.'},
   lgPeriod:{de:'Periode',en:'Period'}, lgPred:{de:'Erwartete Periode',en:'Predicted period'}, lgPre:{de:'Tage vor der Periode',en:'Pre-period window'}, lgLogged:{de:'Etwas eingetragen',en:'Something logged'},
   lgFert:{de:'Fruchtbares Fenster (Schätzung)',en:'Fertile window (estimate)'}, lgOv:{de:'Eisprung · höchste Chance',en:'Ovulation · peak day'},
+  // customizable Today (spec §7.2): edit mode, card names and hints, quick picks, Demnächst, Woche
+  customize:{de:'Ansicht anpassen',en:'Customize'}, ringSize:{de:'Ring',en:'Ring'}, ringLarge:{de:'Groß',en:'Large'}, ringCompact:{de:'Kompakt',en:'Compact'},
+  cardsL:{de:'Karten',en:'Cards'}, cardsHint:{de:'Ziehe am Griff, um die Reihenfolge zu ändern.',en:'Drag the handle to change the order.'},
+  addCard:{de:'Karte hinzufügen',en:'Add a card'}, addCardNone:{de:'Alle Karten sind sichtbar.',en:'All cards are shown.'},
+  resetLayout:{de:'Auf Standard zurücksetzen',en:'Reset to default'}, moveUp:{de:'Nach oben',en:'Move up'}, moveDown:{de:'Nach unten',en:'Move down'},
+  hideCard:{de:'Ausblenden',en:'Hide'}, showCard:{de:'Hinzufügen',en:'Add'}, dragCard:{de:'Zum Verschieben ziehen',en:'Drag to move'},
+  card_upcoming:{de:'Demnächst',en:'Coming up'}, card_week:{de:'Woche',en:'This week'}, card_patterns:{de:'Gefundene Muster',en:'Patterns found'}, card_fertile:{de:'Fruchtbares Fenster',en:'Fertile window'},
+  ch_log:{de:'Deine Einträge von heute und deine Schnellauswahl',en:'Today’s entries and your quick picks'},
+  ch_test:{de:'Nur bei Kinderwunsch, nach dem Eisprung',en:'Trying to conceive only, after ovulation'},
+  ch_best:{de:'Nur bei Kinderwunsch, vor dem Eisprung',en:'Trying to conceive only, before ovulation'},
+  ch_lhPlan:{de:'Nur bei Kinderwunsch: wann du mit LH-Tests beginnst',en:'Trying to conceive only: when to start LH tests'},
+  ch_lhToday:{de:'Nur bei Kinderwunsch, an deinen Testtagen',en:'Trying to conceive only, on your testing days'},
+  ch_forecast:{de:'Erscheint, sobald Cyclus genug Muster für die nächsten 7 Tage kennt',en:'Appears once Cyclus knows enough patterns for the next 7 days'},
+  ch_fertile:{de:'Erscheint, wenn das fruchtbare Fenster eingeschaltet ist',en:'Appears when the fertile window is turned on'},
+  ch_pre:{de:'Kündigt die Tage vor deiner Periode an',en:'Announces the days before your period'},
+  ch_upcoming:{de:'Was als Nächstes kommt, mit Datum',en:'What’s next, with dates'},
+  ch_patterns:{de:'Erscheint, wenn Cyclus Muster gefunden hat',en:'Appears when Cyclus has found patterns'},
+  ch_week:{de:'Sieben Tage rund um heute',en:'Seven days around today'},
+  editQuick:{de:'Schnellauswahl bearbeiten',en:'Edit quick picks'}, quickT:{de:'Deine Schnellauswahl',en:'Your quick picks'},
+  quickB:{de:'Bis zu 8 Einträge, die du auf „Heute“ mit einem Tipp setzt, in der Reihenfolge deiner Auswahl.',en:'Up to 8 items you can set on Today with one tap, in the order you pick them.'},
+  quickN:{de:(n,m)=>`${n} von ${m}`,en:(n,m)=>`${n} of ${m}`},
+  upNow:{de:d=>`jetzt bis ${d}`,en:d=>`now until ${d}`}, upInDays:{de:n=>`in ${n} Tagen`,en:n=>`in ${n} days`},
+  upRemLater:{de:'Erinnerung, falls die Periode später kommt',en:'Reminder if your period is late'}, upRemBackup:{de:'Erinnerung an die Sicherung',en:'Backup reminder'},
   // ring explainer (tap the ring or its ⓘ): only what the ring shows right now
   ringHelpT:{de:'So liest du den Ring',en:'Reading the ring'}, ringHelpA:{de:'Ring erklären',en:'Explain the ring'},
   ringIntro:{de:'Der Ring ist dein aktueller Zyklus: ein Abschnitt pro Tag, im Uhrzeigersinn. Er beginnt unten links mit dem ersten Tag deiner Periode.',en:'The ring is your current cycle: one segment per day, clockwise. It starts at the bottom left with the first day of your period.'},
@@ -1197,7 +1222,8 @@ function patternSection(v){
 }
 function renderToday(){
   const v = vm();
-  let kicker='', big='', bigMax=40, sub='', extra='', under='', cards='';
+  let kicker='', big='', bigMax=40, sub='', extra='', under='', whyL='';
+  const C = {}; // card html by layout key (spec §7.2); empty = nothing to say right now
   if (!v.pred){
     kicker=t('welcome'); big=t('letsStart'); bigMax=30; sub=t('startSub');
     under = `<button class="btn primary" data-act="periodStart">${t('periodStarted')}</button><button class="btn secondary small" data-act="openLog">${t('logEarlier')}</button>`;
@@ -1214,24 +1240,24 @@ function renderToday(){
       const dpo = f.todayCd - f.mapD; const test = Math.max(f.dateOf(f.mapD)+14, v.pred.lo);
       kicker=t('afterOv'); big=t('dayN',dpo); sub=t('cycleDayN',v.cd);
       extra = `<div class="ovl">${t('ovOccurred',md(f.dateOf(f.mapD)))}</div>`;
-      cards += `<div class="card"><h3>${t('testTitle')}</h3><p>${t('testBody',wmd(test))}</p></div>`;
+      C.test = `<div class="card"><h3>${t('testTitle')}</h3><p>${t('testBody',wmd(test))}</p></div>`;
     } else {
       kicker=t('fertToday'); big=t('ft'+td.tier); bigMax=36; sub=t('cycleDayN',v.cd);
       if (td.tier===0 && f.band){ const n = f.band[0]-f.todayCd; sub = n>0 ? t('windowOpens',n) : t('windowPassed'); }
       const ov = f.status==='soon' ? (f.hpd[0]<=f.todayCd ? t('ovSoonTT') : t('ovSoon',range(f.dateOf(f.hpd[0]),f.dateOf(f.hpd[1])))) : t('ovEst',range(f.dateOf(f.hpd[0]),f.dateOf(f.hpd[1])));
       extra = `<div class="ovl">${ov}</div>`;
       const best = f.days.filter(x=>x.cd>=f.todayCd && x.pf>=0.15).sort((a,b)=>b.c-a.c).slice(0,3).sort((a,b)=>a.cd-b.cd);
-      if (best.length) cards += `<div class="card"><h3>${t('bestDays')}</h3><p><b style="color:var(--ink)">${best.map(x=>x.cd===f.todayCd?t('today'):x.cd===f.todayCd+1?t('tomorrow'):wmd(f.dateOf(x.cd))).join(' · ')}</b></p><p>${t('bestTip')}</p></div>`;
+      if (best.length) C.best = `<div class="card"><h3>${t('bestDays')}</h3><p><b style="color:var(--ink)">${best.map(x=>x.cd===f.todayCd?t('today'):x.cd===f.todayCd+1?t('tomorrow'):wmd(f.dateOf(x.cd))).join(' · ')}</b></p><p>${t('bestTip')}</p></div>`;
       const lhPos = f.ev.some(e=>e.type==='lhpos'); const tl = (S.logs.get(TODAY)||{}).lh; const startDate = f.dateOf(f.planStart);
       if (!lhPos || tl==='pos'){
-        if (TODAY < startDate) cards += `<div class="card"><h3>${t('lhTests')}</h3><p>${t('lhPlan',wmd(startDate),v.pred.used.length)}</p></div>`;
+        if (TODAY < startDate) C.lhPlan = `<div class="card"><h3>${t('lhTests')}</h3><p>${t('lhPlan',wmd(startDate),v.pred.used.length)}</p></div>`;
         else { const negs = f.ev.filter(e=>e.type==='lhneg').length;
-          cards += `<div class="card"><div class="row between"><h3>${t('lhToday')}</h3><span class="tiny muted">${t('lhNegSoFar',negs)}</span></div>
+          C.lhToday = `<div class="card"><div class="row between"><h3>${t('lhToday')}</h3><span class="tiny muted">${t('lhNegSoFar',negs)}</span></div>
           <div class="chips">${['neg','pos','surge'].map(k=>`<button class="chip lh" data-act="lh" data-v="${k}" aria-pressed="${tl===k}">${lhL(k)}</button>`).join('')}</div></div>`; }
       }
     }
     under = `${extra}<span class="badge fert"><span class="dot"></span>${t(f.chip)}</span>`;
-    cards += `<button class="linkrow" data-act="sheet" data-v="why">${t('whyLink')} ${I.chev}</button>`;
+    whyL = `<button class="linkrow" data-act="sheet" data-v="why">${t('whyLink')} ${I.chev}</button>`;
   } else {
     const p = v.pred;
     kicker=t('cycleDay'); big=String(v.cd); bigMax=46;
@@ -1241,18 +1267,62 @@ function renderToday(){
     if (v.status==='later'){ sub=t('later'); extra=`<div class="sub">${t('expectedOn',range(p.lo,p.hi))}</div>`; }
     under = `<span class="badge"><span class="dot" style="color:${p.neff<2?'var(--warning)':'var(--success)'}"></span>${t('tier_'+p.tier)}</span>`;
     if (['pre','expected','later'].includes(v.status) && p.lo-TODAY<=3) under += `<button class="btn primary" data-act="periodStart">${t('periodStarted')}</button>`;
-    if (S.showFertTrack && v.fert && v.fert.band) cards += `<div class="card"><h3>${t('fertWinTrack')}</h3><p>${range(v.fert.dateOf(v.fert.band[0]),v.fert.dateOf(v.fert.band[1]))}. ${t('notBC')}</p></div>`;
-    if (v.status==='between') cards += `<div class="card"><h3>${t('preTitle',wmd(p.lo-7))}</h3><p>${t('preBody')}</p></div>`;
+    if (S.showFertTrack && v.fert && v.fert.band) C.fertile = `<div class="card"><h3>${t('fertWinTrack')}</h3><p>${range(v.fert.dateOf(v.fert.band[0]),v.fert.dateOf(v.fert.band[1]))}. ${t('notBC')}</p></div>`;
+    if (v.status==='between') C.pre = `<div class="card"><h3>${t('preTitle',wmd(p.lo-7))}</h3><p>${t('preBody')}</p></div>`;
   }
-  if (v.pred && !v.paused){ const fc = forecastCard(v); cards = (S.mode==='conceive' && v.fertOn) ? cards.replace(`<button class="linkrow" data-act="sheet" data-v="why">`, fc+`<button class="linkrow" data-act="sheet" data-v="why">`) : fc + cards; cards += patternLink(v); }
+  if (v.pred && !v.paused){ C.forecast = forecastCard(v); C.patterns = patternLink(v); C.upcoming = upcomingCard(v); }
+  C.week = weekCard(v);
   const center = `<div class="kicker">${kicker}</div><div class="big" data-max="${bigMax}" style="font-size:${bigMax}px${v.fertOn&&S.mode==='conceive'&&!v.paused&&!v.inPeriod&&v.fert&&v.fert.status!=='occurred'&&v.fert.days[v.fert.todayCd-1].tier?';color:var(--fertile)':''}">${big}</div>${sub?`<div class="sub">${sub}</div>`:''}${S.mode!=='conceive'||!v.fertOn?extra:''}`;
+  const quick = S.quick || PINNED, tl = S.logs.get(TODAY)||{};
+  C.log = `<div class="card"><button data-act="openLog" style="all:unset;display:block;cursor:pointer"><div class="row between"><h3>${t('todaysLog')}</h3><span class="muted">${I.chev}</span></div>${todayLogSummary()}</button>${quick.length?`<div class="chips" style="margin-top:8px">${quick.map(k=>`<button class="chip" data-act="quickToggle" data-v="${k}" aria-pressed="${(tl.symptoms||[]).includes(k)||(tl.emo||[]).includes(k)||(tl.tags||[]).includes(k)}">${qL(k)}</button>`).join('')}</div>`:''}</div>`;
+  const L = S.layout;
+  const ring = L.compact
+    ? `<div class="ringcompact"><div class="ringwrap small" role="img" aria-label="${ringLabel(v)}" data-act="sheet" data-v="ring">${ringSVG(v)}</div><div class="ringtext">${center}</div></div>`
+    : `<div class="ringwrap" role="img" aria-label="${ringLabel(v)}" data-act="sheet" data-v="ring" style="cursor:pointer">${ringSVG(v)}<div class="ringcenter">${center}</div>${v.pred?`<button class="ringinfo" data-act="sheet" data-v="ring" aria-label="${t('ringHelpA')}">${I.info}</button>`:''}</div>`;
+  const body = S.editToday ? todayEditor() : `<div class="stack">${L.order.filter(k=>!L.hidden.includes(k) && C[k]).map(k=>C[k]).join('')}</div>
+  ${whyL}${v.fertOn?`<div class="foot">${t('notBC')}</div>`:''}<button class="linkrow" data-act="editToday" style="justify-content:center;color:var(--ink2)">${t('customize')}</button>`;
   return `${header(t('tabToday'))}
-  <div class="ringwrap" role="img" aria-label="${ringLabel(v)}" data-act="sheet" data-v="ring" style="cursor:pointer">${ringSVG(v)}<div class="ringcenter">${center}</div>${v.pred?`<button class="ringinfo" data-act="sheet" data-v="ring" aria-label="${t('ringHelpA')}">${I.info}</button>`:''}</div>
+  ${ring}
   <div class="under">${under}</div>
-  <div class="stack">
-    <button class="card" data-act="openLog" style="text-align:left"><div class="row between"><h3>${t('todaysLog')}</h3><span class="muted">${I.chev}</span></div>${todayLogSummary()}</button>
-    ${cards}
-  </div>${v.fertOn?`<div class="foot">${t('notBC')}</div>`:''}`;
+  ${body}`;
+}
+const qL = k => SYM[k]||EMO[k] ? itemL(k,S.lang) : tagLL(k,S.lang);
+const CARD_TITLE = {log:'todaysLog',test:'testTitle',best:'bestDays',lhPlan:'lhTests',lhToday:'lhToday',forecast:'fcT',fertile:'card_fertile',pre:'lgPre',upcoming:'card_upcoming',patterns:'card_patterns',week:'card_week'};
+function todayEditor(){
+  const L = S.layout, shown = L.order.filter(k=>!L.hidden.includes(k)), hidden = L.order.filter(k=>L.hidden.includes(k));
+  const quick = S.quick || PINNED;
+  return `<div class="row between"><h3 style="font-size:20px">${t('customize')}</h3><button class="x" data-act="editToday">${t('done')}</button></div>
+  <div class="lbl">${t('ringSize')}</div><div class="seg"><button data-act="ringSize" data-v="0" aria-pressed="${!L.compact}">${t('ringLarge')}</button><button data-act="ringSize" data-v="1" aria-pressed="${L.compact}">${t('ringCompact')}</button></div>
+  <div class="lbl">${t('cardsL')}</div><div class="list">${shown.map((k,i)=>`<div class="li"><div class="t"><b>${t(CARD_TITLE[k])}</b><span>${t('ch_'+k)}</span>${k==='log'?`<div class="chips" style="margin-top:6px">${[...Object.keys(SYM),...Object.keys(EMO),...TAGS].map(x=>`<button class="chip" data-act="quickPick" data-v="${x}" aria-pressed="${quick.includes(x)}">${qL(x)}</button>`).join('')}</div>`:''}</div>
+    <button class="iconbtn" data-act="cardMove" data-v="${k}:-1" aria-label="${t('moveUp')}" ${i===0?'disabled':''}>↑</button><button class="iconbtn" data-act="cardMove" data-v="${k}:1" aria-label="${t('moveDown')}" ${i===shown.length-1?'disabled':''}>↓</button><button class="iconbtn" data-act="cardHide" data-v="${k}" aria-label="${t('hideCard')}">✕</button></div>`).join('')}</div>
+  <div class="lbl">${t('addCard')}</div>${hidden.length?`<div class="list">${hidden.map(k=>`<button class="li" data-act="cardShow" data-v="${k}"><div class="t"><b>${t(CARD_TITLE[k])}</b><span>${t('ch_'+k)}</span></div><span aria-label="${t('showCard')}">＋</span></button>`).join('')}</div>`:`<p class="small muted">${t('addCardNone')}</p>`}
+  <button class="linkrow" data-act="cardReset">${t('resetLayout')}</button>`;
+}
+function upcomingCard(v){
+  const p = v.pred, f = v.fertOn ? v.fert : null, items = [];
+  items.push({k:'pre', from:p.lo-7, to:p.lo-1});
+  if (f && f.band) items.push({k:'fertile', from:f.dateOf(f.band[0]), to:f.dateOf(f.band[1])});
+  if (f && f.status!=='occurred') items.push({k:'ov', from:f.dateOf(f.mapD)});
+  items.push({k:'period', from:p.lo, to:p.hi, likely:p.likely});
+  const rows = items.filter(x=>(x.to??x.from)>=TODAY).sort((a,b)=>Math.max(a.from,TODAY)-Math.max(b.from,TODAY)).slice(0,4);
+  if (!rows.length) return '';
+  const lab = {pre:['lgPre','var(--pre)'], fertile:['card_fertile','var(--fertile)'], ov:['rhOv','var(--fertile)'], period:['nextPeriod','var(--period)']};
+  return `<div class="card"><h3>${t('card_upcoming')}</h3>${rows.map(x=>{ const ongoing = x.to!=null && x.from<=TODAY; const d=(x.likely??x.from)-TODAY;
+    const when = ongoing ? t('upNow',md(x.to)) : x.likely ? `${t('around',md(x.likely))} · ${t('possibleR',range(x.from,x.to))}` : x.to!=null ? range(x.from,x.to) : wmd(x.from);
+    const rel = ongoing ? '' : d<=0 ? t('todayShort') : d===1 ? t('tomorrow') : t('upInDays',d);
+    return `<div class="row between" style="padding:6px 0"><span style="display:flex;gap:10px;align-items:center"><i style="width:10px;height:10px;border-radius:5px;background:${lab[x.k][1]}"></i><span><b>${t(lab[x.k][0])}</b><br><span class="tiny muted">${when}</span></span></span><span class="tiny muted"><b>${rel}</b></span></div>`; }).join('')}</div>`;
+}
+function weekCard(v){
+  const bleed = new Set(); v.starts.forEach(s=>periodDays(s).forEach(d=>bleed.add(d)));
+  const p = v.pred, cells = [];
+  for (let d=TODAY-3; d<=TODAY+3; d++){
+    const isB = bleed.has(d), pred = p && !v.paused && d>=p.lo && d<=p.hi && d>TODAY && !isB, pre = p && !v.paused && d>=p.lo-7 && d<p.lo && d>=TODAY;
+    let fert = 0; if (v.fertOn && v.fert){ const cd = d - v.fert.cs + 1; const fd = cd>=1 ? v.fert.days[cd-1] : null; if (fd && fd.tier>0 && !isB) fert = fd.tier; }
+    cells.push(`<button data-act="calFocus" data-v="${d}" style="all:unset;flex:1;text-align:center;cursor:pointer"><div class="tiny muted">${F.w.format(asDate(d))}</div>
+      <div style="margin:4px auto 0;width:34px;height:34px;border-radius:17px;display:grid;place-items:center;font-weight:700;${isB?'background:var(--period);color:#fff;':''}${pred?'border:2px dashed var(--period);':''}${fert?`box-shadow:inset 0 0 0 40px color-mix(in srgb,var(--fertile) ${[0,16,32,50][fert]}%,transparent);`:''}${d===TODAY?'outline:2px solid var(--ink);outline-offset:2px;':''}">${asDate(d).getUTCDate()}</div>
+      ${pre?'<div style="width:20px;margin:4px auto 0;border-top:2px dashed var(--pre)"></div>':''}</button>`);
+  }
+  return `<div class="card"><h3>${t('card_week')}</h3><div style="display:flex;margin-top:8px">${cells.join('')}</div></div>`;
 }
 function ringLabel(v){
   if (!v.pred) return t('ringNone');
@@ -1666,6 +1736,16 @@ app.addEventListener('click', e => {
   switch(a){
     case 'tab': S.tab=v; S.layer=null; render(false); try{ history.replaceState(null,'','#'+v); }catch(_){} break;
     case 'openLog': S.logDate=TODAY; S.layer='log'; render(); break;
+    case 'editToday': S.editToday=!S.editToday; render(); break;
+    case 'ringSize': S.layout.compact = v==='1'; render(); break;
+    case 'cardMove': { const [k,dir]=v.split(':'); const L=S.layout, shown=L.order.filter(x=>!L.hidden.includes(x)); const i=shown.indexOf(k), j=i+Number(dir);
+      if (j>=0 && j<shown.length){ [shown[i],shown[j]]=[shown[j],shown[i]]; L.order=[...shown, ...L.order.filter(x=>L.hidden.includes(x))]; } render(); break; }
+    case 'cardHide': S.layout.hidden=[...S.layout.hidden, v]; render(); break;
+    case 'cardShow': { const L=S.layout; L.hidden=L.hidden.filter(x=>x!==v); L.order=[...L.order.filter(x=>!L.hidden.includes(x) && x!==v), v, ...L.order.filter(x=>L.hidden.includes(x))]; render(); break; }
+    case 'cardReset': S.layout={order:['log','test','best','lhPlan','lhToday','forecast','fertile','pre','upcoming','patterns','week'], hidden:['week'], compact:S.layout.compact}; render(); break;
+    case 'quickPick': { const q=[...(S.quick||PINNED)]; S.quick = q.includes(v) ? q.filter(x=>x!==v) : q.length<8 ? [...q, v] : q; render(); break; }
+    case 'quickToggle': setLog(TODAY, l=>{ const f = EMO[v]?'emo':TAGS.includes(v)?'tags':'symptoms'; l[f]=l[f]||[]; l[f]=l[f].includes(v)?l[f].filter(x=>x!==v):[...l[f],v]; }); render(); break;
+    case 'calFocus': { const dt=asDate(Number(v)); S.calMonth=[dt.getUTCFullYear(), dt.getUTCMonth()+1]; S.tab='calendar'; S.dayDetail=Number(v); S.layer='day'; render(); break; }
     case 'close': S.layer=null; if (S.lastChange){ S.lastChange=null; toast('tSaved'); } else render(); break;
     case 'logDay': S.logDate=Math.min(TODAY, S.logDate+Number(v)); render(); break;
     case 'flow': edit(l=>{ l.flow = l.flow===v?undefined:v; }); break;

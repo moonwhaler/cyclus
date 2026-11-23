@@ -23,6 +23,8 @@ object CyclusIcons {
     val Calendar = icon("calendar", 2f, "M6.5 5h11a3 3 0 0 1 3 3v9a3 3 0 0 1-3 3h-11a3 3 0 0 1-3-3V8a3 3 0 0 1 3-3z", "M3.5 10h17M8 3v4M16 3v4")
     val Insights = icon("insights", 2f, "M5 20V11M12 20V5M19 20v-7")
     val Plus = icon("plus", 2.4f, "M12 5v14M5 12h14")
+    val EyeOff = icon("eyeOff", 1.8f, "M3 12s3.3-6.5 9-6.5 9 6.5 9 6.5-3.3 6.5-9 6.5S3 12 3 12z", "M12 9.2a2.8 2.8 0 1 0 0 5.6a2.8 2.8 0 1 0 0-5.6z", "M4.5 4.5l15 15")
+    val DragHandle = icon("drag", 2f, "M6 9h12M6 15h12")
     val Info = icon("info", 1.8f, "M12 3.5a8.5 8.5 0 1 0 0 17a8.5 8.5 0 1 0 0-17z", "M12 11v5.2", filled = listOf("M10.9,7.9a1.1,1.1 0 1,0 2.2,0a1.1,1.1 0 1,0 -2.2,0"))
     val Back = icon("back", 2.2f, "M15 5l-7 7 7 7")
     val Shield = icon("shield", 1.8f, "M12 3l7 3v5c0 4.5-3 8.5-7 10-4-1.5-7-5.5-7-10V6z", "M9 12l2 2 4-4")

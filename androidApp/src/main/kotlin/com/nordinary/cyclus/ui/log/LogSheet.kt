@@ -103,6 +103,8 @@ fun LogSheet(
     mode: Mode,
     suggestions: List<String>,
     fmt: Fmt,
+    /** The symptoms among the person's quick picks (the „Schnellauswahl“ row). */
+    pinned: List<String> = Catalog.PINNED,
     onDayChange: (Day) -> Unit,
     onUpdate: ((DayLog) -> DayLog) -> Unit,
     /** Optional sections the person has used recently ([LogGroup.used]); they open by themselves. */
@@ -137,9 +139,10 @@ fun LogSheet(
                 }
             }
             if (conceive) LhGroup(log, fmt, onUpdate)
-            Group(fmt.s("pinned")) {
+            // the row stays in Kinderwunsch mode (it holds „Sex“) even without symptom quick picks
+            if (pinned.isNotEmpty() || conceive) Group(fmt.s("pinned")) {
                 FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                    for (s in Catalog.PINNED) SymptomChip(s, log, fmt, onUpdate)
+                    for (s in pinned) SymptomChip(s, log, fmt, onUpdate)
                     if (conceive) CyclusChip(fmt.s("sex"), log.sex, { onUpdate { it.copy(sex = !it.sex) } })
                 }
             }
@@ -158,12 +161,12 @@ fun LogSheet(
                 if (!conceive) { add(LogGroup.DISCHARGE); add(LogGroup.TEMPERATURE) }
                 add(LogGroup.TAGS); add(LogGroup.NOTE)
             }
-            val open = optional.filter { it in used || it.has(log) }
+            val open = optional.filter { it in used || it.has(log, pinned) }
             val folded = optional - open.toSet()
             @Composable fun section(g: LogGroup) = when (g) {
                 LogGroup.MORE_SYMPTOMS -> Group(fmt.s("moreSym")) {
                     FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                        for (s in Catalog.SYMPTOMS.filter { it !in Catalog.PINNED && it !in suggestions }) SymptomChip(s, log, fmt, onUpdate)
+                        for (s in Catalog.SYMPTOMS.filter { it !in pinned && it !in suggestions }) SymptomChip(s, log, fmt, onUpdate)
                     }
                 }
                 LogGroup.PAIN -> PainGroup(log, fmt, onUpdate)
