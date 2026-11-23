@@ -27,15 +27,18 @@ object CyclusFile {
 
     data class Header(val mode: Byte, val salt: ByteArray, val iterations: Int, val nonce: ByteArray)
 
+    /** Key = PBKDF2(UTF-8(NFC(passphrase))) (FORMAT.md), so files open on any platform. [normalize] = false only in tests (files of earlier versions). */
     fun sealWithPassphrase(
         json: ByteArray,
         passphrase: CharArray,
         iterations: Int = DEFAULT_ITERATIONS,
         salt: ByteArray = CyclusCrypto.random(16),
         nonce: ByteArray = CyclusCrypto.random(12),
+        normalize: Boolean = true,
     ): ByteArray {
         val header = header(MODE_PASSPHRASE, salt, iterations, nonce)
-        val key = CyclusCrypto.pbkdf2(passphrase, salt, iterations)
+        val pass = if (normalize) CyclusCrypto.nfc(passphrase) else passphrase
+        val key = try { CyclusCrypto.pbkdf2(pass, salt, iterations) } finally { if (pass !== passphrase) pass.fill(' ') }
         try {
             return header + CyclusCrypto.sealGcm(key, nonce, header, CyclusCrypto.deflateRaw(json))
         } finally {
@@ -67,6 +70,19 @@ object CyclusFile {
         val h = readHeader(bytes)
         if (h.mode != MODE_PASSPHRASE) throw CyclusFileException.Malformed("not a passphrase file")
         if (h.iterations !in minIterations..MAX_ITERATIONS) throw CyclusFileException.Malformed("iterations out of range: ${h.iterations}")
+        val nfc = CyclusCrypto.nfc(passphrase)
+        try {
+            return openWith(bytes, nfc, h)
+        } catch (e: CyclusFileException.WrongPassphraseOrDamaged) {
+            // files written before NFC was required (2026-11-23) used the passphrase as typed
+            if (nfc === passphrase) throw e
+            return openWith(bytes, passphrase, h)
+        } finally {
+            if (nfc !== passphrase) nfc.fill(' ')
+        }
+    }
+
+    private fun openWith(bytes: ByteArray, passphrase: CharArray, h: Header): ByteArray {
         val key = CyclusCrypto.pbkdf2(passphrase, h.salt, h.iterations)
         try {
             return open(bytes, key, h)

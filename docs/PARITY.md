@@ -1,6 +1,33 @@
 # Cyclus parity matrix
 
-One row per user-visible feature. Rules: ANDROID_PLAN §1. A release ships only when every row is **done** on both platforms, or flagged off on both. Every PR that touches UI updates its row.
+One row per user-visible feature. Rules: ANDROID_PLAN §1 and IOS_PLAN §1. A release ships only when every row is **done** on both platforms, or flagged off on both. Every PR that touches UI updates its row. **The Android app is the reference implementation for iOS** (IOS_PLAN §1.2); a row's notes describe what both platforms must do.
+
+## Allowed platform differences (exhaustive)
+Same function and the same privacy defaults on both platforms; only the surface or mechanism differs (owner decision 2026-11-23, IOS_PLAN I4). Anything not listed here is a parity bug.
+
+| Area | iOS | Android |
+|---|---|---|
+| Chrome material | Liquid Glass (tab bar, nav bars, floating button) | Material 3 tonal surfaces, no blur |
+| Navigation | Tab bar (sidebar-adaptable on iPad), swipe-back, push | Navigation bar (rail ≥ 600 dp), predictive back, edge-to-edge |
+| Typeface | SF Pro + SF Pro Rounded numerals | Roboto Flex + Nunito numerals (bundled) |
+| Touch target | ≥ 44 pt | ≥ 48 dp |
+| Health store | HealthKit (same six write categories and import set in v1, IOS_PLAN I7); permissions revoked by the person in Settings › Health | Health Connect; „Trennen“ revokes access in-app; install link where missing |
+| Lock-screen surface | Lock Screen accessory widgets (same detail rule as the home widget) + Control on the Lock Screen | Quick Settings tile (phones have no lock-screen widgets) |
+| Quick log entry | Control Center control | Quick Settings tile |
+| Icon long-press „Eintragen“ (opt-in) | Home Screen quick action | App shortcut |
+| Widgets | WidgetKit small/medium (+ StandBy) | Glance small/medium |
+| Hide the app | *Hide and Require Face ID* explainer | Private Space explainer (Android 15+) |
+| Screen capture | „Bildschirmaufnahmen verbergen“ (recordings/mirroring covered; screenshots can't be blocked, said honestly) | „Bildschirmfotos verhindern“ (`FLAG_SECURE`) |
+| App switcher / recents | Privacy cover always | Thumbnail hidden always (API 33+; `FLAG_SECURE` before) |
+| Wallpaper colours | — | „Hintergrund“ palette (Material You, Android 12+) |
+| In-app language | Row opens the app's language in iOS Settings | In-app picker (Android 13+) |
+| Notification categories | Per-kind toggles in the app; system settings link | Same toggles + system channels |
+| Device backup transport | Snapshot in iCloud/computer backups, key only in iCloud Keychain (E2E); status = last snapshot update | Snapshot only over E2E/device-to-device backup; status = transport result |
+| Database key protection | Keychain `WhenUnlockedThisDeviceOnly`, wrapped by the Secure Enclave | Keystore (StrongBox), unlocked-device rule on Android 15+ |
+| Alternate icon | `setAlternateIconName` | `activity-alias` |
+| On-device LLM (v1.5) | Foundation Models | Gemini Nano (ML Kit GenAI) |
+| Watch (v1.5) | watchOS | Wear OS |
+
 
 Status values: `—` not started · `wip` · `done` · `off` (feature-flagged off) · `n/a` (allowed platform difference, ANDROID_PLAN §1.1).
 
@@ -11,7 +38,7 @@ Status values: `—` not started · `wip` · `done` · `off` (feature-flagged of
 | E-003 | Learning from history (`learnFromHistory`) | 11.11.5 | engine | done | — | n/a | Shared Kotlin, golden vectors |
 | E-004 | Pattern watch („Deine Muster“) | 11.12 | engine | done | — | n/a | Shared Kotlin, golden vectors |
 | E-005 | Outlook („Ausblick“) | 11.13 | engine | done | — | n/a | Shared Kotlin, golden vectors |
-| S-001 | Encrypted local store | 11.2–11.3 | — | done | — | n/a | Android: SQLCipher + Keystore. iOS: Data Protection `.complete` |
+| S-001 | Encrypted local store | 11.2–11.3 | — | done | — | n/a | Android: SQLCipher + Keystore. iOS: SQLCipher + Keychain (Secure Enclave-wrapped) + file protection `completeUnlessOpen` (IOS_PLAN I2) |
 | S-002 | Backup / encrypted export | 11.9 | Privacy | done | — | | `.cyclus` v1 export/import (merge/replace) + E2E-only device backup with restore. CSV export pending |
 | F-001 | Today ring | 7.2 | Heute | done | — | | **2026-11-23 (prototype changed too):** tapping the ring, or the quiet ⓘ in its bottom gap, opens „So liest du den Ring“: a legend of only what the ring shows right now (today, period, pre-period days, predicted period, fertile window by strength, ovulation dashed/solid, other days), each swatch drawn like the ring itself, plus a link to „So funktionieren Prognosen“. TalkBack: the ring is a button „Ring erklären“. |
 | F-002 | Today states (empty, between, pre, expected, later, in period, paused) | 7.2 | Heute | done | — | | Episodes UI (start/stop a pause) in F-018 **2026-11-22 review (iOS to follow):** pinned symptoms as one-tap chips on the „Heute eingetragen“ card; the date subtitle only on Heute; the Eintragen button shrinks to its icon while scrolling down. **2026-11-22 (prototype changed too):** next period shows the most likely date first („um den 6. Dez.“) and „möglich: 2.–11. Dez.“ below; in the pre-period phase „etwa N Tagen“. |
@@ -36,7 +63,14 @@ Status values: `—` not started · `wip` · `done` · `off` (feature-flagged of
 | F-021 | Customizable Today (step 1) | 7.2 | Heute | done | — | | Prototype changed too. „Ansicht anpassen“ at the bottom of Today: edit mode in place (drag handle, eye to hide, TalkBack Nach oben/Nach unten/Ausblenden; prototype: ↑/↓ buttons), hidden cards in „Karte hinzufügen“, „Auf Standard zurücksetzen“. Ring Groß/Kompakt. New cards: „Demnächst“ (pre-period days, fertile window, ovulation, next period with likely date, next backup/late reminder; on by default), „Woche“ (7 days around today, calendar cells; in the library). „Deine Schnellauswahl“: up to 8 symptoms/feelings/tags as one-tap chips (also the log sheet's Schnellauswahl row). Timed cards appear only when relevant; one layout for both modes; the fertility footer (Warum dieses Fenster?, Nicht zur Verhütung geeignet) is never hideable. Layout travels in exports (`today.layout`, `today.ring`, `quick.picks`). iOS: same |
 | P-001 | Health store sync | 11.4 | Health Connect | done | — | n/a | Import + opt-in write, only while the app is open. Every write category off by default (decision 2026-11-22). External values fill only empty fields; precedence user > Samsung Health/Google Fit/Fitbit > other apps. Reconstruction from own records only into an empty store and only after „In Cyclus übernehmen“ (offer in the Privacy Center, never automatic) |
 | P-002 | Widgets | 8.1 | Startbildschirm | done | — | | Glance small + medium. Details off by default (neutral „Cyclus“). Buttons open the app via a non-exported alias; no widget-side writes, so no pending queue |
-| P-003 | Quick action (QS tile / Control) | 8.2 | Schnelleinstellungen | done | — | n/a | Tile „Cyclus · Eintragen“ + opt-in launcher shortcut. iOS Control v1.1 |
+| P-003 | Quick action (QS tile / Control) | 8.2 | Schnelleinstellungen | done | — | n/a | Tile „Cyclus · Eintragen“ + opt-in launcher shortcut. iOS: Control Center control + opt-in Home Screen quick action, both in v1 (IOS_PLAN §6.2) |
 | P-004 | Notifications | 8.3 | Mitteilungen | done | — | | Opt-in on all API levels (decision 2026-11-22, applies to iOS too). Planned in-app, one DB-free inexact alarm re-arms from a side file |
 | P-005 | Large screens (tablet, foldable, landscape) | — | Alle | done | — | n/a | Rail ≥ 600 dp; ≥ 840 dp Today + Calendar side by side (no Calendar tab), Insights in two columns; other screens ≤ 640 dp centred |
+| S-003 | Store key, locked-device recovery, store error screen | 11.2 | — | done | — | n/a | Key usable only while unlocked (Android 15+; 10–14 without that rule, ANDROID_PLAN §2.4); a „locked“ failure retries automatically on unlock and on return to the app; blocking error screen with Retry, never deletes data. iOS: SQLCipher + Keychain behind the Secure Enclave, retry on protected-data-available (IOS_PLAN §2.4) |
+| S-004 | Restore from device backup | 11.9 | — | done | — | | First launch imports the snapshot atomically; failure → Retry / „Neu beginnen“ (only the restored copy is discarded). iOS: key from iCloud Keychain, „Schlüssel fehlt“ state (IOS_PLAN §6.4) |
+| S-005 | Cross-platform transfer (`.cyclus` Android ↔ iPhone) | 11.9 | Privacy | wip | — | | Owner requirement 2026-11-23: an export from either platform imports on the other (merge/replace, onboarding or Privacy Center). Done: shared format, NFC passphrase + fallback, vectors incl. umlaut. To do (both): open a `.cyclus` file from other apps into the import flow, „Auf ein neues Handy umziehen“ guide, cross fixture files in CI. Device backups stay on their platform (said in the Privacy Center) |
+| F-022 | App lock keeps your place | 7.12 | Sperre | done | — | | After unlocking, the person is where they were (tab, pushed screen, sheet, selected day, scroll); nothing of the content is drawn behind the lock |
+| F-023 | Store error & restore screens | 7.13 | — | done | — | | Same states and copy on both platforms |
+| X-002 | No-network build check | 0.1 | — | done | — | n/a | Android: `verifyNoInternet` (no `INTERNET` permission in the merged manifest). iOS: forbidden-API lint + App Privacy Report release check (IOS_PLAN §0.1) |
+| X-003 | Debug demo data (debug builds only) | — | Prototype panel | done | — | n/a | Long-press the screen title „Heute“ → prototype scenarios / erase. Never in release builds |
 | X-001 | Shared string source → strings.xml + xcstrings | ANDROID_PLAN 2.2 | — | wip | — | n/a | Interim: `tools/strings/export.mjs` generates Android resources from the prototype's `TX` table |

@@ -43,23 +43,7 @@ Local first, data security and trust beat every feature.
 6. **Native interaction:** navigation, back behaviour, sheets, system integrations, haptics and accessibility follow each platform's conventions (§1.1).
 
 ### 1.1 Allowed platform differences (exhaustive)
-| Area | iOS | Android |
-|---|---|---|
-| Chrome material | Liquid Glass | Material 3 tonal surfaces (no blur glass) |
-| Navigation | Tab bar, swipe-back, push | Navigation bar (rail on tablets), **predictive back**, edge-to-edge |
-| Health store | HealthKit | Health Connect (fewer types → fewer categories mirrored, §6.1) |
-| Lock-screen surface | Lock Screen widgets | **Quick Settings tile**. Phones have no lock-screen widgets; Glance home-screen widgets are on both |
-| Control Center control | iOS 18+ control | Quick Settings tile (same function, same auth rule) |
-| Siri / Shortcuts | App Intents (no auto App Shortcuts) | App shortcuts **off by default**; App Functions (Gemini) later |
-| On-device LLM (v1.5) | Foundation Models | Gemini Nano (ML Kit GenAI Prompt API) on supported devices; templates otherwise |
-| Hide the app entirely | iOS 18 "Hide and Require Face ID" | Android 15+ **Private Space** |
-| Screenshot blocking | Not possible (switcher blur only) | Optional `FLAG_SECURE` „Bildschirmfotos verhindern“ + recents thumbnail hidden by default |
-| Alternate icon | `setAlternateIconName` | `activity-alias` switch |
-| Watch (v1.5) | watchOS app | Wear OS app (Compose for Wear, M3 Expressive) |
-| Typeface | SF Pro (+ SF Pro Rounded numerals) | Roboto Flex (bundled) + **Nunito** numerals (as the prototype). See §3.3 |
-| Touch target | ≥ 44 pt | ≥ 48 dp |
-
-Anything not in this table must be identical. A difference that isn't listed is a **parity bug**.
+Moved to **`PARITY.md` › Allowed platform differences** on 2026-11-23 (one canonical list for both plans, extended for IOS_PLAN I4). Anything not listed there is a parity bug.
 
 ### 1.2 Parity matrix (process)
 - `docs/PARITY.md` (to be created at the start of Android work, phase A1): one row per feature ID (`F-001 Today ring`, `F-002 Log flow` …), with columns *Spec §*, *Prototype screen*, *iOS status*, *Android status*, *Screenshot pair*, *Notes*.
@@ -299,7 +283,7 @@ Pin exact versions at project start and record them in the SOUP list.
 - **Backup run:** device-only, no E2E/D2D flag or intentionally no snapshot → nothing written. Everything (key unwrap + full snapshot authentication) is validated before the first byte; on failure nothing is written and the status says „failed“. Only then the snapshot and a transient plain copy of the key are streamed (deleted in `finally`; stale copies swept in `Application.onCreate`). Observed with LocalTransport: an empty run is rejected by the transport, so no empty set is committed (not promised to users).
 - **Restore:** `onRestoreFile` wraps the backup key from the stream for the new device (no plaintext key on disk) into `restore/`; `onRestoreFinished` marks `restore/pending` only if snapshot and key both arrived. The first launch imports atomically into a fresh encrypted DB, promotes the key, and on failure deletes only that fresh DB (Retry / „Neu beginnen“).
 - **Never backed up:** the database, its Keystore-wrapped key, preferences. Rules XML include exactly the two backup files (defence in depth).
-- **Encrypted export/import** via the Storage Access Framework (`CreateDocument` / `OpenDocument`). Same `.cyclus` v1 format → cross-platform migration. Exports never contain app-lock/PIN settings.
+- **Encrypted export/import** via the Storage Access Framework (`CreateDocument` / `OpenDocument`). Same `.cyclus` v1 format → cross-platform migration. Exports never contain app-lock/PIN settings. **Cross-platform requirement (owner 2026-11-23):** a file from Android opens on iPhone and vice versa; passphrase normalized to NFC (with fallback for older files), see `docs/export/FORMAT.md` and IOS_PLAN §6.4.4. Still to add on Android: open a `.cyclus` file from other apps (intent filters) and the „Auf ein neues Handy umziehen“ guide.
 
 ### 6.5 On-device language model (v1.5, parity with iOS)
 - Gemini Nano via the **ML Kit GenAI Prompt API**. Device list is limited (e.g. Pixel 10, Galaxy S26, recent vivo/Xiaomi). Inference runs only while the app is in the foreground.

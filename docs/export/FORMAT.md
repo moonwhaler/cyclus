@@ -16,7 +16,7 @@ All integers big-endian. The first 40 bytes are the **header**.
 | 40 | n | ciphertext | AES-256-GCM of the compressed payload |
 | 40+n | 16 | tag | GCM authentication tag |
 
-- **Key (mode 1):** `PBKDF2-HMAC-SHA256(UTF-8(passphrase), salt, iterations, 32 bytes)`.
+- **Key (mode 1):** `PBKDF2-HMAC-SHA256(UTF-8(NFC(passphrase)), salt, iterations, 32 bytes)`. The passphrase is Unicode-normalized to **NFC** first, so the same visible passphrase gives the same key on every platform and keyboard („ä“ precomposed or as „a“ + combining mark). Readers must also try the passphrase exactly as typed when the NFC form fails: files written before 2026-11-23 used it un-normalized.
 - **Key (mode 2):** a random 256-bit key held by the device (Android: wrapped by the hardware keystore; travels only inside an end-to-end encrypted system backup).
 - **Associated data:** the 40 header bytes. Any change to magic, mode, salt, iterations or nonce makes decryption fail.
 - **Compression:** raw DEFLATE (RFC 1951, no zlib/gzip header) of the UTF-8 JSON payload. Readers should cap the inflated size (Cyclus: 32 MB).
@@ -52,4 +52,8 @@ See `cyclus-export.schema.json`. Summary:
 ## Test vectors
 `shared/golden/export/`: `vector.json` (payload), `vector-mode1.cyclus` (passphrase `Cyclus-Testvektor 1`, salt
 `000102…0f`, 1000 iterations — below the normal minimum, test only), `vector-mode2.cyclus` (key `101112…2f`), both with
-nonce `a0a1…ab`. Encoders must reproduce them byte for byte.
+nonce `a0a1…ab`. Encoders must reproduce them byte for byte. `vector-mode1-umlaut.cyclus`: same salt/nonce/iterations,
+passphrase `Zyklus-Prüfung ä`; encoders must produce these exact bytes from both the NFC and the NFD form of it.
+
+## Cross-platform guarantee (owner requirement 2026-11-23)
+A `.cyclus` file written by Cyclus on **any** platform opens in Cyclus on **any** other platform (Android → iPhone, iPhone → Android, and the reference decoder), with merge or replace. Both apps use the one shared Kotlin implementation of this format; the vectors above run on JVM, Android and iOS. File name `Cyclus-YYYY-MM-DD.cyclus`; media type `application/octet-stream`; iOS declares the exported type `com.nordinary.cyclus.backup` (extension `cyclus`). Device backups (mode 2) use the same container, but their key never leaves the platform's backup system, so they restore only on the same platform; moving between Android and iPhone always goes through a passphrase file.

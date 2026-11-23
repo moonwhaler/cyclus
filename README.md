@@ -1,6 +1,6 @@
 # Cyclus
 
-Private, local-first cycle tracker. **German first**, iOS first, Android with full parity.
+Private, local-first cycle tracker. **German first**. Android first (reference implementation), iOS follows with 100% parity on the same Kotlin Multiplatform core.
 "Dein Zyklus, verstanden. Nie hochgeladen." No servers, no accounts, no tracking. All intelligence runs on the device.
 
 ## Documents
@@ -8,6 +8,7 @@ Private, local-first cycle tracker. **German first**, iOS first, Android with fu
 |---|---|
 | [`docs/DESIGN_SPEC.md`](docs/DESIGN_SPEC.md) | **Main spec** (product, UX/UI, threat model, engines, delivery). Start with §0 (decisions D1–D10) |
 | [`docs/ANDROID_PLAN.md`](docs/ANDROID_PLAN.md) | Android design & plan: parity rules, KMP architecture, Material 3 Expressive mapping, Health Connect, Play |
+| [`docs/IOS_PLAN.md`](docs/IOS_PLAN.md) | iOS design & plan for 100% parity with the Android app: shared-first refactor, KMP on iOS, SQLCipher + Keychain, HealthKit, WidgetKit, E2E-only backups, App Store |
 | [`docs/REVIEW.md`](docs/REVIEW.md) | Sceptic review of the first plan (12 MAJOR / 24 MINOR), all resolved in the spec (§0.3) |
 | [`docs/PARITY.md`](docs/PARITY.md) | Parity matrix: one row per feature, Android and iOS status |
 | [`docs/PLAN.md`](docs/PLAN.md) | First plan, superseded, kept for history |

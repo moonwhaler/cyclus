@@ -3,6 +3,7 @@
 > Date: 2026-11-22 · Status: **Draft for owner sign-off** · Supersedes `PLAN.md` v0.1.
 > Incorporates the sceptic review (`REVIEW.md`: 12 MAJOR, 24 MINOR). §0.3 maps every finding to its resolution.
 > Codename "Cyclus". Final name TBD.
+> **2026-11-23:** iOS implementation details in this spec (written before D10/D11) are superseded where `IOS_PLAN.md` §10 says so. The Android app is the reference implementation; both apps reach 100% parity (`PARITY.md`).
 
 ---
 
@@ -17,7 +18,7 @@ Defaults are marked ✅. The rest of this spec is written against them. Changing
 | **D2** | Positioning vs. iOS 27 Apple Health | ✅ Three wedges (§1.2): **deep fast logging**, **condition-first** (PCOS/endo/irregular), **Doctor Visit Pack**. Validate in phase 1 with current Apple Health users. | Pick one wedge only |
 | **D3** | Publisher | ✅ **Legal entity + Organization developer account** before submission (UG (haftungsbeschränkt) or e.V.; D-U-N-S number). Start now, because it takes 4–8 weeks. | Individual account (rejection risk under guideline 5.1.1(ix), personal liability) |
 | **D4** | Delivery | ✅ **Phase-based plan, no effort or time estimates** (owner decision 2026-11-22: built AI-assisted, effort numbers don't apply). Full v1 scope in ordered phases with exit criteria (§13.1); only outside lead times are planned in calendar time. Fertility can go live per region later than the core app (feature flag). | Fallback scope list (§13.1) |
-| **D5** | Backup | ✅ Store **included** in device backups (so phone migration just works), with honest disclosure plus a "Device only" toggle that sets `isExcludedFromBackup`, plus **encrypted export**. | Exclude by default (max privacy, real data-loss risk) |
+| **D5** | Backup | ✅ **Revised 2026-11-22/23 (both platforms): end-to-end only.** The database itself is never backed up; an encrypted snapshot goes into device backups only where Apple/Google can't read it (Android: E2E/device-to-device transport, ANDROID_PLAN §6.4; iOS: snapshot key only in iCloud Keychain, IOS_PLAN §6.4), "Nur auf dem Gerät" toggle, plus **encrypted export**. Original draft: store included in backups with a "Device only" toggle. | Exclude by default (max privacy, real data-loss risk) |
 | **D6** | Money | ✅ Strictly free. **No tip jar in v1** (it would make the developer a DSA trader, whose address is published). | Tip jar via IAP after the entity exists |
 | **D7** | Platform baseline | ✅ **Deployment target iOS 26.0, built with the iOS 27 SDK.** Use iOS 27 APIs behind `if #available`. | iOS 27 minimum (smaller audience, simpler code) |
 | **D9** | Patterns & outlook | ✅ **In v1 (owner decision 2026-11-22).** „Deine Muster“ (§11.12) watches body, mood & feelings, lifestyle, fertility and cycle health. „Ausblick“ (§11.13) turns patterns into a 7-day outlook. Fertility and cycle-health watchers follow the same regulatory gate as fertility (§1.4). | — (decided) |

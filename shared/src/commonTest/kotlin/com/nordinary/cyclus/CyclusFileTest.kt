@@ -94,4 +94,31 @@ class CyclusFileTest {
         assertContentEquals(v2, CyclusFile.sealWithKey(plain, key, nonce))
         assertTrue(ExportFile.decode(plain).logs.isNotEmpty())
     }
+
+    /** Cross-platform: the same visible passphrase opens the file whatever Unicode form a keyboard produced (FORMAT.md: NFC). */
+    @Test fun passphraseIsNormalizedToNfc() {
+        val nfc = "Zyklus-Pr\u00fcfung \u00e4".toCharArray()
+        val nfd = "Zyklus-Pru\u0308fung a\u0308".toCharArray()
+        val fromNfd = CyclusFile.sealWithPassphrase(json, nfd.copyOf(), iterations = 1000)
+        assertContentEquals(json, CyclusFile.openWithPassphrase(fromNfd, nfc.copyOf(), minIterations = 1000))
+        val fromNfc = CyclusFile.sealWithPassphrase(json, nfc.copyOf(), iterations = 1000)
+        assertContentEquals(json, CyclusFile.openWithPassphrase(fromNfc, nfd.copyOf(), minIterations = 1000))
+        // frozen vector: other platforms must produce exactly these bytes from either form
+        val plain = readGoldenBytes("export/vector.json")
+        val v = readGoldenBytes("export/vector-mode1-umlaut.cyclus")
+        val salt = hex("000102030405060708090a0b0c0d0e0f"); val nonce = hex("a0a1a2a3a4a5a6a7a8a9aaab")
+        assertContentEquals(v, CyclusFile.sealWithPassphrase(plain, nfc.copyOf(), 1000, salt, nonce))
+        assertContentEquals(v, CyclusFile.sealWithPassphrase(plain, nfd.copyOf(), 1000, salt, nonce))
+        assertContentEquals(plain, CyclusFile.openWithPassphrase(v, nfd.copyOf(), minIterations = 1000))
+    }
+
+    /** Files written before NFC was required (passphrase used as typed, here decomposed) still open. */
+    @Test fun olderFilesWithUnnormalizedPassphraseStillOpen() {
+        val nfd = "Pru\u0308fung".toCharArray()
+        val legacy = CyclusFile.sealWithPassphrase(json, nfd.copyOf(), iterations = 1000, normalize = false)
+        assertContentEquals(json, CyclusFile.openWithPassphrase(legacy, nfd.copyOf(), minIterations = 1000))
+        assertFailsWith<CyclusFileException.WrongPassphraseOrDamaged> {
+            CyclusFile.openWithPassphrase(legacy, "Pruefung".toCharArray(), minIterations = 1000)
+        }
+    }
 }

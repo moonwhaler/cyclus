@@ -10,6 +10,7 @@ Prints the JSON payload to stdout. Needs the `cryptography` package.
 """
 import argparse
 import getpass
+import unicodedata
 import hashlib
 import struct
 import sys
@@ -35,7 +36,22 @@ def decode(data: bytes, passphrase: str | None = None, key: bytes | None = None,
             raise ValueError("passphrase required (mode 1)")
         if not (min_iterations <= iterations <= 10_000_000):
             raise ValueError(f"iterations out of range: {iterations}")
-        key = hashlib.pbkdf2_hmac("sha256", passphrase.encode("utf-8"), salt, iterations, 32)
+        # FORMAT.md: key from UTF-8(NFC(passphrase)); files from before 2026-11-23 used the passphrase as typed
+        nfc = unicodedata.normalize("NFC", passphrase)
+        candidates = [nfc] + ([passphrase] if passphrase != nfc else [])
+        for i, p in enumerate(candidates):
+            k = hashlib.pbkdf2_hmac("sha256", p.encode("utf-8"), salt, iterations, 32)
+            try:
+                deflated = AESGCM(k).decrypt(nonce, data[HEADER:], header)
+                break
+            except Exception:
+                if i == len(candidates) - 1:
+                    raise
+        d = zlib.decompressobj(-15)
+        out = d.decompress(deflated, MAX_JSON)
+        if d.unconsumed_tail:
+            raise ValueError("payload too large")
+        return out
     elif mode == 2:
         if key is None or len(key) != 32 or iterations != 0:
             raise ValueError("raw 256-bit key required (mode 2)")

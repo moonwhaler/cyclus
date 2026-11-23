@@ -16,6 +16,13 @@ actual object CyclusCrypto {
 
     actual fun random(size: Int): ByteArray = ByteArray(size).also { rng.nextBytes(it) }
 
+    actual fun nfc(passphrase: CharArray): CharArray {
+        val chars = java.nio.CharBuffer.wrap(passphrase)
+        // no String copy of the passphrase in the common case
+        if (java.text.Normalizer.isNormalized(chars, java.text.Normalizer.Form.NFC)) return passphrase
+        return java.text.Normalizer.normalize(chars, java.text.Normalizer.Form.NFC).toCharArray()
+    }
+
     actual fun pbkdf2(passphrase: CharArray, salt: ByteArray, iterations: Int): ByteArray {
         val spec = PBEKeySpec(passphrase, salt, iterations, 256)
         try {
