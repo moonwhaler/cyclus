@@ -456,6 +456,19 @@ const TX = {
   f_conceive:{de:'Kinderwunsch',en:'Trying to get pregnant'}, byear:{de:'Geburtsjahr (optional, bleibt auf deinem iPhone)',en:'Birth year (optional, stays on your iPhone)'}, noSay:{de:'Keine Angabe',en:'Prefer not to say'},
   onb5T:{de:'Cyclus mit Face ID sperren?',en:'Lock Cyclus with Face ID?'}, onb5B:{de:'Wer dein iPhone benutzt, braucht dann dein Gesicht oder eine Cyclus-PIN, um die App zu öffnen.',en:'Anyone using your phone would need your face or a Cyclus PIN to open it.'},
   turnOn:{de:'Einschalten',en:'Turn on'}, notNow:{de:'Jetzt nicht',en:'Not now'}, welcomeDlg:{de:'Willkommen',en:'Welcome'},
+  // notice + consent (spec §7.1): required in onboarding, again yearly, when fertility is switched on, and on new wording
+  noticeT:{de:'Bevor du startest',en:'Before you start'}, noticeB:{de:'Bitte lies das in Ruhe. Es ist wichtig.',en:'Please read this carefully. It matters.'},
+  nt1:{de:'Keine Verhütung.',en:'Not birth control.'}, nt1s:{de:'Cyclus ist kein Verhütungsmittel. Verlass dich nie auf Cyclus, um eine Schwangerschaft zu vermeiden. Auch an Tagen, die Cyclus als wenig oder nicht fruchtbar zeigt, kannst du schwanger werden. Wenn du nicht schwanger werden willst, verhüte.',en:'Cyclus is not a contraceptive. Never rely on Cyclus to avoid pregnancy. You can get pregnant even on days Cyclus shows as low or no fertility. If you don’t want to get pregnant, use contraception.'},
+  nt2:{de:'Nur Schätzungen.',en:'Estimates only.'}, nt2s:{de:'Prognosen und fruchtbare Tage sind statistische Schätzungen aus deinen Einträgen. Sie können falsch sein, besonders bei unregelmäßigen Zyklen, nach hormoneller Verhütung, in der Stillzeit oder bei Krankheit.',en:'Forecasts and fertile days are statistical estimates from what you enter. They can be wrong, especially with irregular cycles, after hormonal birth control, while breastfeeding or when ill.'},
+  nt3:{de:'Kein Medizinprodukt.',en:'Not a medical device.'}, nt3s:{de:'Cyclus stellt keine Diagnosen und ersetzt keine ärztliche Beratung. Bei Fragen oder Beschwerden wende dich an deine Ärztin oder deinen Arzt.',en:'Cyclus does not diagnose anything and does not replace medical advice. For questions or symptoms, talk to your healthcare provider.'},
+  nt4:{de:'Deine Entscheidung.',en:'Your decision.'}, nt4s:{de:'Was du mit diesen Angaben machst, entscheidest du selbst. Der Entwickler haftet nicht für die Folgen solcher Entscheidungen, insbesondere nicht für eine ungeplante oder eine ausbleibende Schwangerschaft. Das gilt nicht bei Vorsatz oder grober Fahrlässigkeit, bei Verletzung von Leben, Körper oder Gesundheit und soweit das Produkthaftungsgesetz gilt.',en:'What you do with this information is your decision. The developer is not liable for the consequences of such decisions, in particular for an unplanned pregnancy or for not getting pregnant. This does not apply to intent or gross negligence, to injury to life, body or health, or where product liability law applies.'},
+  noticeChk:{de:'Ich habe das gelesen und verstanden. Ich nutze Cyclus nicht, um eine Schwangerschaft zu vermeiden.',en:'I have read and understood this. I will not use Cyclus to avoid pregnancy.'},
+  agreeCont:{de:'Zustimmen und weiter',en:'Agree and continue'}, agree:{de:'Zustimmen',en:'Agree'},
+  noticeRow:{de:'Wichtiger Hinweis',en:'Important notice'}, noticeAgain:{de:'Einmal im Jahr und wenn sich dieser Text ändert, bitten wir dich, ihn erneut zu bestätigen.',en:'Once a year, and whenever this text changes, we ask you to confirm it again.'},
+  noticeFert:{de:'Gleich zeigt Cyclus fruchtbare Tage. Bitte bestätige vorher diesen Hinweis.',en:'Cyclus is about to show fertile days. Please confirm this notice first.'},
+  legal:{de:'Rechtliches',en:'Legal'}, consentOn:{de:d=>`Bestätigt am ${d}`,en:d=>`Confirmed on ${d}`}, consentNone:{de:'Noch nicht bestätigt',en:'Not confirmed yet'},
+  consentHist:{de:'Deine Bestätigungen',en:'Your confirmations'}, consentVer:{de:v=>`Hinweis-Version ${v}`,en:v=>`Notice version ${v}`},
+  consentFoot:{de:'Deine Bestätigungen werden nur auf diesem Gerät gespeichert und nie gesendet.',en:'Your confirmations are stored only on this device and never sent.'},
   // lock
   lockedT:{de:'Cyclus ist gesperrt',en:'Cyclus is locked'}, lockedB:{de:'Deine Daten bleiben verborgen, bis du entsperrst.',en:'Your data stays hidden until you unlock.'}, unlockBtn:{de:'Mit Face ID entsperren',en:'Unlock with Face ID'}, recognizing:{de:'Wird erkannt…',en:'Recognizing…'},
   // patterns ("Deine Muster") and outlook ("Ausblick")
@@ -1457,6 +1470,7 @@ function renderPrivacy(){
       <div class="li"><div class="t"><b>${t('devOnlyT')}</b><span>${t('devOnlyS')}</span></div>${sw('deviceOnly',P.deviceOnly,t('devOnlyT'))}</div>
       <button class="li" data-act="toast" data-v="tBackup"><div class="t"><b style="color:var(--period)">${t('encBk')}</b><span>${t('encBkS')}</span></div>${I.chev}</button>
     </div></div>
+    <div class="sec"><div class="lbl">${t('legal')}</div><div class="list"><div class="li"><div class="t"><b>${t('noticeRow')}</b><span>${S.consentAt?t('consentOn', new Intl.DateTimeFormat(S.lang,{dateStyle:'medium',timeStyle:'short'}).format(new Date(S.consentAt))):t('consentNone')}</span></div></div></div></div>
     <div class="list"><button class="li" data-act="sheet" data-v="erase"><span class="ic" style="background:#B3264E">${I.trash}</span><div class="t"><b style="color:var(--period)">${t('eraseT')}</b></div></button></div>
   </div>`;
 }
@@ -1526,7 +1540,7 @@ function renderReport(){
 /* ============ onboarding & lock ============ */
 function renderOnb(){
   const st = S.onb; const step = st.step;
-  const dots = `<div class="dots">${[0,1,2,3,4,5].map(i=>`<i class="${i===Math.min(step,5)?'on':''}"></i>`).join('')}</div>`;
+  const dots = `<div class="dots">${[0,1,2,3,4,5,6].map(i=>`<i class="${i===Math.min(step,6)?'on':''}"></i>`).join('')}</div>`;
   let body='';
   if (step===0) body = `<div class="grow"></div><div class="glyph">${I.ring}</div><h2>${t('onb0T')}</h2><p>${t('onb0B')}</p><div class="grow"></div><button class="btn primary block" data-act="onbNext">${t('getStarted')}</button>`;
   if (step===1) body = `<h2>${t('onb1T')}</h2><div class="promise">
@@ -1534,14 +1548,18 @@ function renderOnb(){
      <div>${I.shield}<span><b>${t('pr2')}</b><br><span class="muted">${t('pr2s')}</span></span></div>
      <div>${I.heart}<span><b>${t('pr3')}</b><br><span class="muted">${t('pr3s')}</span></span></div></div>
      <p class="small">${t('onb1N')}</p><div class="grow"></div>${dots}<button class="btn primary block" data-act="onbNext">${t('cont')}</button>`;
-  if (step===2) body = st.importing ? `<h2>${t('importing')}</h2><p>${t('importingB')}</p><div class="bar"><i id="ibar"></i></div><p class="small" id="imsg">${t('lookFor')}</p><div class="grow"></div>${dots}`
+  if (step===2) body = `<h2>${t('noticeT')}</h2><p>${t('noticeB')}</p>${noticeHtml()}${dots}
+     <label class="li" style="border-radius:14px;background:var(--surface);gap:10px"><input type="checkbox" onchange="document.getElementById('agreeBtn').disabled=!this.checked"><b>${t('noticeChk')}</b></label>
+     <button class="btn primary block" id="agreeBtn" data-act="onbAgree" disabled>${t('agreeCont')}</button>`;
+  if (step===3) body = st.importing ? `<h2>${t('importing')}</h2><p>${t('importingB')}</p><div class="bar"><i id="ibar"></i></div><p class="small" id="imsg">${t('lookFor')}</p><div class="grow"></div>${dots}`
      : `<h2>${t('onb2T')}</h2><p>${t('onb2B')}</p><div class="grow"></div>${dots}<button class="btn primary block" data-act="onbImport">${t('importBtn')}</button><button class="btn secondary block" data-act="onbNext">${t('skip')}</button>`;
-  if (step===3) body = `<h2>${t('onb3T')}</h2><input type="date" class="field" id="lastp" value="2026-11-11" max="2026-11-22" aria-label="${t('lastPAria')}"><p class="small">${t('onb3B')}</p><div class="grow"></div>${dots}<button class="btn primary block" data-act="onbNext">${t('cont')}</button><button class="btn secondary block" data-act="onbNext" data-v="unknown">${t('dontRemember')}</button>`;
-  if (step===4) body = `<h2>${t('onb4T')}</h2><p>${t('onb4B')}</p><div class="chips">${['f_conceive','ep_hbc','ep_preg','ep_pp','ep_peri','ep_pcos','ep_endo','ep_t','ep_none'].map(x=>`<button class="chip" data-act="onbFactor" data-v="${x}" aria-pressed="${st.factors.includes(x)}">${t(x)}</button>`).join('')}</div>
+  if (step===4) body = `<h2>${t('onb3T')}</h2><input type="date" class="field" id="lastp" value="2026-11-11" max="2026-11-22" aria-label="${t('lastPAria')}"><p class="small">${t('onb3B')}</p><div class="grow"></div>${dots}<button class="btn primary block" data-act="onbNext">${t('cont')}</button><button class="btn secondary block" data-act="onbNext" data-v="unknown">${t('dontRemember')}</button>`;
+  if (step===5) body = `<h2>${t('onb4T')}</h2><p>${t('onb4B')}</p><div class="chips">${['f_conceive','ep_hbc','ep_preg','ep_pp','ep_peri','ep_pcos','ep_endo','ep_t','ep_none'].map(x=>`<button class="chip" data-act="onbFactor" data-v="${x}" aria-pressed="${st.factors.includes(x)}">${t(x)}</button>`).join('')}</div>
      <label class="small" for="byear">${t('byear')}</label><select class="field" id="byear"><option>${t('noSay')}</option>${Array.from({length:50},(_,i)=>`<option>${2013-i}</option>`).join('')}</select><div class="grow"></div>${dots}<button class="btn primary block" data-act="onbNext">${t('cont')}</button>`;
-  if (step===5) body = `<div class="grow"></div><div class="faceid">${I.faceid}</div><h2>${t('onb5T')}</h2><p>${t('onb5B')}</p><div class="grow"></div>${dots}<button class="btn primary block" data-act="onbDone" data-v="lock">${t('turnOn')}</button><button class="btn secondary block" data-act="onbDone">${t('notNow')}</button>`;
+  if (step===6) body = `<div class="grow"></div><div class="faceid">${I.faceid}</div><h2>${t('onb5T')}</h2><p>${t('onb5B')}</p><div class="grow"></div>${dots}<button class="btn primary block" data-act="onbDone" data-v="lock">${t('turnOn')}</button><button class="btn secondary block" data-act="onbDone">${t('notNow')}</button>`;
   return `<div class="onb" role="dialog" aria-label="${t('welcomeDlg')}">${body}</div>`;
 }
+const noticeHtml = () => `<div class="promise">${[1,2,3,4].map(i=>`<div><i style="width:10px;height:10px;border-radius:5px;margin:6px auto 0;align-self:start;background:var(${i===1?'--period':'--warning'})"></i><span><b>${t('nt'+i)}</b><br><span class="muted">${t('nt'+i+'s')}</span></span></div>`).join('')}</div>`;
 const renderLock = () => `<div class="lock" role="dialog" aria-label="${t('lockedT')}"><div class="glyph">${I.ring}</div><h2 style="margin:0;font-size:22px">${t('lockedT')}</h2><p class="muted" style="margin:0">${t('lockedB')}</p><button class="btn primary" data-act="unlock" id="unlockBtn">${t('unlockBtn')}</button></div>`;
 
 /* ============ panel ============ */
@@ -1653,13 +1671,14 @@ app.addEventListener('click', e => {
     case 'unlock': { const b=document.getElementById('unlockBtn'); if (b) b.textContent=t('recognizing'); setTimeout(()=>{ S.lock=false; render(); }, 650); break; }
     case 'onbNext': {
       const from = S.onb.step;
-      if (from===3 && v!=='unknown'){ const val=(document.getElementById('lastp')||{}).value; if (val){ const [yy,mm,dd]=val.split('-').map(Number); const d0=D(yy,mm,dd); for (let k=0;k<5;k++) if (d0+k<=TODAY) setLog(d0+k, l=>{ l.flow=['medium','heavy','medium','light','light'][k]; }); } }
-      S.onb.step = from===2 ? 3 : from+1; render(false); break; }
+      if (from===4 && v!=='unknown'){ const val=(document.getElementById('lastp')||{}).value; if (val){ const [yy,mm,dd]=val.split('-').map(Number); const d0=D(yy,mm,dd); for (let k=0;k<5;k++) if (d0+k<=TODAY) setLog(d0+k, l=>{ l.flow=['medium','heavy','medium','light','light'][k]; }); } }
+      S.onb.step = from+1; render(false); break; }
+    case 'onbAgree': S.consentAt = Date.now(); S.onb.step = 3; render(false); break;
     case 'onbImport':
       S.onb.importing=true; render(false);
       requestAnimationFrame(()=>requestAnimationFrame(()=>{ const b=document.getElementById('ibar'); if (b) b.style.width='100%'; }));
       setTimeout(()=>{ const m=document.getElementById('imsg'); if (m) m.textContent=t('found'); }, 700);
-      setTimeout(()=>{ const f=S.onb.factors; genScenario('day12'); S.scen=null; S.onb={step:4, factors:f, imported:true}; render(false); }, 1500);
+      setTimeout(()=>{ const f=S.onb.factors; genScenario('day12'); S.scen=null; S.onb={step:5, factors:f, imported:true}; render(false); }, 1500);
       break;
     case 'onbFactor': { const f=S.onb.factors; S.onb.factors = v==='ep_none' ? (f.includes(v)?[]:[v]) : (f.includes(v)? f.filter(x=>x!==v) : [...f.filter(x=>x!=='ep_none'), v]); render(false); break; }
     case 'onbDone': { const f=S.onb.factors; S.privacy.appLock = v==='lock';

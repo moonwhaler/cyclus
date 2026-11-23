@@ -83,7 +83,7 @@ fun OnboardingScreen(vm: AppViewModel, fmt: Fmt) {
     val hcAvailable = remember { vm.health.availability() == HealthAvailability.AVAILABLE }
     val hcLauncher = rememberLauncherForActivityResult(PermissionController.createRequestPermissionResultContract()) { granted ->
         vm.health.connected(granted)
-        if (granted.isNotEmpty()) step = 4 // cycles come from Health Connect: no need to ask for the last period
+        if (granted.isNotEmpty()) step = 5 // cycles come from Health Connect: no need to ask for the last period
     }
 
     Column(
@@ -106,16 +106,25 @@ fun OnboardingScreen(vm: AppViewModel, fmt: Fmt) {
                 Dots(1); PrimaryButton(fmt.s("cont"), { step = 2 }, Modifier.fillMaxWidth())
             }
             2 -> {
-                Title(fmt.s("onb2T")); Body(fmt.s("onb2B"))
+                // the one step that can't be skipped (spec §7.1): agreed and timed at this tap, before any data enters
+                Spacer(Modifier.height(8.dp))
+                Icon(CyclusIcons.Shield, null, Modifier.size(56.dp).align(Alignment.CenterHorizontally), tint = c.warning)
+                Title(fmt.s("noticeT")); Body(fmt.s("noticeB"))
+                NoticeContent(fmt)
                 Dots(2)
+                NoticeConfirm(fmt, fmt.s("agreeCont")) { vm.recordConsent(); step = 3 }
+            }
+            3 -> {
+                Title(fmt.s("onb2T")); Body(fmt.s("onb2B"))
+                Dots(3)
                 PrimaryButton(fmt.s("importBtn"), { app.lock.suspendForExternalActivity(); openDoc.launch(arrayOf("*/*")) }, Modifier.fillMaxWidth())
                 if (hcAvailable) SecondaryButton(
                     stringResource(R.string.onb_hc),
                     { app.lock.suspendForExternalActivity(); hcLauncher.launch(vm.health.readPermissions()) }, Modifier.fillMaxWidth(),
                 )
-                SecondaryButton(fmt.s("skip"), { step = 3 }, Modifier.fillMaxWidth())
+                SecondaryButton(fmt.s("skip"), { step = 4 }, Modifier.fillMaxWidth())
             }
-            3 -> {
+            4 -> {
                 Title(fmt.s("onb3T"))
                 val todayMs = LocalDate.now().atStartOfDay().toInstant(ZoneOffset.UTC).toEpochMilli()
                 val picker = rememberDatePickerState(
@@ -146,11 +155,11 @@ fun OnboardingScreen(vm: AppViewModel, fmt: Fmt) {
                     }
                 }
                 Body(fmt.s("onb3B"), small = true)
-                Dots(3)
-                PrimaryButton(fmt.s("cont"), { step = 4 }, Modifier.fillMaxWidth())
-                SecondaryButton(fmt.s("dontRemember"), { vm.onboardingChoices.value = choices.copy(lastPeriodStart = null, stillBleeding = false, durationDays = null); step = 4 }, Modifier.fillMaxWidth())
+                Dots(4)
+                PrimaryButton(fmt.s("cont"), { step = 5 }, Modifier.fillMaxWidth())
+                SecondaryButton(fmt.s("dontRemember"), { vm.onboardingChoices.value = choices.copy(lastPeriodStart = null, stillBleeding = false, durationDays = null); step = 5 }, Modifier.fillMaxWidth())
             }
-            4 -> {
+            5 -> {
                 Title(fmt.s("onb4T")); Body(fmt.s("onb4B"))
                 FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                     CyclusChip(fmt.s("f_conceive"), choices.conceive, {
@@ -166,13 +175,13 @@ fun OnboardingScreen(vm: AppViewModel, fmt: Fmt) {
                     })
                 }
                 Body(stringResource(R.string.onb_conceive_note), small = true)
-                Dots(4); PrimaryButton(fmt.s("cont"), { step = 5 }, Modifier.fillMaxWidth())
+                Dots(5); PrimaryButton(fmt.s("cont"), { step = 6 }, Modifier.fillMaxWidth())
             }
             else -> {
                 Spacer(Modifier.height(32.dp))
                 Icon(CyclusIcons.Shield, null, Modifier.size(64.dp).align(Alignment.CenterHorizontally), tint = c.accent)
                 Title(fmt.s("onb5T"), center = true); Body(fmt.s("onb5B"), center = true)
-                Dots(5)
+                Dots(6)
                 PrimaryButton(fmt.s("turnOn"), { if (Authn.available(ctx)) vm.finishOnboarding(enableLock = true) else pinSheet = true }, Modifier.fillMaxWidth())
                 SecondaryButton(fmt.s("notNow"), { vm.finishOnboarding(enableLock = false) }, Modifier.fillMaxWidth())
             }
@@ -186,7 +195,7 @@ fun OnboardingScreen(vm: AppViewModel, fmt: Fmt) {
                 importing = false
                 // continue to the life-stage and lock steps; an import never sets up the app lock
                 val m = vm.model.value
-                step = if (m != null && (m.activeEpisode != null || m.settings.containsKey(SettingKeys.MODE))) 5 else 4
+                step = if (m != null && (m.activeEpisode != null || m.settings.containsKey(SettingKeys.MODE))) 6 else 5
             }
         },
         onDismiss = { vm.privacy.cancelImport(); importing = false },
@@ -215,6 +224,6 @@ private fun Promise(t: String, sub: String) {
 private fun Dots(current: Int) {
     val c = Cyclus.colors
     Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(6.dp, Alignment.CenterHorizontally)) {
-        for (i in 0..5) Box(Modifier.size(7.dp).clip(CircleShape).background(if (i == current) c.ink else c.line))
+        for (i in 0..6) Box(Modifier.size(7.dp).clip(CircleShape).background(if (i == current) c.ink else c.line))
     }
 }

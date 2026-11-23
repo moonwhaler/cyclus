@@ -35,6 +35,7 @@ import com.nordinary.cyclus.presenter.InsightsUiState
 import com.nordinary.cyclus.presenter.LifeStage
 import com.nordinary.cyclus.presenter.NotifyKeys
 import com.nordinary.cyclus.presenter.NotifyKind
+import com.nordinary.cyclus.presenter.Consent
 import com.nordinary.cyclus.presenter.Onboarding
 import com.nordinary.cyclus.presenter.OnboardingChoices
 import com.nordinary.cyclus.presenter.TodayPresenter
@@ -382,6 +383,11 @@ class AppViewModel(
         }
     }
 
+    /** The person confirmed the notice (spec §7.1) now; earlier confirmations are kept. */
+    fun recordConsent() {
+        scope.launch(errors) { repo.setSetting(Consent.KEY, Consent.confirm(repo.setting(Consent.KEY), System.currentTimeMillis())) }
+    }
+
     fun saved() { scope.launch(errors) { _messages.emit(UiMessage("tSaved")) } }
 
     fun undo(message: UiMessage) { message.undo?.let { u -> scope.launch(errors) { u() } } }
@@ -396,7 +402,7 @@ class AppViewModel(
                 logs = s.logs,
                 episodes = s.pausedSince?.let { listOf(Episode("demo-hbc", EpisodeKind.HORMONAL_CONTRACEPTION, it)) } ?: emptyList(),
                 // onboarding stays done: otherwise the empty moment inside the replace brings it back
-                settings = mapOf(Onboarding.DONE to "1") +
+                settings = mapOf(Onboarding.DONE to "1", Consent.KEY to Consent.confirm(null, System.currentTimeMillis())) +
                     (if (s.mode == Mode.CONCEIVE) mapOf(SettingKeys.MODE to "conceive") else emptyMap()),
             )
         }
@@ -414,6 +420,6 @@ class AppViewModel(
 
         /** Device bookkeeping no system surface (reminders, widget, shortcut) depends on. */
         private fun isBookkeeping(k: String) = k.startsWith("hc.") || k == SettingKeys.LOCK_BACKOFF ||
-            k == SettingKeys.EXPORT_COUNT || k == SettingKeys.REPORT_NAME
+            k == SettingKeys.EXPORT_COUNT || k == SettingKeys.REPORT_NAME || k == SettingKeys.CONSENT
     }
 }

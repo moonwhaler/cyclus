@@ -347,11 +347,12 @@ SF Symbols (hierarchical rendering). Custom symbols (SF Symbols template format)
 
 ## 7. Screen specifications
 
-### 7.1 Onboarding (≤ 60 s, every step skippable)
+### 7.1 Onboarding (≤ 60 s, every step skippable except the notice)
 | # | Screen | Content | Primary / secondary |
 |---|---|---|---|
 | 1 | Welcome | Wordmark, "Your cycle, understood. Never uploaded." | **Get started** |
 | 2 | Privacy promise | 3 rows: "No account. No servers.", "We never see your data.", "You decide what goes into Apple Health." Link: "What about backups?" (opens §7.8 explainer) | **Continue** |
+| 2a | Notice „Bevor du startest“ (required) | Four points: **Not birth control** (never rely on Cyclus to avoid pregnancy; low or no fertility shown ≠ can't get pregnant), **Estimates only**, **Not a medical device**, **Your decision** (developer not liable for consequences, except intent, gross negligence, injury to life/body/health and product liability law). Checkbox „I have read and understood this. I will not use Cyclus to avoid pregnancy.“ | **Agree and continue** (disabled until ticked; no skip) |
 | 3 | Import | "Bring your history from Apple Health so predictions work from day one." | **Import from Apple Health** / Skip |
 | 3a | Import progress | Read-only permission sheet (menstrual flow, spotting, symptoms, BBT, wrist temp, cervical mucus, contraceptive, pregnancy, lactation). Progress → "Found 37 periods since 2021." | auto-advance |
 | 4 | Last period (if no import) | "When did your last period start?" Inline graphical date picker | **Continue** / "I don't remember" |
@@ -359,6 +360,8 @@ SF Symbols (hierarchical rendering). Custom symbols (SF Symbols template format)
 | 6 | Anything affecting your cycle? | Multi-select chips: Hormonal birth control · Pregnant · Postpartum / breastfeeding · Perimenopause · PCOS · Endometriosis · Testosterone / gender-affirming hormones · None of these | **Continue** |
 | 7 | App lock | "Lock Cyclus with Face ID?" | **Turn on** / Not now |
 | 8 | Done | Today screen with first-run coach mark on the Log button | — |
+
+**Notice consent (2026-11-23).** Agreeing stores version + time (device only: not in exports, not in device snapshots; erase removes it). It is asked again, full screen after unlock, when the last confirmation of the current wording is older than 12 months, when the wording version is raised, and on a restored or new phone. That screen keeps „Datenschutz“ reachable (export, erase), so nobody is locked out of their own data by not agreeing. Switching on the fertile window or Kinderwunsch shows the notice as a sheet first; the switch only changes after agreeing. Datenschutz › Rechtliches › „Wichtiger Hinweis“ shows the last confirmation; its sheet lists every confirmation (date, time, version). The wording is not legal advice and needs a lawyer's review before public release.
 
 - **Android (2026-11-22):** step 3 imports a `.cyclus` backup (Health Connect import arrives with A4); step 4 asks „Blutest du noch?“ / „Wie viele Tage ungefähr?“ and logs only the stated days as bleeding without a level (no invented flow levels); birth year is not asked until the engine uses age-band priors.
 - Write permissions for Apple Health are **not** requested here. They are requested in context when the user turns on mirroring for a category (Settings › Apple Health), avoiding a 35-toggle sheet.

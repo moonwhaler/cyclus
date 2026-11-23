@@ -159,6 +159,8 @@ object SettingKeys {
     const val EXPORT_LAST = "export.last"
     /** Name printed on the Doctor Visit Pack; remembered on this device only. */
     const val REPORT_NAME = "report.name"
+    /** Agreement to the „Bevor du startest“ notice ([com.nordinary.cyclus.presenter.Consent]); this device only, never exported. */
+    const val CONSENT = "consent.notice"
 }
 
 /** What an import will bring in (shown before Merge/Replace). */

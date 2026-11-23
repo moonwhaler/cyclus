@@ -144,6 +144,8 @@ fun CyclusApp(vm: AppViewModel) {
 
     var sheet by rememberSaveable { mutableStateOf(Sheet.NONE) }
     var sheetDay by rememberSaveable { mutableStateOf<Int?>(null) }
+    /** Settings change waiting for the notice to be confirmed (not saveable: on recreation the switch simply stays off). */
+    var noticeThen by remember { mutableStateOf<(() -> Unit)?>(null) }
     var logChanged by rememberSaveable { mutableStateOf(false) }
 
     val a11yContext = LocalContext.current
@@ -229,7 +231,15 @@ fun CyclusApp(vm: AppViewModel) {
                         mode = m?.mode ?: Mode.TRACK, showFertility = m?.showFertility ?: false,
                         lifeStage = LifeStage.of(m?.activeEpisode?.kind),
                         onBack = { backStack.removeLastOrNull() },
-                        onMode = vm::setMode, onShowFertility = vm::setShowFertility, onLifeStage = vm::setLifeStage,
+                        // fertile days become visible: confirm the notice first (spec §7.1)
+                        onMode = { mode ->
+                            if (mode == Mode.CONCEIVE && m?.mode != Mode.CONCEIVE) noticeThen = { vm.recordConsent(); vm.setMode(mode) }
+                            else vm.setMode(mode)
+                        },
+                        onShowFertility = { on ->
+                            if (on) noticeThen = { vm.recordConsent(); vm.setShowFertility(true) } else vm.setShowFertility(false)
+                        },
+                        onLifeStage = vm::setLifeStage,
                         onComingSoon = comingSoon, onPrivacy = { backStack.add(PrivacyKey) },
                         onNotifications = { backStack.add(NotifyKey) },
                         appearance = AppearanceStore.state.collectAsStateWithLifecycle().value,
@@ -276,6 +286,10 @@ fun CyclusApp(vm: AppViewModel) {
             }
         },
     )
+
+    noticeThen?.let { then ->
+        com.nordinary.cyclus.ui.onboarding.NoticeSheet(fmt, onAgree = { noticeThen = null; then() }, onDismiss = { noticeThen = null })
+    }
 
     val m = model ?: return
     val day = sheetDay

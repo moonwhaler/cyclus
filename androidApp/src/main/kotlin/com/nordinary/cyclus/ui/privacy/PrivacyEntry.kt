@@ -23,11 +23,13 @@ import com.nordinary.cyclus.i18n.Fmt
 import com.nordinary.cyclus.lock.Authn
 import com.nordinary.cyclus.lock.LockConfig
 import com.nordinary.cyclus.presenter.NotifyKeys
+import com.nordinary.cyclus.presenter.Consent
+import com.nordinary.cyclus.ui.onboarding.ConsentHistorySheet
 import com.nordinary.cyclus.ui.AppViewModel
 import com.nordinary.cyclus.ui.HealthActions
 import java.time.LocalDate
 
-private enum class PrivacySheet { NONE, PIN, PIN_THEN_LOCK, EXPORT, IMPORT, ERASE }
+private enum class PrivacySheet { NONE, PIN, PIN_THEN_LOCK, EXPORT, IMPORT, ERASE, NOTICE }
 
 /** Privacy Center route: state, file pickers and sheets. */
 @Composable
@@ -78,6 +80,7 @@ fun PrivacyEntry(vm: AppViewModel, fmt: Fmt, snackbar: SnackbarHostState, onBack
             widgetDetails = notify.widgetDetails,
             shortcut = notify.shortcut,
             lock = lock, lockPaused = app.lock.isPaused(canAuth),
+            consent = Consent.current(m.settings),
         ),
         onBack = onBack,
         onLockEnabled = { on ->
@@ -102,6 +105,7 @@ fun PrivacyEntry(vm: AppViewModel, fmt: Fmt, snackbar: SnackbarHostState, onBack
             h.enabled.takeIf { it.isNotEmpty() }?.joinToString(", ") { res.getString(categoryLabel(it)) } ?: fmt.s("nothingW")
         },
         onShortcut = { vm.setSetting(NotifyKeys.SHORTCUT, if (it) "1" else null) },
+        onNotice = { sheet = PrivacySheet.NOTICE },
     )
 
     when (sheet) {
@@ -124,6 +128,10 @@ fun PrivacyEntry(vm: AppViewModel, fmt: Fmt, snackbar: SnackbarHostState, onBack
             fmt, healthWritten = m.settings[HealthKeys.WROTE] == "1",
             onErase = { deleteHealth -> sheet = PrivacySheet.NONE; onErased(); vm.privacy.eraseEverything(deleteHealth) },
             onDismiss = { sheet = PrivacySheet.NONE },
+        )
+        PrivacySheet.NOTICE -> ConsentHistorySheet(
+            fmt, Consent.history(m.settings), needed = Consent.needed(m.settings, System.currentTimeMillis()),
+            onAgree = { vm.recordConsent(); sheet = PrivacySheet.NONE }, onDismiss = { sheet = PrivacySheet.NONE },
         )
         PrivacySheet.NONE -> {}
     }

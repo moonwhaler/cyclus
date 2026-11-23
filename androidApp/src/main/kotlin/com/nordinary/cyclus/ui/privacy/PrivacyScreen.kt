@@ -62,6 +62,8 @@ data class PrivacyUiState(
     val discreet: Boolean = true,
     val widgetDetails: Boolean = false,
     val shortcut: Boolean = false,
+    /** Newest confirmation of the current notice (spec §7.1), null if none or out of date. */
+    val consent: com.nordinary.cyclus.presenter.Consent.Record? = null,
 )
 
 /** Datenschutz (prototype `renderPrivacy`), honest per platform (spec §7.8, ANDROID_PLAN §2.4, §6.4). */
@@ -84,6 +86,7 @@ fun PrivacyScreen(
     onDiscreet: (Boolean) -> Unit = {},
     onWidgetDetails: (Boolean) -> Unit = {},
     onShortcut: (Boolean) -> Unit = {},
+    onNotice: () -> Unit = {},
     /** „In Health Connect“ row (written categories), null where Health Connect isn't available. */
     healthLine: String? = null,
     healthContent: @Composable () -> Unit = {},
@@ -178,6 +181,11 @@ fun PrivacyScreen(
                     Link(stringResource(R.string.import_t), stringResource(R.string.import_s), onImport)
                 }
                 Note(stringResource(if (state.deviceOnly) R.string.device_only_note else R.string.bk_how))
+            }
+            Section(fmt.s("legal")) {
+                Group {
+                    Link(fmt.s("noticeRow"), state.consent?.let { fmt.s("consentOn", fmt.dateTime(it.atMillis)) } ?: fmt.s("consentNone"), onNotice)
+                }
             }
             Group { Link(fmt.s("eraseT"), null, onErase, danger = true) }
             Spacer(Modifier.height(32.dp))

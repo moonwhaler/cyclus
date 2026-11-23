@@ -39,6 +39,9 @@ class Fmt(private val res: Resources, val locale: Locale) {
     /** "So" / "Sun" (no trailing dot, as in the outlook header) */
     fun weekday(day: Day): String = fW.format(date(day)).replace(".", "")
     fun long(day: Day): String = fLong.format(date(day))
+    /** A moment in the device's time zone, with year and time: "23. Nov. 2026, 14:05" / "Nov 23, 2026, 2:05 PM". */
+    fun dateTime(epochMillis: Long): String =
+        DateFormat.getInstanceForSkeleton("yMMMdjmm", locale).apply { timeZone = TimeZone.getDefault() }.format(Date(epochMillis))
     fun dayOfMonth(day: Day): Int = java.time.LocalDate.ofEpochDay(day.toLong()).dayOfMonth
 
     /** Prototype `range(a, b)`: "3.–8. Dez." / "Dec 3–8" / "28. Nov. – 3. Dez." */

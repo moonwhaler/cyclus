@@ -21,6 +21,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.setValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -42,7 +43,10 @@ import com.nordinary.cyclus.store.DbKeyException
 import com.nordinary.cyclus.store.StoreState
 import com.nordinary.cyclus.ui.AppViewModel
 import com.nordinary.cyclus.ui.CyclusApp
+import com.nordinary.cyclus.presenter.Consent
+import com.nordinary.cyclus.ui.onboarding.ConsentScreen
 import com.nordinary.cyclus.ui.onboarding.OnboardingScreen
+import com.nordinary.cyclus.ui.privacy.PrivacyEntry
 import com.nordinary.cyclus.ui.theme.Cyclus
 import com.nordinary.cyclus.ui.theme.CyclusTheme
 import com.nordinary.cyclus.ui.today.PrimaryButton
@@ -147,6 +151,18 @@ class MainActivity : FragmentActivity() {
                             }
                         }
                     }
+                    consentDue(m.settings) -> {
+                        // a year later, new wording or a restored phone: confirm again; Privacy stays reachable
+                        // (export, erase) so nobody is locked out of their own data by not agreeing
+                        var privacy by androidx.compose.runtime.saveable.rememberSaveable { androidx.compose.runtime.mutableStateOf(false) }
+                        if (privacy) {
+                            val snackbar = remember { androidx.compose.material3.SnackbarHostState() }
+                            androidx.activity.compose.BackHandler { privacy = false }
+                            Surface(Modifier.fillMaxSize(), color = Cyclus.colors.bg) {
+                                PrivacyEntry(vm, fmt, snackbar, onBack = { privacy = false }, onErased = { privacy = false })
+                            }
+                        } else ConsentScreen(fmt, onAgree = vm::recordConsent, onPrivacy = { privacy = true })
+                    }
                     else -> CyclusApp(vm)
                 }
             }
@@ -165,6 +181,13 @@ class MainActivity : FragmentActivity() {
             .build()
         prompt.authenticate(info)
     }
+}
+
+/** Re-checked on every resume, so a year that ends while the app sits in the background still asks. */
+@Composable
+private fun consentDue(settings: Map<String, String>): Boolean {
+    val resumed by androidx.lifecycle.compose.LocalLifecycleOwner.current.lifecycle.currentStateFlow.collectAsStateWithLifecycle()
+    return remember(settings, resumed) { Consent.needed(settings, System.currentTimeMillis()) }
 }
 
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
