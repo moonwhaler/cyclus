@@ -3,14 +3,21 @@
 Version scheme: `major.minor.patch`. Android `versionCode` only ever goes up, by 1 per release; the public 1.0.0 starts
 at 10200 (internal test builds before it reached 10101).
 
-## Unreleased
+## 1.1.0 — 2026-11-24
 
-- **Health Connect:** entries of today are now written in the morning too. Before, a value logged before noon (e.g.
-  the morning temperature) made the whole write fail until noon.
-- **Four more languages:** French, Spanish, Portuguese and Italian. Choose one in Settings › Language or follow your
-  phone; phones in other languages get English. The Doctor Visit Pack can be created in any of the six languages.
+### New
+- **Four more languages:** French, Spanish, Portuguese and Italian, alongside English and German. Choose one in
+  Settings › Language or follow your phone's language; phones set to other languages get English.
+- **Doctor Visit Pack in six languages:** create the PDF in the language your doctor reads.
 - **About Cyclus › License:** Cyclus is free software under the GNU GPL 3.0; the notice and the full license text are
-  now in the app.
+  in the app.
+
+### Improved
+- Cleaner line breaks in long words and headings, in every language.
+
+### Fixed
+- **Health Connect:** entries for today, such as your morning temperature, are now written right away. Before, a value
+  logged before noon could stop the sync to Health Connect until noon.
 
 ## 1.0.0 — 2026-11-23
 

@@ -19,8 +19,8 @@ android {
         applicationId = "com.nordinary.cyclus"
         minSdk = 29
         targetSdk = 36
-        versionCode = 10200 // +1 per release, never down (internal test builds reached 10101); see CHANGELOG
-        versionName = "1.0.0"
+        versionCode = 10201 // +1 per release, never down (internal test builds reached 10101); see CHANGELOG
+        versionName = "1.1.0"
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
 
