@@ -46,7 +46,7 @@ const ANDROID_OVERRIDES = {
   pinOnlyT: { de: 'Nur PIN, keine Biometrie', en: 'PIN only, no biometrics' },
   pinOnlyS: { de: 'Hilfreich, wenn jemand anderes deine Displaysperre kennt', en: 'Useful if someone else knows your screen lock' },
   devOnlyS: {
-    de: 'Cyclus aus Google-Backups ausschließen. Geht dein Gerät verloren, sind Daten weg, die nicht in einem Export sind.',
+    de: 'Cyclus aus Google-Backups ausschließen. Geht dein Gerät verloren, sind alle Daten weg, die du nicht exportiert hast.',
     en: 'Exclude Cyclus from Google backups. If you lose this phone, data not in an export is gone.',
   },
   er1: { de: '✓ Alle Cyclus-Daten auf diesem Gerät, samt Schlüsseln', en: '✓ All Cyclus data on this device, including its keys' },
@@ -59,7 +59,7 @@ const ANDROID_OVERRIDES = {
   onb0B: { de: 'Ein privates Zyklus- und Symptomtagebuch.', en: 'A private cycle and symptom diary.' },
   pr1s: { de: 'Deine Daten bleiben auf deinem Gerät.', en: 'Your data stays on your device.' },
   pr3: { de: 'Du bestimmst, was du teilst.', en: 'You decide what you share.' },
-  pr3s: { de: 'Exporte und Arztberichte entstehen nur, wenn du sie erstellst.', en: 'Exports and doctor reports exist only when you create them.' },
+  pr3s: { de: 'Exporte und Arztberichte gibt es nur, wenn du sie selbst erstellst.', en: 'Exports and doctor reports exist only when you create them.' },
   onb1N: {
     de: 'In Google-Backups landet Cyclus nur Ende-zu-Ende-verschlüsselt. Das kannst du unter Datenschutz ändern.',
     en: 'Cyclus goes into Google backups only end-to-end encrypted. You can change that in Privacy.',
