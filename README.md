@@ -69,8 +69,8 @@ An iPhone version is planned on the same shared core.
 Cyclus is free software: you can redistribute it and/or modify it under the terms of the
 [GNU General Public License, version 3](LICENSE) (GPL-3.0-only). It comes without any warranty.
 
-The name "Cyclus" and the Cyclus icon are not covered by this license. Modified versions must use a different name
-and icon, so nobody mistakes them for this app.
+The name "Cyclus" and the Cyclus icon are not covered by this license: **forks and other modified versions may not
+use them** and must ship under their own name and icon, so nobody mistakes them for this app.
 
 The open-source components bundled with the app, and their licenses, are listed in the app under
 About Cyclus › Open-source licenses.
