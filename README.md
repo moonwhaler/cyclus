@@ -16,7 +16,7 @@ No servers, no accounts, no tracking; all intelligence runs on the device. **And
 | [`CHANGELOG.md`](CHANGELOG.md) | Release history |
 | [`docs/archive/`](docs/archive/) | First plan and its sceptic review (history; resolved in the spec §0.3) |
 
-## Status — 1.0.1 (2026-11-23)
+## Status — 1.1.0 (2026-11-23)
 **Android: first stable milestone, feature-complete for v1 (phases A0–A5)**:
 - engines ported from the prototype and checked against its golden vectors (prediction, fertility, learning, „Deine Muster“, „Ausblick“);
 - encrypted store (SQLCipher, hardware-held key, automatic recovery after unlock), app lock (biometrics + Cyclus PIN, keeps your place);

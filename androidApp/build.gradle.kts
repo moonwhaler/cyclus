@@ -19,8 +19,8 @@ android {
         applicationId = "com.nordinary.cyclus"
         minSdk = 29
         targetSdk = 36
-        versionCode = 10001 // major*10000 + minor*100 + patch
-        versionName = "1.0.1"
+        versionCode = 10100 // major*10000 + minor*100 + patch
+        versionName = "1.1.0"
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
 

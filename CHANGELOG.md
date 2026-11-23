@@ -2,7 +2,7 @@
 
 Version scheme: `major.minor.patch`; Android `versionCode = major*10000 + minor*100 + patch`.
 
-## Unreleased
+## 1.1.0 — 2026-11-23
 
 - **Today, five new cards** (in „Karte hinzufügen“, off by default): **Zyklus vs. üblich**, **Temperaturkurve**,
   **Stimmung & Energie** (7 days against your usual on the same cycle days), **Fragen für die Ärztin** (your own list,
