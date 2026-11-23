@@ -252,6 +252,7 @@ Pin exact versions at project start and record them in the SOUP list.
 **Sync rules** are the same shared state machine (spec §11.4). Health Connect equivalents:
 - `Metadata.clientRecordId` = sync identifier (`cyclus:<key>`);
 - `clientRecordVersion` = sync version (an upsert replaces lower versions);
+- record time: a day value at local noon, a period from its first day 00:00 to the day after its last; **never in the future** (Health Connect rejects such records, and with them the whole insert): today before noon uses the current time, an ongoing period ends now (fixed 2026-11-24, `RecordTimeTest`);
 - **Changes API** (`getChangesToken` / `getChanges`) replaces anchored queries and gives deletions of own records → `removedInHealth` review, as on iOS;
 - `dataOrigin` = source app → precedence: Cyclus > Samsung Health / Google Fit / Fitbit > other apps.
 

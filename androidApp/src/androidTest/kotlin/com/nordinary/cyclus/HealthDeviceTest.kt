@@ -129,7 +129,7 @@ class HealthDeviceTest {
     @Test fun recordsMapBothWays() {
         for (r in listOf(
             OwnRecord("cyclus:flow:$today", HealthType.FLOW, today, "heavy"),
-            OwnRecord("cyclus:period:$today", HealthType.PERIOD, today, (today + 4).toString()),
+            OwnRecord("cyclus:period:${today - 4}", HealthType.PERIOD, today - 4, today.toString()), // ongoing: ends today
             OwnRecord("cyclus:bbt:$today", HealthType.BBT, today, "36.55"),
             OwnRecord("cyclus:mucus:$today", HealthType.MUCUS, today, "eggwhite"),
             OwnRecord("cyclus:lh:$today", HealthType.LH, today, "surge"),

@@ -274,11 +274,15 @@ class HealthSync(private val ctx: Context) {
             else -> null
         }
 
-        /** Own record → Health Connect record: a day value at local noon (rule 3), a period from start to end + 1 day. */
-        fun toRecord(r: OwnRecord, version: Long, clientId: String = r.syncId): Record {
+        /**
+         * Own record → Health Connect record: a day value at local noon (rule 3), a period from start to end + 1 day.
+         * Never in the future: Health Connect rejects such records (and with them the whole insert), so today's value
+         * before noon gets the current time and an ongoing period ends now. Both stay on the same day.
+         */
+        fun toRecord(r: OwnRecord, version: Long, clientId: String = r.syncId, now: Instant = Instant.now()): Record {
             val zone = ZoneId.systemDefault()
             val noon = LocalDate.ofEpochDay(r.day.toLong()).atTime(12, 0).atZone(zone)
-            val t = noon.toInstant(); val off = noon.offset
+            val t = minOf(noon.toInstant(), now); val off = noon.offset
             val meta = Metadata.manualEntry(clientId, version)
             return when (r.type) {
                 HealthType.FLOW -> MenstruationFlowRecord(t, off, meta, when (r.value) {
@@ -288,7 +292,9 @@ class HealthSync(private val ctx: Context) {
                 HealthType.PERIOD -> {
                     val s = LocalDate.ofEpochDay(r.day.toLong()).atStartOfDay(zone)
                     val e = LocalDate.ofEpochDay((r.value.toIntOrNull() ?: r.day).toLong() + 1).atStartOfDay(zone)
-                    MenstruationPeriodRecord(s.toInstant(), s.offset, e.toInstant(), e.offset, meta)
+                    // end after the start, but not after now
+                    val end = maxOf(s.toInstant().plusSeconds(1), minOf(e.toInstant(), now))
+                    MenstruationPeriodRecord(s.toInstant(), s.offset, end, zone.rules.getOffset(end), meta)
                 }
                 HealthType.SPOTTING -> IntermenstrualBleedingRecord(t, off, meta)
                 HealthType.BBT -> BasalBodyTemperatureRecord(t, off, meta, Temperature.celsius(r.value.toDouble()))
