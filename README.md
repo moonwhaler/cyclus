@@ -13,6 +13,7 @@
   <a href="../../releases/latest">Download</a> ·
   <a href="#features">Features</a> ·
   <a href="#privacy">Privacy</a> ·
+  <a href="#license">License</a> ·
   <a href="#for-developers">For developers</a>
 </p>
 
@@ -63,6 +64,16 @@ The release builds are signed with this certificate (SHA-256), so you can check 
 `9A:2F:7A:A3:C6:13:04:2D:F1:F6:F6:2F:0D:0F:1D:97:66:FB:58:5C:9B:E0:C3:20:62:7A:F2:9E:6D:47:23:56`
 
 An iPhone version is planned on the same shared core.
+
+## License
+Cyclus is free software: you can redistribute it and/or modify it under the terms of the
+[GNU General Public License, version 3](LICENSE) (GPL-3.0-only). It comes without any warranty.
+
+The name "Cyclus" and the Cyclus icon are not covered by this license. Modified versions must use a different name
+and icon, so nobody mistakes them for this app.
+
+The open-source components bundled with the app, and their licenses, are listed in the app under
+About Cyclus › Open-source licenses.
 
 ---
 
