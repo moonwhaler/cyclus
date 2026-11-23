@@ -68,6 +68,7 @@ fun SettingsScreen(
     onComingSoon: () -> Unit,
     onPrivacy: () -> Unit = onComingSoon,
     onNotifications: () -> Unit = onComingSoon,
+    onAbout: () -> Unit = onComingSoon,
     appearance: com.nordinary.cyclus.presenter.Appearance = com.nordinary.cyclus.presenter.Appearance.DEFAULT,
     onAppearance: (com.nordinary.cyclus.presenter.Appearance) -> Unit = {},
 ) {
@@ -133,6 +134,8 @@ fun SettingsScreen(
                     LinkItem(fmt.s("notifT"), fmt.s("notifS"), onNotifications)
                     HorizontalDivider(color = c.line)
                     LinkItem(fmt.s("privT"), null, onPrivacy)
+                    HorizontalDivider(color = c.line)
+                    LinkItem(fmt.s("aboutT"), fmt.s("aboutS"), onAbout)
                 }
             }
             Text(fmt.s("purpose"), Modifier.padding(horizontal = 4.dp), fontSize = 12.sp, color = c.ink2)

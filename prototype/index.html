@@ -509,6 +509,10 @@ const TX = {
   noticeFert:{de:'Gleich zeigt Cyclus fruchtbare Tage. Bitte bestätige vorher diesen Hinweis.',en:'Cyclus is about to show fertile days. Please confirm this notice first.'},
   legal:{de:'Rechtliches',en:'Legal'}, consentOn:{de:d=>`Bestätigt am ${d}`,en:d=>`Confirmed on ${d}`}, consentNone:{de:'Noch nicht bestätigt',en:'Not confirmed yet'},
   consentHist:{de:'Deine Bestätigungen',en:'Your confirmations'}, consentVer:{de:v=>`Hinweis-Version ${v}`,en:v=>`Notice version ${v}`},
+  aboutT:{de:'Über Cyclus',en:'About Cyclus'}, aboutS:{de:'Version, Hinweis, Lizenzen',en:'Version, notice, licenses'}, aboutVer:{de:v=>`Version ${v}`,en:v=>`Version ${v}`},
+  ossT:{de:'Open-Source-Lizenzen',en:'Open-source licenses'}, ossS:{de:n=>`${n} Bausteine`,en:n=>`${n} components`},
+  ossIntro:{de:'Cyclus baut auf freier Software auf. Danke an alle, die sie entwickeln und pflegen.',en:'Cyclus is built on free and open-source software. Thanks to everyone who builds and maintains it.'},
+  ossLic:{de:'Lizenz',en:'License'}, tOss:{de:'Die vollständige Liste zeigt die App.',en:'The app shows the full list.'},
   consentFoot:{de:'Deine Bestätigungen werden nur auf diesem Gerät gespeichert und nie gesendet.',en:'Your confirmations are stored only on this device and never sent.'},
   // lock
   lockedT:{de:'Cyclus ist gesperrt',en:'Cyclus is locked'}, lockedB:{de:'Deine Daten bleiben verborgen, bis du entsperrst.',en:'Your data stays hidden until you unlock.'}, unlockBtn:{de:'Mit Face ID entsperren',en:'Unlock with Face ID'}, recognizing:{de:'Wird erkannt…',en:'Recognizing…'},
@@ -1601,8 +1605,22 @@ function renderSettings(){
     <div class="sec"><div class="lbl">${t('more')}</div><div class="list">
       <button class="li" data-act="toast" data-v="tNotif"><span class="ic" style="background:#8F5600">${I.bell}</span><div class="t"><b>${t('notifT')}</b><span>${t('notifS')}</span></div>${I.chev}</button>
       <button class="li" data-act="push" data-v="privacy"><span class="ic" style="background:#2E7D5B">${I.shield}</span><div class="t"><b>${t('privT')}</b></div>${I.chev}</button>
+      <button class="li" data-act="push" data-v="about"><span class="ic" style="background:#5B5F97">${I.info}</span><div class="t"><b>${t('aboutT')}</b><span>${t('aboutS')}</span></div>${I.chev}</button>
     </div></div>
     <p class="tiny muted" style="padding:0 4px;margin:0">${t('purpose')}</p>
+  </div>`;
+}
+function renderAbout(){
+  const when = S.consentAt ? t('consentOn', new Intl.DateTimeFormat(S.lang,{dateStyle:'medium',timeStyle:'short'}).format(new Date(S.consentAt))) : t('consentNone');
+  return `<div class="pushhead"><button data-act="pop">${I.back}${t('back')}</button></div>
+  <div class="pushbody"><h2>${t('aboutT')}</h2>
+    <div class="card" style="text-align:center"><svg viewBox="0 0 48 48" width="64" height="64" aria-hidden="true"><path d="M13 37a15 15 0 1 1 22 0" stroke="#B3264E" stroke-width="5" stroke-linecap="round" fill="none"/><circle cx="24" cy="9" r="3" fill="#B3264E"/></svg>
+      <h3 style="margin:6px 0 2px">Cyclus</h3><p class="muted" style="margin:0">${t('aboutVer','1.0.0')}</p><p class="muted" style="margin:6px 0 0">${t('onb0B')}</p></div>
+    <div class="list">
+      <div class="li"><div class="t"><b>${t('noticeRow')}</b><span>${when}</span></div></div>
+      <button class="li" data-act="sheet" data-v="method"><div class="t"><b>${t('methodT')}</b></div>${I.chev}</button>
+      <button class="li" data-act="toast" data-v="tOss"><div class="t"><b>${t('ossT')}</b><span>${t('ossS',126)}</span></div>${I.chev}</button>
+    </div>
   </div>`;
 }
 function renderReport(){
@@ -1705,7 +1723,7 @@ function render(keepScroll=true){
   const st = keep('.main'), sst = keep('.sheet .sheetbody'), pst = keep('.push .pushbody');
   const view = S.tab==='today'?renderToday():S.tab==='calendar'?renderCalendar():renderInsights();
   const sheet = {log:renderLogSheet, day:renderDaySheet, why:renderWhySheet, ring:renderRingSheet, method:renderMethodSheet, erase:renderEraseSheet}[S.layer];
-  const push = {privacy:renderPrivacy, settings:renderSettings, report:renderReport}[S.push];
+  const push = {privacy:renderPrivacy, settings:renderSettings, report:renderReport, about:renderAbout}[S.push];
   app.innerHTML = `
   <div class="statusbar"><span class="num">9:41</span><span class="sb-icons" aria-hidden="true">
     <svg width="18" height="12" viewBox="0 0 18 12" fill="currentColor"><rect x="0" y="8" width="3" height="4" rx="1"/><rect x="5" y="5.5" width="3" height="6.5" rx="1"/><rect x="10" y="3" width="3" height="9" rx="1"/><rect x="15" y="0" width="3" height="12" rx="1"/></svg>

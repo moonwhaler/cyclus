@@ -128,9 +128,11 @@ import kotlinx.serialization.Serializable
 @Serializable private data object ReportKey : NavKey
 @Serializable private data object NotifyKey : NavKey
 @Serializable private data object PatternsKey : NavKey
+@Serializable private data object AboutKey : NavKey
+@Serializable private data object LicensesKey : NavKey
 
 private enum class Tab(val key: String) { TODAY("tabToday"), CALENDAR("tabCal"), INSIGHTS("tabIns") }
-private enum class Sheet { NONE, LOG, WHY, METHOD }
+private enum class Sheet { NONE, LOG, WHY, METHOD, NOTICE }
 
 /** Root: pushed screens via Navigation 3 (predictive back, survives recreation), shared snackbar, sheets on top. */
 @Composable
@@ -245,10 +247,26 @@ fun CyclusApp(vm: AppViewModel) {
                         onLifeStage = vm::setLifeStage,
                         onComingSoon = comingSoon, onPrivacy = { backStack.add(PrivacyKey) },
                         onNotifications = { backStack.add(NotifyKey) },
+                        onAbout = { backStack.add(AboutKey) },
                         appearance = AppearanceStore.state.collectAsStateWithLifecycle().value,
                         onAppearance = { AppearanceStore.set(ctx, it) },
                     )
                 }
+            }
+            entry<AboutKey> {
+                Centered {
+                    val consent = model?.settings?.let { com.nordinary.cyclus.presenter.Consent.current(it) }
+                    com.nordinary.cyclus.ui.about.AboutScreen(
+                        fmt = fmt,
+                        consentLine = consent?.let { fmt.s("consentOn", fmt.dateTime(it.atMillis)) } ?: fmt.s("consentNone"),
+                        onBack = { backStack.removeLastOrNull() },
+                        onNotice = { sheet = Sheet.NOTICE }, onMethod = { sheet = Sheet.METHOD },
+                        onLicenses = { backStack.add(LicensesKey) },
+                    )
+                }
+            }
+            entry<LicensesKey> {
+                Centered { com.nordinary.cyclus.ui.about.LicensesScreen(fmt, onBack = { backStack.removeLastOrNull() }) }
             }
             entry<PatternsKey> {
                 val ins = model?.insights as? InsightsUiState.Ready
@@ -317,6 +335,11 @@ fun CyclusApp(vm: AppViewModel) {
         }
         Sheet.WHY -> m.why?.let { WhySheet(it, fmt) { sheet = Sheet.NONE } }
         Sheet.METHOD -> MethodSheet(fmt) { sheet = Sheet.NONE }
+        Sheet.NOTICE -> com.nordinary.cyclus.ui.onboarding.ConsentHistorySheet(
+            fmt, com.nordinary.cyclus.presenter.Consent.history(m.settings),
+            needed = com.nordinary.cyclus.presenter.Consent.needed(m.settings, System.currentTimeMillis()),
+            onAgree = { vm.recordConsent(); sheet = Sheet.NONE }, onDismiss = { sheet = Sheet.NONE },
+        )
         Sheet.NONE -> {}
     }
 }

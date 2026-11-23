@@ -383,6 +383,14 @@
     <string name="tx_consentNone">Not confirmed yet</string>
     <string name="tx_consentHist">Your confirmations</string>
     <string name="tx_consentVer">Notice version %1$s</string>
+    <string name="tx_aboutT">About Cyclus</string>
+    <string name="tx_aboutS">Version, notice, licenses</string>
+    <string name="tx_aboutVer">Version %1$s</string>
+    <string name="tx_ossT">Open-source licenses</string>
+    <string name="tx_ossS">%1$s components</string>
+    <string name="tx_ossIntro">Cyclus is built on free and open-source software. Thanks to everyone who builds and maintains it.</string>
+    <string name="tx_ossLic">License</string>
+    <string name="tx_tOss">The app shows the full list.</string>
     <string name="tx_consentFoot">Your confirmations are stored only on this device and never sent.</string>
     <string name="tx_lockedT">Cyclus is locked</string>
     <string name="tx_lockedB">Your data stays hidden until you unlock.</string>

@@ -244,7 +244,7 @@ Tabs: Heute · Kalender · Einblicke   (iOS: Liquid Glass tab bar · Android: na
 │   └── floating „Eintragen“ → Log sheet
 ├── Kalender: month grid, selected day's detail inline (Bearbeiten, Periodenbeginn), legend
 └── Einblicke: Muster summary → Muster screen · Arztbericht → builder → PDF preview → share · stats & charts · history
-Einstellungen (pushed): Erscheinungsbild · Sprache · Ziel (Zyklus / Kinderwunsch) · Fruchtbares Fenster · Lebensphase · Mitteilungen · intended purpose
+Einstellungen (pushed): Erscheinungsbild · Sprache · Ziel (Zyklus / Kinderwunsch) · Fruchtbares Fenster · Lebensphase · Mitteilungen · Datenschutz · Über Cyclus (§7.15) · intended purpose
 Datenschutz (pushed): Wo deine Daten sind · Schutz (App-Sperre, PIN, Sperren nach, …) · Sichtbarkeit · Health store · Backups (Nur auf dem Gerät, Export, Import) · Rechtliches · Alles löschen
 Full-screen gates: app lock · store error · restore · notice consent (§7.1)
 ```
@@ -540,6 +540,13 @@ Selected in onboarding step 6 ("Trying to get pregnant") or in Settings › Life
 - **Two-week wait** (after *Likely occurred*): ring centre "Day 6 after ovulation", card "Earliest reliable test: Nov 28". No countdown pressure, no baby imagery.
 - **Log sheet pinned (Conceive default):** LH test · Mucus · BBT · Sex. The BBT field remembers the last value and offers a ±0.05 stepper; the °C/°F unit follows settings.
 - **Calendar:** fertility shading (3 intensities + dot pattern), ◎ ovulation marker, ✦ peak day, LH-positive tick.
+
+### 7.15 Über Cyclus (About)
+Settings › Mehr › „Über Cyclus“ (pushed). Owner decisions 2026-11-23: no publisher line, no contact link (nothing leaves the app).
+- **Header:** app icon, „Cyclus“, „Version x.y.z“ (the installed build), the welcome subline.
+- **Wichtiger Hinweis:** subtitle „Bestätigt am …“; opens the notice with every confirmation (same sheet as Datenschutz › Rechtliches; confirm button when due).
+- **So funktionieren Prognosen:** the method sheet (same as Insights).
+- **Open-Source-Lizenzen** („n Bausteine“): every bundled component, A–Z, with version and license name; tap → its full license text (reflowed for the phone, selectable). The list is generated at build time from the shipped dependencies, never typed by hand; components without usable metadata (SQLCipher, the bundled fonts) are added from checked-in license files. Required: licenses that ask for their notice in the binary distribution (BSD, OFL, Apache NOTICE) are satisfied here.
 
 ---
 

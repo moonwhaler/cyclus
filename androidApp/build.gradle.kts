@@ -5,6 +5,8 @@ plugins {
     alias(libs.plugins.kotlin.compose)
     alias(libs.plugins.kotlin.serialization)
     alias(libs.plugins.androidx.baselineprofile)
+    // open-source notices (Über Cyclus › Open-Source-Lizenzen), generated from the real dependencies at build time
+    alias(libs.plugins.aboutlibraries.android)
 }
 
 android {
@@ -82,6 +84,13 @@ kotlin {
     jvmToolchain(21)
 }
 
+// Open-source notices: libraries come from the resolved release dependencies; aboutlibraries/ adds what POMs lack
+// (SQLCipher's license text) and what isn't a dependency (the bundled fonts, OFL).
+aboutLibraries {
+    collect { configPath = file("aboutlibraries") }
+    export { excludeFields.addAll("funding", "scm") }
+}
+
 // One startup profile for every build type (release and the optimized test build); generated on an emulator with
 // ./gradlew :androidApp:generateReleaseBaselineProfile (see baselineprofile/).
 baselineProfile {
@@ -112,6 +121,7 @@ dependencies {
     implementation(libs.navigation3.runtime)
     implementation(libs.navigation3.ui)
     implementation(libs.kotlinx.serialization.json)
+    implementation(libs.aboutlibraries.core)
     implementation(libs.compose.ui.tooling.preview)
     debugImplementation(libs.compose.ui.tooling)
     debugImplementation(libs.compose.ui.test.manifest)

@@ -383,6 +383,14 @@
     <string name="tx_consentNone">Noch nicht bestätigt</string>
     <string name="tx_consentHist">Deine Bestätigungen</string>
     <string name="tx_consentVer">Hinweis-Version %1$s</string>
+    <string name="tx_aboutT">Über Cyclus</string>
+    <string name="tx_aboutS">Version, Hinweis, Lizenzen</string>
+    <string name="tx_aboutVer">Version %1$s</string>
+    <string name="tx_ossT">Open-Source-Lizenzen</string>
+    <string name="tx_ossS">%1$s Bausteine</string>
+    <string name="tx_ossIntro">Cyclus baut auf freier Software auf. Danke an alle, die sie entwickeln und pflegen.</string>
+    <string name="tx_ossLic">Lizenz</string>
+    <string name="tx_tOss">Die vollständige Liste zeigt die App.</string>
     <string name="tx_consentFoot">Deine Bestätigungen werden nur auf diesem Gerät gespeichert und nie gesendet.</string>
     <string name="tx_lockedT">Cyclus ist gesperrt</string>
     <string name="tx_lockedB">Deine Daten bleiben verborgen, bis du entsperrst.</string>

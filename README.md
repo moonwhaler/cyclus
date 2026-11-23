@@ -22,6 +22,7 @@ No servers, no accounts, no tracking; all intelligence runs on the device. **And
 - encrypted store (SQLCipher, hardware-held key, automatic recovery after unlock), app lock (biometrics + Cyclus PIN, keeps your place);
 - Today (customizable: card order, hide/library, Groß/Kompakt ring, Deine Schnellauswahl, Demnächst, Woche, ring explainer), Log sheet, Calendar, Insights + Muster, Kinderwunsch mode;
 - onboarding with the required „Bevor du startest“ notice and recorded consent (re-asked yearly and before fertility is shown);
+- Über Cyclus: version, the notice with its confirmations, how predictions work, open-source licenses (generated at build time);
 - Arztbericht (PDF, DE/EN), Datenschutz-Center, encrypted export/import (cross-platform), E2E-only device backup with restore, crypto-shred erase;
 - Health Connect (import + opt-in write, foreground only), widgets, Quick Settings tile, opt-in shortcut, discreet opt-in notifications, colour themes incl. Material You, tablets/foldables.
 
@@ -48,3 +49,6 @@ python3 tools/screens/capture.py # reference screenshots (emulator only)
 Troubleshooting: if Gradle reports `Plugin ... was not found` or `Could not find androidx...` although the version exists,
 Google Maven may be failing over IPv4 on your network (seen behind a VPN). Run Gradle with IPv6 preferred:
 `./gradlew --stop && JAVA_TOOL_OPTIONS=-Djava.net.preferIPv6Addresses=true ./gradlew --refresh-dependencies build`.
+The same failure can leave POMs marked missing in Gradle's cache; the open-source license list (Über Cyclus) then silently
+lacks the AndroidX libraries. Check: `androidApp/build/generated/aboutLibraries/aboutlibraries.json` should list > 100 libraries;
+if not, rerun the command above.

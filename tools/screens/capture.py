@@ -35,6 +35,7 @@ T = {
         report="Arztbericht", privacy="Datenschutz", settings="Einstellungen", notice="Wichtiger Hinweis", erase="Alles löschen",
         export="Verschlüsselte Sicherung erstellen", notifications="Mitteilungen", custom="Eigene", pin="Cyclus-PIN",
         appLock="App-Sperre", why="Warum dieses Fenster", preview="Vorschau", back="Zurück", close="Schließen",
+        about="Über Cyclus", oss="Open-Source-Lizenzen", sqlc="SQLCipher",
     ),
     "en": dict(
         start="Get started", cont="Continue", read="I have read", agree="Agree and continue", skip="Skip",
@@ -46,6 +47,7 @@ T = {
         report="Doctor Visit Pack", privacy="Privacy", settings="Settings", notice="Important notice", erase="Erase everything",
         export="Create encrypted backup", notifications="Notifications", custom="Custom", pin="Cyclus PIN",
         appLock="App lock", why="Why this window", preview="Preview", back="Back", close="Close",
+        about="About Cyclus", oss="Open-source licenses", sqlc="SQLCipher",
     ),
 }
 
@@ -71,7 +73,9 @@ class Emu:
         for m in re.finditer(r"<node [^>]*>", xml):
             n = m.group(0)
             b = list(map(int, re.findall(r"\d+", re.search(r'bounds="([^"]*)"', n).group(1))))
-            yield re.search(r' text="([^"]*)"', n).group(1), re.search(r'content-desc="([^"]*)"', n).group(1), b
+            # attribute values may be single-quoted when they contain a double quote (e.g. a license name)
+            attr = lambda k: (lambda m: m.group(2) if m else "")(re.search(rf' {k}=(["\'])(.*?)\1', n))
+            yield attr("text"), attr("content-desc"), b
 
     def find(self, label, desc=False, tries=3):
         for _ in range(tries):
@@ -272,6 +276,14 @@ def run(e: Emu, lang: str, only: str | None, dark: bool):
         if e.tap(t["notifications"], required=False, wait=1.8):
             e.shot("09-notifications"); e.key("KEYCODE_BACK")
         e.key("KEYCODE_BACK")
+    if want("about"):
+        e.home(t)
+        e.top(); e.tap(t["settings"], desc=True, wait=1.8)
+        e.tap(t["about"], wait=1.8); e.shot("09-about")
+        e.tap(t["notice"]); e.shot("09-about-notice"); e.tap(t["close"], seek=0)
+        e.tap(t["oss"], wait=2.0); e.shot("09-about-licenses")
+        e.tap(t["sqlc"], wait=1.8, seek=30); e.shot("09-about-license-text"); e.tap(t["close"], seek=0)
+        e.key("KEYCODE_BACK"); e.key("KEYCODE_BACK"); e.key("KEYCODE_BACK")
     if want("lock"):
         e.home(t)
         e.top(); e.tap(t["privacy"], desc=True, wait=1.8)

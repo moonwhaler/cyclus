@@ -2,6 +2,12 @@
 
 Version scheme: `major.minor.patch`; Android `versionCode = major*10000 + minor*100 + patch`.
 
+## Unreleased
+
+- **Über Cyclus** (Einstellungen › Mehr): version, „Wichtiger Hinweis“ with every confirmation, how predictions
+  work, and **Open-Source-Lizenzen**: every bundled component with its full license text, generated at build time
+  (AboutLibraries); SQLCipher's license and the bundled fonts (OFL) added from checked-in files.
+
 ## 1.0.0 — 2026-11-23
 
 First stable milestone. Android is feature-complete for v1 (phases A0–A5) and the reference implementation;

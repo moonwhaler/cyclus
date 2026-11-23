@@ -7,4 +7,5 @@ plugins {
     alias(libs.plugins.sqldelight) apply false
     alias(libs.plugins.android.test) apply false
     alias(libs.plugins.androidx.baselineprofile) apply false
+    alias(libs.plugins.aboutlibraries.android) apply false
 }
