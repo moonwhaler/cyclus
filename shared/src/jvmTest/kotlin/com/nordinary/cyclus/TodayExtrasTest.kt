@@ -100,10 +100,11 @@ class TodayExtrasTest {
     @Test fun phaseFollowsTheCycle() {
         assertEquals(Phase.PERIOD, TodayExtras.phase(snap(SampleScenario.PERIOD), emptySet())!!.phase)
         val day12 = assertNotNull(TodayExtras.phase(snap(SampleScenario.DAY12), emptySet()))
-        assertEquals(Phase.FOLLICULAR, day12.phase)
+        assertEquals(Phase.AFTER_PERIOD, day12.phase)
         assertTrue(day12.notForBC) // fertility hidden: the card carries the line itself
-        assertEquals(Phase.LUTEAL, TodayExtras.phase(snap(SampleScenario.EXPECTED), emptySet())!!.phase)
-        assertEquals(Phase.LUTEAL, TodayExtras.phase(snap(SampleScenario.CONCEIVE_2WW), emptySet())!!.phase)
+        assertEquals(Phase.BEFORE_OV, TodayExtras.phase(snap(SampleScenario.DAY12, fertTrack = true), emptySet())!!.phase)
+        assertEquals(Phase.PRE, TodayExtras.phase(snap(SampleScenario.EXPECTED), emptySet())!!.phase)
+        assertEquals(Phase.AFTER_OV, TodayExtras.phase(snap(SampleScenario.CONCEIVE_2WW), emptySet())!!.phase)
         assertNull(TodayExtras.phase(snap(SampleScenario.HBC), emptySet()))
         assertNull(TodayExtras.phase(snap(SampleScenario.EMPTY), emptySet()))
     }
@@ -116,9 +117,13 @@ class TodayExtrasTest {
         for (d in start..start + 27) {
             val data = SampleScenarios.generate(SampleScenario.DAY12, today).logs.filterKeys { it <= d }
             val off = CycleSnapshot.compute(CycleData(data, emptyMap(), d), Mode.TRACK, false)
-            TodayExtras.phase(off, emptySet())?.let { assertTrue(it.phase != Phase.OVULATION); assertTrue(it.notForBC) }
+            // spec §9.3: fertility hidden → only period-relative phases, never anything about ovulation
+            TodayExtras.phase(off, emptySet())?.let { assertTrue(it.phase in setOf(Phase.PERIOD, Phase.AFTER_PERIOD, Phase.PRE)); assertTrue(it.notForBC) }
             val on = CycleSnapshot.compute(CycleData(data, emptyMap(), d), Mode.TRACK, true)
-            TodayExtras.phase(on, emptySet())?.let { if (it.phase == Phase.OVULATION) sawOv = true; assertFalse(it.notForBC) }
+            TodayExtras.phase(on, emptySet())?.let {
+                assertTrue(it.phase in setOf(Phase.PERIOD, Phase.BEFORE_OV, Phase.OVULATION, Phase.AFTER_OV))
+                if (it.phase == Phase.OVULATION) sawOv = true; assertFalse(it.notForBC)
+            }
         }
         assertTrue(sawOv)
     }

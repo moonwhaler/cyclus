@@ -411,11 +411,14 @@ const TX = {
   dqClear:{de:'Erledigte entfernen',en:'Remove done'}, dqEdit:{de:'Bearbeiten',en:'Edit'}, dqDel:{de:'Löschen',en:'Delete'}, dqSave:{de:'Speichern',en:'Save'},
   dqFull:{de:'Höchstens 30 offene Fragen.',en:'At most 30 open questions.'},
   dqCheckA:{de:'Erledigt',en:'Done'},
-  ph_period:{de:'Periode',en:'Period'}, ph_foll:{de:'Follikelphase',en:'Follicular phase'}, ph_ov:{de:'Rund um den Eisprung',en:'Around ovulation'}, ph_lut:{de:'Lutealphase',en:'Luteal phase'},
+  ph_period:{de:'Periode',en:'Period'}, ph_beforeOv:{de:'Vor dem Eisprung',en:'Before ovulation'}, ph_ov:{de:'Rund um den Eisprung',en:'Around ovulation'}, ph_afterOv:{de:'Nach dem Eisprung',en:'After ovulation'},
+  ph_afterPeriod:{de:'Nach der Periode',en:'After your period'}, ph_pre:{de:'Tage vor der Periode',en:'Pre-period window'},
   phL_period:{de:'Die Gebärmutterschleimhaut wird abgestoßen; Östrogen und Progesteron sind niedrig.',en:'The uterine lining is shed; oestrogen and progesterone are low.'},
-  phL_foll:{de:'Östrogen steigt, ein Eibläschen reift heran.',en:'Oestrogen rises while a follicle matures.'},
+  phL_beforeOv:{de:'Östrogen steigt, ein Eibläschen reift heran.',en:'Oestrogen rises while a follicle matures.'},
   phL_ov:{de:'Ein LH-Anstieg löst den Eisprung aus. Geschätzt, nicht sicher.',en:'An LH surge triggers ovulation. Estimated, not certain.'},
-  phL_lut:{de:'Progesteron ist erhöht; vor der Periode sinken beide Hormone.',en:'Progesterone is raised; before the period both hormones fall.'},
+  phL_afterOv:{de:'Progesteron ist erhöht; vor der Periode sinken beide Hormone.',en:'Progesterone is raised; before the period both hormones fall.'},
+  phL_afterPeriod:{de:'Die Periode ist vorbei; Östrogen steigt allmählich wieder an.',en:'Your period is over; oestrogen gradually rises again.'},
+  phL_pre:{de:'Die Hormonspiegel sinken vor der Periode; viele bemerken dann Veränderungen.',en:'Hormone levels fall before your period; many people notice changes then.'},
   phPat:{de:'Deine Muster in dieser Phase',en:'Your patterns in this phase'}, phMore:{de:'Mehr zu deinen Mustern',en:'More about your patterns'},
   phInfo:{de:'Allgemeine Information, keine Diagnose.',en:'General information, not a diagnosis.'},
   editQuick:{de:'Schnellauswahl bearbeiten',en:'Edit quick picks'}, quickT:{de:'Deine Schnellauswahl',en:'Your quick picks'},
@@ -1372,8 +1375,9 @@ function extraCards(v){
     <div class="row" style="gap:8px;margin-top:6px"><input id="dq" placeholder="${t('dqPh')}" maxlength="300" value="${escH(S.qText)}" style="flex:1"><button class="btn secondary small" data-act="dqAdd">${t('dqAdd')}</button></div><p class="tiny muted">${t('dqHint')}</p></div>`;
   if (p && !v.paused){
     const f = v.fertOn ? v.fert : null;
-    const ph = v.inPeriod ? 'period' : f ? (f.todayCd>=f.hpd[0] && f.todayCd<=f.hpd[1] ? 'ov' : f.todayCd>f.hpd[1] ? 'lut' : 'foll')
-      : TODAY > p.likely - Math.round((LEARN && LEARN.lut ? LEARN.lut.mean : 12.4)) ? 'lut' : 'foll';
+    // spec §9.3: no follicular/luteal; ovulation wording only with fertility shown, else relative to the period
+    const ph = v.inPeriod ? 'period' : f ? (f.todayCd>=f.hpd[0] && f.todayCd<=f.hpd[1] ? 'ov' : f.todayCd>f.hpd[1] ? 'afterOv' : 'beforeOv')
+      : TODAY >= p.lo - 7 ? 'pre' : 'afterPeriod';
     const len = p.likely - p.last;
     const w = v.inPeriod ? 'P' : (TODAY>=p.likely-7 && TODAY<p.likely) ? 'PRE' : (v.cd-1>=len-16 && v.cd-1<=len-11) ? 'MIDC' : null;
     const pats = w ? visiblePatterns(v).filter(isPattern).filter(x=>x.win===w).slice(0,2) : [];

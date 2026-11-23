@@ -1,7 +1,6 @@
 package com.nordinary.cyclus.presenter
 
 import com.nordinary.cyclus.core.Day
-import com.nordinary.cyclus.core.Js
 import com.nordinary.cyclus.engine.CycleSnapshot
 import com.nordinary.cyclus.insights.Pattern
 import com.nordinary.cyclus.insights.Window
@@ -39,11 +38,21 @@ data class MoodWeek(
     val usualEnergy: List<Double?>,
 )
 
-enum class Phase(val key: String) { PERIOD("period"), FOLLICULAR("foll"), OVULATION("ov"), LUTEAL("lut") }
+/**
+ * Spec §9.3: no "follicular"/"luteal" in the app, and ovulation wording only while fertility is shown. So there are
+ * two sets: relative to ovulation (fertility shown) and relative to the period (fertility hidden).
+ */
+enum class Phase(val key: String) {
+    PERIOD("period"),
+    // fertility shown
+    BEFORE_OV("beforeOv"), OVULATION("ov"), AFTER_OV("afterOv"),
+    // fertility hidden: no ovulation wording at all
+    AFTER_PERIOD("afterPeriod"), PRE("pre"),
+}
 
 /**
- * „Phasen-Hinweis“: the current phase with one neutral line, plus the person's own patterns for this cycle window.
- * [notForBC]: fertility isn't shown, so the page has no „Nicht zur Verhütung“ footer: the card carries the line.
+ * „Phasen-Hinweis“ (Cycle phase): the current phase with one neutral line, plus the person's own patterns for this
+ * cycle window. [notForBC]: fertility isn't shown, so the page has no „Nicht zur Verhütung“ footer: the card carries it.
  */
 data class PhaseCard(val phase: Phase, val patterns: List<Pattern>, val notForBC: Boolean)
 
@@ -92,12 +101,12 @@ object TodayExtras {
             snap.inPeriod -> Phase.PERIOD
             f != null -> when {
                 f.todayCd in f.hpd.first..f.hpd.second -> Phase.OVULATION
-                f.todayCd > f.hpd.second -> Phase.LUTEAL
-                else -> Phase.FOLLICULAR
+                f.todayCd > f.hpd.second -> Phase.AFTER_OV
+                else -> Phase.BEFORE_OV
             }
-            // fertility hidden: no ovulation phase and no date, only before/after the usual luteal length
-            today > p.likely - Js.roundInt(snap.lut.mean) -> Phase.LUTEAL
-            else -> Phase.FOLLICULAR
+            // fertility hidden: relative to the period only, the same pre-period window as Today's card and the ring
+            today >= p.lo - 7 -> Phase.PRE
+            else -> Phase.AFTER_PERIOD
         }
         // the same windows as „Deine Muster“ (pastCycles: k = 0-based day, len = cycle length)
         val len = p.likely - p.last

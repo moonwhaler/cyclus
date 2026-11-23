@@ -2,6 +2,12 @@
 
 Version scheme: `major.minor.patch`; Android `versionCode = major*10000 + minor*100 + patch`.
 
+## Unreleased
+
+- **Cycle phase** card follows the wording rules (spec §9.3): no "follicular"/"luteal"; with fertility shown it says
+  Before ovulation / Around ovulation / After ovulation, with fertility hidden only After your period / Pre-period
+  window, never anything about ovulation.
+
 ## 1.1.0 — 2026-11-23
 
 - **Today, five new cards** (in Add a card, off by default): **Cycle vs. usual**, **Temperature curve**,
