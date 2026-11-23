@@ -47,7 +47,7 @@ const ANDROID_OVERRIDES = {
   pinOnlyS: { de: 'Hilfreich, wenn jemand anderes deine Displaysperre kennt', en: 'Useful if someone else knows your screen lock' },
   devOnlyS: {
     de: 'Cyclus aus Google-Backups ausschließen. Geht dein Gerät verloren, sind alle Daten weg, die du nicht exportiert hast.',
-    en: 'Exclude Cyclus from Google backups. If you lose this phone, data not in an export is gone.',
+    en: 'Exclude Cyclus from Google backups. If you lose this phone, anything you haven’t exported is gone.',
   },
   er1: { de: '✓ Alle Cyclus-Daten auf diesem Gerät, samt Schlüsseln', en: '✓ All Cyclus data on this device, including its keys' },
   er3s: {
