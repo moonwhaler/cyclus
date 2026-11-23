@@ -1,6 +1,6 @@
 # Cyclus
 
-Private, local-first cycle tracker. **German first.** „Dein Zyklus, verstanden. Nie hochgeladen.“
+Private, local-first cycle tracker. **German first.** „Deinen Zyklus verstehen. Privat und sicher.“
 No servers, no accounts, no tracking; all intelligence runs on the device. **Android is built first and is the reference implementation**; iOS follows with 100% parity on the same Kotlin Multiplatform core.
 
 ## Documents

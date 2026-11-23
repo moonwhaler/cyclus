@@ -40,7 +40,7 @@ Defaults are marked ✅. The rest of this spec is written against them. Changing
   - threat model;
   - HealthKit sync state machine;
   - posterior-predictive engine with age-band priors and missed-log detection.
-- **Re-positioned:** from "smartest tracker" to *"Your cycle, understood. Never uploaded."* The intelligence is honest stats now and on-device language later.
+- **Re-positioned:** from "smartest tracker" to *„Deinen Zyklus verstehen. Privat und sicher.“* (EN "Understand your cycle. Private and secure."; owner 2026-11-23, replacing "Your cycle, understood. Never uploaded.") The intelligence is honest stats now and on-device language later.
 
 ### 0.3 Review resolution map
 | Finding | Resolution | Where |
@@ -87,7 +87,7 @@ Defaults are marked ✅. The rest of this spec is written against them. Changing
 ## 1. Product definition
 
 ### 1.1 Positioning
-**"Your cycle, understood. Never uploaded."**
+**„Deinen Zyklus verstehen. Privat und sicher.“** (EN "Understand your cycle. Private and secure.")
 A free, beautiful, deeply private cycle and symptom diary for iPhone. It is the best tool to *understand your own patterns* and *walk into a doctor's appointment with evidence*. There are no servers, accounts, ads or trackers. The developer never receives your data.
 
 ### 1.2 Wedges vs. Apple Health (iOS 27)
@@ -345,7 +345,7 @@ SF Symbols (hierarchical rendering). Custom symbols (SF Symbols template format)
 ### 7.1 Onboarding (≤ 60 s, every step skippable except the notice)
 | # | Screen | Content | Primary / secondary |
 |---|---|---|---|
-| 1 | Welcome | Ring glyph, „Dein Zyklus, verstanden. Nie hochgeladen.“ | **Los geht's** |
+| 1 | Welcome | Ring glyph, „Deinen Zyklus verstehen. Privat und sicher.“ | **Los geht's** |
 | 2 | Privacy promise | „Kein Konto. Keine Server.“ · „Wir sehen deine Daten nie.“ · „Du bestimmst, was du teilst.“ + backup note | **Weiter** |
 | 3 | Notice „Bevor du startest“ (required) | Four points: **Keine Verhütung** (never rely on Cyclus to avoid pregnancy; low or no fertility shown ≠ can't get pregnant), **Nur Schätzungen**, **Kein Medizinprodukt**, **Deine Entscheidung** (developer not liable for consequences, except intent, gross negligence, injury to life/body/health and product liability law). Checkbox „Ich habe das gelesen und verstanden. Ich nutze Cyclus nicht, um eine Schwangerschaft zu vermeiden.“ | **Zustimmen und weiter** (disabled until ticked; no skip) |
 | 4 | Import | „Hast du eine Cyclus-Sicherung?“ → `.cyclus` file from any platform, or the health store (then step 5 is skipped) | **Sicherung importieren** / health store / Überspringen |
