@@ -2,7 +2,7 @@
 
 Version scheme: `major.minor.patch`; Android `versionCode = major*10000 + minor*100 + patch`.
 
-## Unreleased
+## 1.0.1 — 2026-11-23
 
 - **Über Cyclus** (Einstellungen › Mehr): version, „Wichtiger Hinweis“ with every confirmation, how predictions
   work, and **Open-Source-Lizenzen**: every bundled component with its full license text, generated at build time
