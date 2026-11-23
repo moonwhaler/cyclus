@@ -1,10 +1,36 @@
-# Cyclus
+<p align="center">
+  <img src="docs/assets/cyclus-icon.svg" width="88" height="88" alt="Cyclus icon">
+</p>
 
-**Understand your cycle. Private and secure.**
+<h1 align="center">Cyclus</h1>
 
-Cyclus is a cycle and symptom diary for Android that keeps everything on your device. No account, no servers, no
-tracking: all predictions and insights are calculated on your phone, and the app has no internet access at all.
-Available in German and English.
+<p align="center">
+  <strong>Understand your cycle. Private and secure.</strong><br>
+  A cycle and symptom diary for Android that keeps everything on your device.
+</p>
+
+<p align="center">
+  <a href="../../releases/latest">Download</a> ·
+  <a href="#features">Features</a> ·
+  <a href="#privacy">Privacy</a> ·
+  <a href="#for-developers">For developers</a>
+</p>
+
+No account, no servers, no tracking: all predictions and insights are calculated on your phone, and the app has no
+internet access at all. Available in German and English.
+
+<table>
+  <tr>
+    <td width="33%" valign="top"><img src="docs/assets/screens/01-today.png" alt="Today screen with the cycle ring"><br><strong>Today</strong><br><sub>Cycle day, next period and your cards, in the order you choose.</sub></td>
+    <td width="33%" valign="top"><img src="docs/assets/screens/02-log.png" alt="Log sheet"><br><strong>Log</strong><br><sub>Flow, quick picks, mood and more. Every tap is saved at once.</sub></td>
+    <td width="33%" valign="top"><img src="docs/assets/screens/03-calendar.png" alt="Calendar"><br><strong>Calendar</strong><br><sub>Past periods, the predicted range and each day's entries.</sub></td>
+  </tr>
+  <tr>
+    <td width="33%" valign="top"><img src="docs/assets/screens/04-patterns.png" alt="Your patterns"><br><strong>Your patterns</strong><br><sub>What repeats in your own records, with the evidence behind it.</sub></td>
+    <td width="33%" valign="top"><img src="docs/assets/screens/05-doctor-visit-pack.png" alt="Doctor Visit Pack"><br><strong>Doctor Visit Pack</strong><br><sub>A PDF for your appointment. You choose what goes in.</sub></td>
+    <td width="33%" valign="top"><img src="docs/assets/screens/06-privacy.png" alt="Privacy Center"><br><strong>Privacy Center</strong><br><sub>Where your data is and how it is protected.</sub></td>
+  </tr>
+</table>
 
 ## Features
 - **Today:** a cycle ring with an explanation, your status, today's log, what's coming up and the week at a glance.
@@ -31,7 +57,7 @@ Cyclus is **not for birth control** and is **not a medical device**. Predictions
 records. For questions or symptoms, talk to your doctor.
 
 ## Download
-Get the latest APK from [Releases](../../releases). Requires Android 10 or newer.
+Get the latest APK from [Releases](../../releases/latest). Requires Android 10 or newer.
 
 The release builds are signed with this certificate (SHA-256), so you can check that an APK is genuine:
 `9A:2F:7A:A3:C6:13:04:2D:F1:F6:F6:2F:0D:0F:1D:97:66:FB:58:5C:9B:E0:C3:20:62:7A:F2:9E:6D:47:23:56`
