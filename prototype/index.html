@@ -273,6 +273,7 @@ textarea,.field{width:100%;border-radius:12px;border:1px solid var(--line);backg
 .onb h2{font-size:28px;line-height:1.15;margin:0;font-weight:800;font-family:var(--f-round);text-wrap:balance;hyphens:manual}
 .onb p{margin:0;color:var(--ink2)}
 .onb .grow{flex:1}
+.onbback{align-self:flex-start;margin:-40px 0 -6px -8px;width:40px;height:40px;display:grid;place-items:center;color:var(--period);background:none;border:0}.onbback svg{width:22px;height:22px}
 .onb .dots{display:flex;gap:6px;justify-content:center}
 .onb .dots i{width:6px;height:6px;border-radius:3px;background:var(--line)}
 .onb .dots i.on{width:18px;background:var(--period)}
@@ -1666,7 +1667,8 @@ function renderOnb(){
   if (step===5) body = `<h2>${t('onb4T')}</h2><p>${t('onb4B')}</p><div class="chips">${['f_conceive','ep_hbc','ep_preg','ep_pp','ep_peri','ep_pcos','ep_endo','ep_t','ep_none'].map(x=>`<button class="chip" data-act="onbFactor" data-v="${x}" aria-pressed="${st.factors.includes(x)}">${t(x)}</button>`).join('')}</div>
      <label class="small" for="byear">${t('byear')}</label><select class="field" id="byear"><option>${t('noSay')}</option>${Array.from({length:50},(_,i)=>`<option>${2013-i}</option>`).join('')}</select><div class="grow"></div>${dots}<button class="btn primary block" data-act="onbNext">${t('cont')}</button>`;
   if (step===6) body = `<div class="grow"></div><div class="faceid">${I.faceid}</div><h2>${t('onb5T')}</h2><p>${t('onb5B')}</p><div class="grow"></div>${dots}<button class="btn primary block" data-act="onbDone" data-v="lock">${t('turnOn')}</button><button class="btn secondary block" data-act="onbDone">${t('notNow')}</button>`;
-  return `<div class="onb" role="dialog" aria-label="${t('welcomeDlg')}">${body}</div>`;
+  const backBtn = step>0 && !st.importing ? `<button class="onbback" data-act="onbBack" aria-label="${t('back')}">${I.back}</button>` : '';
+  return `<div class="onb" role="dialog" aria-label="${t('welcomeDlg')}">${backBtn}${body}</div>`;
 }
 const noticeHtml = () => `<div class="promise">${[1,2,3,4].map(i=>`<div><i style="width:10px;height:10px;border-radius:5px;margin:6px auto 0;align-self:start;background:var(${i===1?'--period':'--warning'})"></i><span><b>${t('nt'+i)}</b><br><span class="muted">${t('nt'+i+'s')}</span></span></div>`).join('')}</div>`;
 const renderLock = () => `<div class="lock" role="dialog" aria-label="${t('lockedT')}"><div class="glyph">${I.ring}</div><h2 style="margin:0;font-size:22px">${t('lockedT')}</h2><p class="muted" style="margin:0">${t('lockedB')}</p><button class="btn primary" data-act="unlock" id="unlockBtn">${t('unlockBtn')}</button></div>`;
@@ -1791,13 +1793,14 @@ app.addEventListener('click', e => {
     case 'onbNext': {
       const from = S.onb.step;
       if (from===4 && v!=='unknown'){ const val=(document.getElementById('lastp')||{}).value; if (val){ const [yy,mm,dd]=val.split('-').map(Number); const d0=D(yy,mm,dd); for (let k=0;k<5;k++) if (d0+k<=TODAY) setLog(d0+k, l=>{ l.flow=['medium','heavy','medium','light','light'][k]; }); } }
-      S.onb.step = from+1; render(false); break; }
-    case 'onbAgree': S.consentAt = Date.now(); S.onb.step = 3; render(false); break;
+      (S.onb.hist=S.onb.hist||[]).push(from); S.onb.step = from+1; render(false); break; }
+    case 'onbBack': S.onb.step = (S.onb.hist||[]).pop() ?? 0; render(false); break;
+    case 'onbAgree': if (!S.consentAt) S.consentAt = Date.now(); (S.onb.hist=S.onb.hist||[]).push(2); S.onb.step = 3; render(false); break;
     case 'onbImport':
       S.onb.importing=true; render(false);
       requestAnimationFrame(()=>requestAnimationFrame(()=>{ const b=document.getElementById('ibar'); if (b) b.style.width='100%'; }));
       setTimeout(()=>{ const m=document.getElementById('imsg'); if (m) m.textContent=t('found'); }, 700);
-      setTimeout(()=>{ const f=S.onb.factors; genScenario('day12'); S.scen=null; S.onb={step:5, factors:f, imported:true}; render(false); }, 1500);
+      setTimeout(()=>{ const f=S.onb.factors; genScenario('day12'); S.scen=null; S.onb={step:5, factors:f, imported:true, hist:[...(S.onb.hist||[]), 3]}; render(false); }, 1500);
       break;
     case 'onbFactor': { const f=S.onb.factors; S.onb.factors = v==='ep_none' ? (f.includes(v)?[]:[v]) : (f.includes(v)? f.filter(x=>x!==v) : [...f.filter(x=>x!=='ep_none'), v]); render(false); break; }
     case 'onbDone': { const f=S.onb.factors; S.privacy.appLock = v==='lock';

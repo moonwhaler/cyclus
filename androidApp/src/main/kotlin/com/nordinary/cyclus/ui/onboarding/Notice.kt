@@ -62,9 +62,9 @@ fun NoticeContent(fmt: Fmt) {
 
 /** Checkbox + button: nothing is agreed until the box is ticked. */
 @Composable
-fun NoticeConfirm(fmt: Fmt, button: String, onAgree: () -> Unit) {
+fun NoticeConfirm(fmt: Fmt, button: String, initiallyRead: Boolean = false, onAgree: () -> Unit) {
     val c = Cyclus.colors
-    var read by rememberSaveable { mutableStateOf(false) }
+    var read by rememberSaveable { mutableStateOf(initiallyRead) }
     Row(
         Modifier.fillMaxWidth().clip(RoundedCornerShape(14.dp)).background(c.surface)
             .toggleable(read, role = Role.Checkbox, onValueChange = { read = it }).padding(horizontal = 8.dp, vertical = 10.dp),
@@ -89,7 +89,7 @@ fun ConsentScreen(fmt: Fmt, onAgree: () -> Unit, onPrivacy: () -> Unit) {
             Text(fmt.s("noticeRow"), Modifier.semantics { heading() }, fontSize = 26.sp, fontWeight = FontWeight.Bold, color = c.ink, lineHeight = 32.sp)
             Text(fmt.s("noticeAgain"), fontSize = 15.sp, color = c.ink2)
             NoticeContent(fmt)
-            NoticeConfirm(fmt, fmt.s("agreeCont"), onAgree)
+            NoticeConfirm(fmt, fmt.s("agreeCont"), onAgree = onAgree)
             // without agreeing, the person can still take their data with them or erase it (trust rule: never locked out)
             TextButton(onClick = onPrivacy, Modifier.align(Alignment.CenterHorizontally)) {
                 Text(fmt.s("aPrivacy"), color = c.accent, fontWeight = FontWeight.SemiBold)
@@ -104,7 +104,7 @@ fun ConsentScreen(fmt: Fmt, onAgree: () -> Unit, onPrivacy: () -> Unit) {
 fun NoticeSheet(fmt: Fmt, onAgree: () -> Unit, onDismiss: () -> Unit) = NoticeSheetFrame(fmt, fmt.s("noticeRow"), onDismiss) {
     Text(fmt.s("noticeFert"), fontSize = 15.sp, color = Cyclus.colors.ink2)
     NoticeContent(fmt)
-    NoticeConfirm(fmt, fmt.s("agree"), onAgree)
+    NoticeConfirm(fmt, fmt.s("agree"), onAgree = onAgree)
 }
 
 /** Privacy → „Wichtiger Hinweis“: the text, every confirmation with its time, and the confirm button when due. */
@@ -113,7 +113,7 @@ fun ConsentHistorySheet(fmt: Fmt, history: List<Consent.Record>, needed: Boolean
     NoticeSheetFrame(fmt, fmt.s("noticeRow"), onDismiss, dismissLabel = fmt.s("close")) {
         val c = Cyclus.colors
         NoticeContent(fmt)
-        if (needed) NoticeConfirm(fmt, fmt.s("agree"), onAgree)
+        if (needed) NoticeConfirm(fmt, fmt.s("agree"), onAgree = onAgree)
         Text(fmt.s("consentHist"), Modifier.padding(top = 6.dp).semantics { heading() }, fontWeight = FontWeight.SemiBold, color = c.ink)
         Column(Modifier.fillMaxWidth().clip(RoundedCornerShape(14.dp)).background(c.surface)) {
             if (history.isEmpty()) Text(fmt.s("consentNone"), Modifier.padding(14.dp), color = c.ink2)

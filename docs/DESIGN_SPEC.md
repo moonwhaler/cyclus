@@ -353,7 +353,7 @@ SF Symbols (hierarchical rendering). Custom symbols (SF Symbols template format)
 | 6 | Anything affecting your cycle? | Chips: Kinderwunsch · Hormonelle Verhütung · Schwanger · Nach der Geburt / Stillzeit · (conditions hidden until the engine widens ranges for them) · Nichts davon | **Weiter** |
 | 7 | App lock | „Cyclus sperren?“ (biometrics/screen lock; PIN setup when nothing else can unlock) | **Einschalten** / Jetzt nicht |
 
-Birth year is not asked (no age-band priors yet). Screenshots: `screens/android/01-onboarding-*.png`.
+Every step after the welcome has a back arrow (and system back) to the step the person came from — after a health-store connection or an import, that is the import step — with every answer kept and changeable; going back to the notice keeps it agreed and records no second confirmation. Birth year is not asked (no age-band priors yet). Screenshots: `screens/android/01-onboarding-*.png`.
 
 **Notice consent (2026-11-23).** Agreeing stores version + time (device only: not in exports, not in device snapshots; erase removes it). It is asked again, full screen after unlock, when the last confirmation of the current wording is older than 12 months, when the wording version is raised, and on a restored or new phone. That screen keeps „Datenschutz“ reachable (export, erase), so nobody is locked out of their own data by not agreeing. Switching on the fertile window or Kinderwunsch shows the notice as a sheet first; the switch only changes after agreeing. Datenschutz › Rechtliches › „Wichtiger Hinweis“ shows the last confirmation; its sheet lists every confirmation (date, time, version). The wording is not legal advice and needs a lawyer's review before public release.
 

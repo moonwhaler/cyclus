@@ -29,7 +29,10 @@ import androidx.compose.material3.rememberDatePickerState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.activity.compose.BackHandler
+import androidx.compose.material3.IconButton
+import androidx.compose.foundation.layout.offset
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -72,10 +75,16 @@ fun OnboardingScreen(vm: AppViewModel, fmt: Fmt) {
     val app = ctx.applicationContext as CyclusApplication
     val choices by vm.onboardingChoices.collectAsStateWithLifecycle()
     val importStage by vm.privacy.importStage.collectAsStateWithLifecycle()
-    var step by remember { mutableIntStateOf(0) }
+    // the steps the person went through, so „Zurück“ (arrow or system back) returns to exactly the previous one
+    // (Health Connect and an import skip steps); every answer stays as given and can be changed
+    var history by rememberSaveable { mutableStateOf(listOf(0)) }
+    val step = history.last()
+    fun go(to: Int) { history = history + to }
+    fun back() { if (history.size > 1) history = history.dropLast(1) }
+    BackHandler(enabled = history.size > 1) { back() }
     var importing by remember { mutableStateOf(false) }
     var pinSheet by remember { mutableStateOf(false) }
-    var askDuration by remember { mutableStateOf(false) }
+    var askDuration by rememberSaveable { mutableStateOf(vm.onboardingChoices.value.durationDays != null) }
     val openDoc = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->
         if (uri != null) { vm.privacy.startImport(uri); importing = true }
     }
@@ -83,13 +92,17 @@ fun OnboardingScreen(vm: AppViewModel, fmt: Fmt) {
     val hcAvailable = remember { vm.health.availability() == HealthAvailability.AVAILABLE }
     val hcLauncher = rememberLauncherForActivityResult(PermissionController.createRequestPermissionResultContract()) { granted ->
         vm.health.connected(granted)
-        if (granted.isNotEmpty()) step = 5 // cycles come from Health Connect: no need to ask for the last period
+        if (granted.isNotEmpty()) go(5) // cycles come from Health Connect: no need to ask for the last period
     }
 
     Column(
         Modifier.fillMaxSize().background(c.bg).systemBarsPadding().padding(24.dp).verticalScroll(rememberScrollState()),
         verticalArrangement = Arrangement.spacedBy(16.dp),
     ) {
+        // back arrow on every step after the welcome
+        if (step > 0) IconButton(onClick = ::back, Modifier.padding(start = 0.dp).offset(x = (-12).dp)) {
+            Icon(CyclusIcons.Back, fmt.s("back"), tint = c.accent)
+        }
         when (step) {
             0 -> {
                 Spacer(Modifier.height(48.dp))
@@ -97,13 +110,13 @@ fun OnboardingScreen(vm: AppViewModel, fmt: Fmt) {
                 Title(fmt.s("onb0T"), center = true)
                 Body(fmt.s("onb0B"), center = true)
                 Spacer(Modifier.height(32.dp))
-                PrimaryButton(fmt.s("getStarted"), { step = 1 }, Modifier.fillMaxWidth())
+                PrimaryButton(fmt.s("getStarted"), { go(1) }, Modifier.fillMaxWidth())
             }
             1 -> {
                 Title(fmt.s("onb1T"))
                 Promise(fmt.s("pr1"), fmt.s("pr1s")); Promise(fmt.s("pr2"), fmt.s("pr2s")); Promise(fmt.s("pr3"), fmt.s("pr3s"))
                 Body(fmt.s("onb1N"), small = true)
-                Dots(1); PrimaryButton(fmt.s("cont"), { step = 2 }, Modifier.fillMaxWidth())
+                Dots(1); PrimaryButton(fmt.s("cont"), { go(2) }, Modifier.fillMaxWidth())
             }
             2 -> {
                 // the one step that can't be skipped (spec §7.1): agreed and timed at this tap, before any data enters
@@ -112,7 +125,9 @@ fun OnboardingScreen(vm: AppViewModel, fmt: Fmt) {
                 Title(fmt.s("noticeT")); Body(fmt.s("noticeB"))
                 NoticeContent(fmt)
                 Dots(2)
-                NoticeConfirm(fmt, fmt.s("agreeCont")) { vm.recordConsent(); step = 3 }
+                // back here after agreeing: still ticked, and no second confirmation is recorded
+                val agreed = !com.nordinary.cyclus.presenter.Consent.needed(vm.model.value?.settings ?: emptyMap(), System.currentTimeMillis())
+                NoticeConfirm(fmt, fmt.s("agreeCont"), initiallyRead = agreed) { if (!agreed) vm.recordConsent(); go(3) }
             }
             3 -> {
                 Title(fmt.s("onb2T")); Body(fmt.s("onb2B"))
@@ -122,7 +137,7 @@ fun OnboardingScreen(vm: AppViewModel, fmt: Fmt) {
                     stringResource(R.string.onb_hc),
                     { app.lock.suspendForExternalActivity(); hcLauncher.launch(vm.health.readPermissions()) }, Modifier.fillMaxWidth(),
                 )
-                SecondaryButton(fmt.s("skip"), { step = 4 }, Modifier.fillMaxWidth())
+                SecondaryButton(fmt.s("skip"), { go(4) }, Modifier.fillMaxWidth())
             }
             4 -> {
                 Title(fmt.s("onb3T"))
@@ -156,8 +171,8 @@ fun OnboardingScreen(vm: AppViewModel, fmt: Fmt) {
                 }
                 Body(fmt.s("onb3B"), small = true)
                 Dots(4)
-                PrimaryButton(fmt.s("cont"), { step = 5 }, Modifier.fillMaxWidth())
-                SecondaryButton(fmt.s("dontRemember"), { vm.onboardingChoices.value = choices.copy(lastPeriodStart = null, stillBleeding = false, durationDays = null); step = 5 }, Modifier.fillMaxWidth())
+                PrimaryButton(fmt.s("cont"), { go(5) }, Modifier.fillMaxWidth())
+                SecondaryButton(fmt.s("dontRemember"), { vm.onboardingChoices.value = choices.copy(lastPeriodStart = null, stillBleeding = false, durationDays = null); askDuration = false; go(5) }, Modifier.fillMaxWidth())
             }
             5 -> {
                 Title(fmt.s("onb4T")); Body(fmt.s("onb4B"))
@@ -175,7 +190,7 @@ fun OnboardingScreen(vm: AppViewModel, fmt: Fmt) {
                     })
                 }
                 Body(stringResource(R.string.onb_conceive_note), small = true)
-                Dots(5); PrimaryButton(fmt.s("cont"), { step = 6 }, Modifier.fillMaxWidth())
+                Dots(5); PrimaryButton(fmt.s("cont"), { go(6) }, Modifier.fillMaxWidth())
             }
             else -> {
                 Spacer(Modifier.height(32.dp))
@@ -195,7 +210,7 @@ fun OnboardingScreen(vm: AppViewModel, fmt: Fmt) {
                 importing = false
                 // continue to the life-stage and lock steps; an import never sets up the app lock
                 val m = vm.model.value
-                step = if (m != null && (m.activeEpisode != null || m.settings.containsKey(SettingKeys.MODE))) 6 else 5
+                go(if (m != null && (m.activeEpisode != null || m.settings.containsKey(SettingKeys.MODE))) 6 else 5)
             }
         },
         onDismiss = { vm.privacy.cancelImport(); importing = false },
