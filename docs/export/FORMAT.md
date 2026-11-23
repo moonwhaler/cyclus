@@ -28,7 +28,7 @@ See `cyclus-export.schema.json`. Summary:
 {
   "schema": 1,
   "exportedAt": "2026-11-22T12:00:00Z",
-  "app": "Cyclus Android 0.1.0",
+  "app": "Cyclus Android 1.0.0",
   "logs": [{ "day": "2026-11-10", "flow": "heavy", "symptoms": ["Cramps"], "pain": {"lowC": 7},
              "mood": 2, "mucus": "eggwhite", "lh": "pos", "bbt": 36.38, "sex": true,
              "note": "…", "nothingElse": false, "updatedAt": 1795000000000 }],
