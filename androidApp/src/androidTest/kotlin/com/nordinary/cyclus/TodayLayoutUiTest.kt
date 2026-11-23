@@ -9,6 +9,8 @@ import androidx.compose.ui.semantics.SemanticsActions
 import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithContentDescription
+import androidx.compose.ui.test.onAllNodesWithContentDescription
+import androidx.compose.ui.test.performTouchInput
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollTo
@@ -78,5 +80,41 @@ class TodayLayoutUiTest {
         rule.setContent { CyclusTheme { fmt = rememberFmt(); TodayContent(state, fmt!!, PaddingValues(), null, {}, {}, {}, {}, {}, layout = allHidden) } }
         rule.onNodeWithText(fmt!!.s("notBC")).performScrollTo().assertExists()
         rule.onNodeWithText(fmt!!.s("whyLink")).performScrollTo().assertExists()
+    }
+
+    /** Drag regressions: every drag sees the current order (no stale order after the first drop), fast drags cross several rows. */
+    @Test fun consecutiveDragsReorderAsExpected() {
+        var fmt: Fmt? = null
+        var layout by mutableStateOf(TodayLayout.DEFAULT)
+        rule.setContent {
+            CyclusTheme {
+                fmt = rememberFmt()
+                androidx.compose.foundation.layout.Column(androidx.compose.ui.Modifier.verticalScroll(androidx.compose.foundation.rememberScrollState())) {
+                    TodayEditor(layout, fmt!!, onLayout = { layout = it }, onEditQuickPicks = {}, onDone = {})
+                }
+            }
+        }
+        val f = fmt!!
+        fun handles() = rule.onAllNodesWithContentDescription(f.s("dragCard"), useUnmergedTree = true)
+        fun centerY(i: Int) = handles()[i].fetchSemanticsNode().boundsInRoot.center.y
+        /** Drag row [from] so its handle ends on row [to]'s handle, in small steps like a finger. */
+        fun drag(from: Int, to: Int) {
+            val dy = centerY(to) - centerY(from)
+            handles()[from].performTouchInput {
+                down(center)
+                repeat(20) { moveBy(androidx.compose.ui.geometry.Offset(0f, dy / 20)) }
+                up()
+            }
+            rule.waitForIdle()
+        }
+        val start = layout.shown
+        drag(3, 0)
+        rule.runOnIdle { check(layout.shown == listOf(start[3], start[0], start[1], start[2]) + start.drop(4)) { "1: ${layout.shown}" } }
+        val second = layout.shown
+        drag(0, 2)
+        rule.runOnIdle { check(layout.shown == listOf(second[1], second[2], second[0]) + second.drop(3)) { "2: ${layout.shown}" } }
+        val third = layout.shown
+        drag(5, 1)
+        rule.runOnIdle { check(layout.shown == listOf(third[0], third[5], third[1], third[2], third[3], third[4]) + third.drop(6)) { "3: ${layout.shown}" } }
     }
 }

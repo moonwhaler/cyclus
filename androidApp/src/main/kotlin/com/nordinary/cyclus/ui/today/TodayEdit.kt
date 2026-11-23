@@ -1,6 +1,20 @@
 package com.nordinary.cyclus.ui.today
 
 import androidx.compose.foundation.background
+import androidx.compose.animation.core.Spring
+import androidx.compose.animation.core.animate
+import androidx.compose.animation.core.spring
+import androidx.compose.foundation.ScrollState
+import androidx.compose.foundation.gestures.scrollBy
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.rememberUpdatedState
+import androidx.compose.runtime.withFrameNanos
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Rect
+import androidx.compose.ui.layout.LayoutCoordinates
+import androidx.compose.ui.layout.onGloballyPositioned
+import kotlinx.coroutines.launch
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.detectDragGestures
 import androidx.compose.foundation.layout.Arrangement
@@ -81,16 +95,86 @@ fun cardTitle(card: TodayCard, fmt: Fmt): String = fmt.s(
  * Hide, add and reset save at once; a drag is kept locally and saved on drop (no database round trip per step).
  */
 @Composable
-fun TodayEditor(layout: TodayLayout, fmt: Fmt, onLayout: (TodayLayout) -> Unit, onEditQuickPicks: () -> Unit, onDone: () -> Unit, modifier: Modifier = Modifier) {
+fun TodayEditor(
+    layout: TodayLayout, fmt: Fmt, onLayout: (TodayLayout) -> Unit, onEditQuickPicks: () -> Unit, onDone: () -> Unit,
+    modifier: Modifier = Modifier,
+    /** Today's scroll: a drag near the top or bottom edge scrolls the list, so every position can be reached. */
+    scroll: ScrollState? = null,
+    /** The visible part of that scroll (root coordinates, already without the top bar and bottom insets). */
+    viewport: () -> Rect? = { null },
+) {
     val c = Cyclus.colors
     val haptic = LocalHapticFeedback.current
-    val gap = with(LocalDensity.current) { 8.dp.toPx() }
-    var working by remember(layout.shown) { mutableStateOf(layout.shown) }
+    val density = LocalDensity.current
+    val gap = with(density) { 8.dp.toPx() }
+    val edge = with(density) { 88.dp.toPx() }
+    val maxStep = with(density) { 18.dp.toPx() }
+    val scope = rememberCoroutineScope()
+    // gesture callbacks live as long as the row: they must always see the current layout, never the one at creation
+    val current by rememberUpdatedState(layout)
+    val save by rememberUpdatedState(onLayout)
+
+    // the order shown while dragging and until the saved order comes back from the store (no snap back on drop)
+    var working by remember { mutableStateOf(layout.shown) }
     var dragging by remember { mutableStateOf<TodayCard?>(null) }
     var offset by remember { mutableFloatStateOf(0f) }
+    var fingerY by remember { mutableFloatStateOf(0f) }
+    /** Auto-scroll starts only once the finger has actually moved (grabbing a card near an edge doesn't scroll). */
+    var moved by remember { mutableStateOf(false) }
     val heights = remember { mutableStateMapOf<TodayCard, Int>() }
-    fun save(list: List<TodayCard>) = onLayout(layout.copy(order = list + layout.order.filter { it in layout.hidden }))
-    fun swap(i: Int, j: Int) { working = working.toMutableList().also { val t = it[i]; it[i] = it[j]; it[j] = t } }
+    val handles = remember { mutableMapOf<TodayCard, LayoutCoordinates>() }
+    // neighbours glide into their new slot instead of jumping
+    val settle = remember { mutableStateMapOf<TodayCard, Float>() }
+    LaunchedEffect(layout.shown) { if (dragging == null) working = layout.shown }
+
+    fun commit(list: List<TodayCard>) = save(current.copy(order = list + current.order.filter { it in current.hidden }))
+
+    fun glide(card: TodayCard, from: Float) {
+        settle[card] = from
+        scope.launch { animate(from, 0f, animationSpec = spring(stiffness = Spring.StiffnessMediumLow)) { v, _ -> settle[card] = v } }
+    }
+
+    /** Swap the dragged card past every neighbour it has crossed by half (fast drags cross several). */
+    fun reorder(card: TodayCard) {
+        while (true) {
+            val idx = working.indexOf(card)
+            val own = (heights[card] ?: 0) + gap
+            if (offset > 0 && idx < working.lastIndex) {
+                val next = working[idx + 1]
+                val h = (heights[next] ?: 0) + gap
+                if (offset <= h / 2) return
+                working = working.toMutableList().also { it[idx] = next; it[idx + 1] = card }
+                offset -= h; glide(next, own)
+            } else if (offset < 0 && idx > 0) {
+                val prev = working[idx - 1]
+                val h = (heights[prev] ?: 0) + gap
+                if (offset >= -h / 2) return
+                working = working.toMutableList().also { it[idx] = prev; it[idx - 1] = card }
+                offset += h; glide(prev, -own)
+            } else return
+            haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
+        }
+    }
+
+    // auto-scroll while the finger rests near an edge; the row stays under the finger
+    LaunchedEffect(dragging) {
+        val card = dragging ?: return@LaunchedEffect
+        val sc = scroll ?: return@LaunchedEffect
+        while (true) {
+            withFrameNanos { }
+            if (!moved) continue
+            val vp = viewport() ?: continue
+            val step = when {
+                fingerY < vp.top + edge -> -maxStep * ((vp.top + edge - fingerY) / edge).coerceIn(0f, 1f)
+                fingerY > vp.bottom - edge -> maxStep * ((fingerY - (vp.bottom - edge)) / edge).coerceIn(0f, 1f)
+                else -> 0f
+            }
+            if (step != 0f) {
+                val used = sc.scrollBy(step)
+                if (used != 0f) { offset += used; reorder(card) }
+            }
+        }
+    }
 
     Column(modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(14.dp)) {
         Row(verticalAlignment = Alignment.CenterVertically) {
@@ -109,16 +193,17 @@ fun TodayEditor(layout: TodayLayout, fmt: Fmt, onLayout: (TodayLayout) -> Unit, 
                 val dragged = dragging == card
                 val title = cardTitle(card, fmt)
                 val actions = buildList {
-                    if (i > 0) add(CustomAccessibilityAction(fmt.s("moveUp")) { save(layout.move(card, i - 1).shown); true })
-                    if (i < working.lastIndex) add(CustomAccessibilityAction(fmt.s("moveDown")) { save(layout.move(card, i + 1).shown); true })
-                    add(CustomAccessibilityAction(fmt.s("hideCard")) { onLayout(layout.hide(card)); true })
+                    if (i > 0) add(CustomAccessibilityAction(fmt.s("moveUp")) { commit(current.move(card, i - 1).shown); true })
+                    if (i < working.lastIndex) add(CustomAccessibilityAction(fmt.s("moveDown")) { commit(current.move(card, i + 1).shown); true })
+                    add(CustomAccessibilityAction(fmt.s("hideCard")) { save(current.hide(card)); true })
                 }
                 Row(
                     Modifier.fillMaxWidth()
                         .zIndex(if (dragged) 1f else 0f)
                         .graphicsLayer {
-                            translationY = if (dragged) offset else 0f
+                            translationY = if (dragged) offset else settle[card] ?: 0f
                             shadowElevation = if (dragged) 10.dp.toPx() else 0f
+                            scaleX = if (dragged) 1.02f else 1f; scaleY = scaleX
                             shape = RoundedCornerShape(14.dp); clip = true
                         }
                         .background(c.surface)
@@ -141,24 +226,28 @@ fun TodayEditor(layout: TodayLayout, fmt: Fmt, onLayout: (TodayLayout) -> Unit, 
                     }
                     Box(
                         Modifier.size(48.dp)
+                            .onGloballyPositioned { handles[card] = it }
                             .semantics { contentDescription = fmt.s("dragCard") }
                             .pointerInput(card) {
+                                fun root(p: Offset) = handles[card]?.takeIf { it.isAttached }?.localToRoot(p)?.y ?: fingerY
                                 detectDragGestures(
-                                    onDragStart = { dragging = card; offset = 0f; haptic.performHapticFeedback(HapticFeedbackType.LongPress) },
-                                    onDragEnd = { dragging = null; offset = 0f; save(working) },
-                                    onDragCancel = { dragging = null; offset = 0f; working = layout.shown },
+                                    onDragStart = { p ->
+                                        working = current.shown; dragging = card; offset = 0f; moved = false; fingerY = root(p)
+                                        haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                                    },
+                                    onDragEnd = {
+                                        val order = working
+                                        commit(order)
+                                        // settle into the slot, then let go
+                                        scope.launch { animate(offset, 0f, animationSpec = spring(stiffness = Spring.StiffnessMediumLow)) { v, _ -> offset = v }; if (dragging == card) dragging = null }
+                                    },
+                                    onDragCancel = { dragging = null; offset = 0f; working = current.shown },
                                 ) { change, amount ->
                                     change.consume()
+                                    fingerY = root(change.position)
+                                    moved = true
                                     offset += amount.y
-                                    val idx = working.indexOf(card)
-                                    // swap once the row has passed half of its neighbour
-                                    if (offset > 0 && idx < working.lastIndex) {
-                                        val h = (heights[working[idx + 1]] ?: 0) + gap
-                                        if (offset > h / 2) { swap(idx, idx + 1); offset -= h; haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove) }
-                                    } else if (offset < 0 && idx > 0) {
-                                        val h = (heights[working[idx - 1]] ?: 0) + gap
-                                        if (offset < -h / 2) { swap(idx, idx - 1); offset += h; haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove) }
-                                    }
+                                    reorder(card)
                                 }
                             },
                         contentAlignment = Alignment.Center,

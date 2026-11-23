@@ -34,6 +34,8 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.compositeOver
 import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.layout.onGloballyPositioned
+import androidx.compose.ui.layout.boundsInRoot
 import androidx.compose.material3.TextButton
 import com.nordinary.cyclus.core.Day
 import com.nordinary.cyclus.presenter.TodayCard
@@ -117,8 +119,13 @@ fun TodayContent(
     val scroll = rememberScrollState()
     // entering or leaving edit mode starts at the top: the ring (size preview) and the editor's header
     androidx.compose.runtime.LaunchedEffect(editing) { scroll.animateScrollTo(0) }
+    // the visible part of the scroll (below the top bar, above the navigation bar): edit mode auto-scrolls near its edges
+    var viewport by androidx.compose.runtime.remember { androidx.compose.runtime.mutableStateOf<androidx.compose.ui.geometry.Rect?>(null) }
+    val density = androidx.compose.ui.platform.LocalDensity.current
     Column(
-        Modifier.fillMaxWidth().verticalScroll(scroll).padding(contentPadding).padding(horizontal = 16.dp),
+        Modifier.fillMaxWidth()
+            .onViewport(contentPadding, density) { viewport = it }
+            .verticalScroll(scroll).padding(contentPadding).padding(horizontal = 16.dp),
         verticalArrangement = Arrangement.spacedBy(0.dp),
     ) {
         val hero = state.hero
@@ -178,7 +185,7 @@ fun TodayContent(
         if (editing) {
             TodayEditor(
                 layout, fmt, onLayout = onLayout, onEditQuickPicks = { quickSheet = true }, onDone = { editing = false },
-                modifier = Modifier.padding(top = 8.dp),
+                modifier = Modifier.padding(top = 8.dp), scroll = scroll, viewport = { viewport },
             )
         } else {
             Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
@@ -493,3 +500,10 @@ private fun TodayCardContent(
         TodayCard.WEEK -> WeekCard(state.week, fmt, onOpenDay, onMarkStart)
     }
 }
+
+/** Reports the scroll viewport in root coordinates, minus the content padding (top bar, navigation bar). */
+private fun Modifier.onViewport(padding: PaddingValues, density: androidx.compose.ui.unit.Density, onRect: (androidx.compose.ui.geometry.Rect) -> Unit) =
+    this.then(Modifier.onGloballyPositioned { co ->
+        val r = co.boundsInRoot()
+        with(density) { onRect(r.copy(top = r.top + padding.calculateTopPadding().toPx(), bottom = r.bottom - padding.calculateBottomPadding().toPx())) }
+    })
