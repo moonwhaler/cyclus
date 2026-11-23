@@ -108,13 +108,22 @@ internal fun reflow(text: String): String =
         out.toString()
     }
 
+/** Cyclus's own license (GPL-3.0), copied from the repository's LICENSE into the assets at build time. */
+object AppLicense {
+    @Volatile private var cache: String? = null
+
+    suspend fun load(ctx: Context): String = cache ?: withContext(Dispatchers.IO) {
+        reflow(ctx.assets.open("LICENSE.txt").bufferedReader().use { it.readText() }).also { cache = it }
+    }
+}
+
 @Composable
 private fun rememberOpenSource(): State<List<OssLib>?> {
     val ctx = LocalContext.current
     return produceState<List<OssLib>?>(null) { value = OpenSource.load(ctx) }
 }
 
-/** „Über Cyclus“: name, version, the notice with its confirmations, how predictions work, open-source licenses. */
+/** „Über Cyclus“: name, version, the notice with its confirmations, how predictions work, the app's license, open-source licenses. */
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 fun AboutScreen(
@@ -127,6 +136,7 @@ fun AboutScreen(
 ) {
     val c = Cyclus.colors
     val libs by rememberOpenSource()
+    var showLicense by rememberSaveable { mutableStateOf(false) }
     PushedScaffold(fmt, fmt.s("aboutT"), onBack) {
         Column(
             Modifier.fillMaxWidth().clip(RoundedCornerShape(20.dp)).background(c.surface).padding(vertical = 24.dp, horizontal = 16.dp),
@@ -145,8 +155,16 @@ fun AboutScreen(
             HorizontalDivider(color = c.line)
             LinkRow(fmt.s("methodT"), null, onMethod)
             HorizontalDivider(color = c.line)
+            LinkRow(fmt.s("ossLic"), fmt.s("licS")) { showLicense = true }
+            HorizontalDivider(color = c.line)
             LinkRow(fmt.s("ossT"), libs?.let { fmt.s("ossS", it.size) }, onLicenses)
         }
+    }
+    if (showLicense) {
+        val ctx = LocalContext.current
+        val text by produceState<String?>(null) { value = AppLicense.load(ctx) }
+        val gpl = OssLib("cyclus", "Cyclus", BuildConfig.VERSION_NAME, null, listOf(OssLicense("GNU General Public License v3.0", null, text.orEmpty())))
+        LicenseSheet(fmt, gpl, intro = "${fmt.s("licNote")}\n\n${fmt.s("licCopy")}") { showLicense = false }
     }
 }
 
@@ -185,7 +203,7 @@ fun LicensesScreen(fmt: Fmt, onBack: () -> Unit) {
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-private fun LicenseSheet(fmt: Fmt, lib: OssLib, onDismiss: () -> Unit) {
+private fun LicenseSheet(fmt: Fmt, lib: OssLib, intro: String? = null, onDismiss: () -> Unit) {
     val c = Cyclus.colors
     ModalBottomSheet(onDismissRequest = onDismiss, sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true), containerColor = c.bg) {
         Row(Modifier.fillMaxWidth().padding(start = 16.dp, end = 8.dp, bottom = 6.dp), verticalAlignment = Alignment.CenterVertically) {
@@ -199,6 +217,7 @@ private fun LicenseSheet(fmt: Fmt, lib: OssLib, onDismiss: () -> Unit) {
             ) {
                 val meta = listOfNotNull(lib.version.takeIf { it.isNotBlank() }, lib.website).joinToString(" · ")
                 if (meta.isNotEmpty()) Text(meta, fontSize = 13.sp, color = c.ink2)
+                if (intro != null) Text(intro, fontSize = 14.sp, color = c.ink)
                 for (l in lib.licenses) {
                     Text("${fmt.s("ossLic")}: ${l.name}", Modifier.padding(top = 6.dp), fontWeight = FontWeight.SemiBold, color = c.ink)
                     if (l.text.isNotBlank()) Text(

@@ -438,6 +438,9 @@
     <string name="tx_ossS">%1$s components</string>
     <string name="tx_ossIntro">Cyclus is built on free and open-source software. Thanks to everyone who builds and maintains it.</string>
     <string name="tx_ossLic">License</string>
+    <string name="tx_licS">Free software under the GNU GPL 3.0</string>
+    <string name="tx_licNote">Cyclus is free software: you may share and change it under the terms of the GNU General Public License, version 3. Cyclus comes without any warranty. The name “Cyclus” and the icon are not covered by the license.</string>
+    <string name="tx_licCopy">© 2026 the Cyclus authors</string>
     <string name="tx_tOss">The app shows the full list.</string>
     <string name="tx_consentFoot">Your confirmations are stored only on this device and never sent.</string>
     <string name="tx_lockedT">Cyclus is locked</string>

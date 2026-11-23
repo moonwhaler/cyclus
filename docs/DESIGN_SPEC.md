@@ -546,6 +546,7 @@ Settings › More › "About Cyclus" (pushed). Owner decisions 2026-11-23: no pu
 - **Header:** app icon, "Cyclus", "Version x.y.z" (the installed build), the welcome subline.
 - **Important notice:** subtitle "Confirmed on …"; opens the notice with every confirmation (same sheet as Privacy › Legal; confirm button when due).
 - **How predictions work:** the method sheet (same as Insights).
+- **License:** "Free software under the GNU GPL 3.0"; opens the notice (free software, share and change under GPL-3.0, no warranty, the name and icon excluded, © the Cyclus authors) and the full license text, copied from the repository's `LICENSE` at build time.
 - **Open-source licenses** ("n components"): every bundled component, A–Z, with version and license name; tap → its full license text (reflowed for the phone, selectable). The list is generated at build time from the shipped dependencies, never typed by hand; components without usable metadata (SQLCipher, the bundled fonts) are added from checked-in license files. Required: licenses that ask for their notice in the binary distribution (BSD, OFL, Apache NOTICE) are satisfied here.
 
 ---

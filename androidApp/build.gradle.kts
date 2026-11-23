@@ -148,8 +148,23 @@ abstract class VerifyNoNetworkPermission : DefaultTask() {
     }
 }
 
+// ---- The app's own license (GPL-3.0, shown in About Cyclus): copied from the repository's LICENSE at build time. ----
+abstract class CopyAppLicense : DefaultTask() {
+    @get:InputFile @get:PathSensitive(PathSensitivity.NONE) abstract val license: RegularFileProperty
+    @get:OutputDirectory abstract val outputDir: DirectoryProperty
+
+    @TaskAction fun copy() {
+        license.get().asFile.copyTo(outputDir.get().file("LICENSE.txt").asFile, overwrite = true)
+    }
+}
+
+val copyAppLicense = tasks.register<CopyAppLicense>("copyAppLicense") {
+    license.set(rootProject.layout.projectDirectory.file("LICENSE"))
+}
+
 androidComponents {
     onVariants { variant ->
+        variant.sources.assets?.addGeneratedSourceDirectory(copyAppLicense, CopyAppLicense::outputDir)
         val cap = variant.name.replaceFirstChar { it.uppercase() }
         val verify = tasks.register<VerifyNoNetworkPermission>("verifyNoInternet$cap") {
             group = "verification"

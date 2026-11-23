@@ -3,6 +3,11 @@
 Version scheme: `major.minor.patch`. Android `versionCode` only ever goes up, by 1 per release; the public 1.0.0 starts
 at 10200 (internal test builds before it reached 10101).
 
+## Unreleased
+
+- **About Cyclus › License:** Cyclus is free software under the GNU GPL 3.0; the notice and the full license text are
+  now in the app.
+
 ## 1.0.0 — 2026-11-23
 
 The first release of Cyclus for Android: a private cycle tracker that keeps everything on your device.

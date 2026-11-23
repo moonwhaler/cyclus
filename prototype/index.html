@@ -545,7 +545,8 @@ const TX = {
   aboutT:{de:'Über Cyclus',en:'About Cyclus'}, aboutS:{de:'Version, Hinweis, Lizenzen',en:'Version, notice, licenses'}, aboutVer:{de:v=>`Version ${v}`,en:v=>`Version ${v}`},
   ossT:{de:'Open-Source-Lizenzen',en:'Open-source licenses'}, ossS:{de:n=>`${n} Bausteine`,en:n=>`${n} components`},
   ossIntro:{de:'Cyclus baut auf freier Software auf. Danke an alle, die sie entwickeln und pflegen.',en:'Cyclus is built on free and open-source software. Thanks to everyone who builds and maintains it.'},
-  ossLic:{de:'Lizenz',en:'License'}, tOss:{de:'Die vollständige Liste zeigt die App.',en:'The app shows the full list.'},
+  ossLic:{de:'Lizenz',en:'License'}, licS:{de:'Freie Software unter der GNU GPL 3.0',en:'Free software under the GNU GPL 3.0'},
+  licNote:{de:'Cyclus ist freie Software: Du darfst sie unter den Bedingungen der GNU General Public License, Version 3, weitergeben und verändern. Cyclus wird ohne jede Gewährleistung bereitgestellt. Der Name „Cyclus“ und das Symbol sind von der Lizenz ausgenommen.',en:'Cyclus is free software: you may share and change it under the terms of the GNU General Public License, version 3. Cyclus comes without any warranty. The name “Cyclus” and the icon are not covered by the license.'}, licCopy:{de:'© 2026 die Cyclus-Autoren',en:'© 2026 the Cyclus authors'}, tOss:{de:'Die vollständige Liste zeigt die App.',en:'The app shows the full list.'},
   consentFoot:{de:'Deine Bestätigungen werden nur auf diesem Gerät gespeichert und nie gesendet.',en:'Your confirmations are stored only on this device and never sent.'},
   // lock
   lockedT:{de:'Cyclus ist gesperrt',en:'Cyclus is locked'}, lockedB:{de:'Deine Daten bleiben verborgen, bis du entsperrst.',en:'Your data stays hidden until you unlock.'}, unlockBtn:{de:'Mit Face ID entsperren',en:'Unlock with Face ID'}, recognizing:{de:'Wird erkannt…',en:'Recognizing…'},
@@ -1687,6 +1688,7 @@ function renderAbout(){
     <div class="list">
       <div class="li"><div class="t"><b>${t('noticeRow')}</b><span>${when}</span></div></div>
       <button class="li" data-act="sheet" data-v="method"><div class="t"><b>${t('methodT')}</b></div>${I.chev}</button>
+      <div class="li"><div class="t"><b>${t('ossLic')}</b><span>${t('licS')}</span><span class="tiny muted">${t('licNote')} ${t('licCopy')}</span></div></div>
       <button class="li" data-act="toast" data-v="tOss"><div class="t"><b>${t('ossT')}</b><span>${t('ossS',126)}</span></div>${I.chev}</button>
     </div>
   </div>`;
