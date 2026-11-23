@@ -1,6 +1,17 @@
 package com.nordinary.cyclus.ui.today
 
 import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.layout.size
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.runtime.remember
+import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.onClick
+import androidx.compose.ui.semantics.role
+import androidx.compose.ui.semantics.semantics
+import com.nordinary.cyclus.ui.common.CyclusIcons
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
@@ -28,12 +39,22 @@ import kotlin.math.sin
 
 /** The cycle ring (prototype `ringSVG`, 300-unit viewBox), with [center] text inside. One semantics node. */
 @Composable
-fun CycleRing(model: RingModel, a11y: String, modifier: Modifier = Modifier, center: @Composable () -> Unit) {
+fun CycleRing(
+    model: RingModel, a11y: String, modifier: Modifier = Modifier,
+    /** Opens the explainer: the whole ring is a tap target, the ⓘ in its bottom gap makes that discoverable. */
+    onExplain: (() -> Unit)? = null, explainLabel: String = "",
+    center: @Composable () -> Unit,
+) {
     val c = Cyclus.colors
-    BoxWithConstraints(
-        modifier.widthIn(max = 300.dp).aspectRatio(1f).clearAndSetSemantics { contentDescription = a11y },
-    ) {
-        Canvas(Modifier.fillMaxSize()) {
+    BoxWithConstraints(modifier.widthIn(max = 300.dp).aspectRatio(1f)) {
+        Canvas(
+            Modifier.fillMaxSize()
+                .then(if (onExplain != null) Modifier.clickable(remember { MutableInteractionSource() }, indication = null, onClickLabel = explainLabel, role = Role.Button, onClick = onExplain) else Modifier)
+                .clearAndSetSemantics {
+                    contentDescription = a11y
+                    if (onExplain != null) { role = Role.Button; onClick(explainLabel) { onExplain(); true } }
+                },
+        ) {
             val u = size.minDimension / 300f
             val cx = size.width / 2; val cy = size.height / 2
             fun arc(r: Float, a0: Float, a1: Float, color: androidx.compose.ui.graphics.Color, w: Float, dash: FloatArray? = null, cap: StrokeCap = StrokeCap.Butt) =
@@ -72,5 +93,10 @@ fun CycleRing(model: RingModel, a11y: String, modifier: Modifier = Modifier, cen
             Modifier.fillMaxSize().padding(start = maxWidth * .21f, end = maxWidth * .21f, top = maxHeight * .22f, bottom = maxHeight * .24f),
             contentAlignment = Alignment.Center,
         ) { Column(horizontalAlignment = Alignment.CenterHorizontally) { center() } }
+        // the gap at the bottom of the ring (45°–135°) is empty: a quiet ⓘ sits there
+        if (onExplain != null && model.segments.isNotEmpty()) IconButton(
+            onClick = onExplain,
+            modifier = Modifier.align(Alignment.BottomCenter).size(44.dp).semantics { contentDescription = explainLabel },
+        ) { Icon(CyclusIcons.Info, null, Modifier.size(18.dp), tint = c.ink2.copy(alpha = .75f)) }
     }
 }

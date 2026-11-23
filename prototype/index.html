@@ -109,6 +109,11 @@ button:focus-visible,input:focus-visible,textarea:focus-visible,select:focus-vis
 /* ring — container-sized text, max three lines, details live below the ring (spec §6 CycleRing) */
 .ringwrap{position:relative;width:min(300px,82%);margin:4px auto 0;aspect-ratio:1;max-width:100%;container-type:inline-size}
 .ringwrap svg{width:100%;height:100%;display:block}
+.ringinfo{position:absolute;left:50%;bottom:0;transform:translateX(-50%);width:44px;height:44px;display:grid;place-items:center;color:var(--ink2);opacity:.75;background:none;border:0}
+.ringinfo svg{width:18px;height:18px}
+.rlegend{display:flex;flex-direction:column;gap:2px;background:var(--surface);border-radius:14px;padding:6px 0}
+.rlegend>div{display:grid;grid-template-columns:52px minmax(0,1fr);gap:14px;align-items:center;padding:9px 14px}
+.rlegend svg{width:52px;height:34px}.rlegend b{display:block}
 .ringcenter{position:absolute;left:21%;right:21%;top:22%;bottom:24%;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;gap:2px;hyphens:manual;overflow:hidden}
 .ringcenter > *{max-width:100%}
 .ringcenter .kicker{font-size:13px;color:var(--ink2);font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
@@ -362,6 +367,16 @@ const TX = {
   calTip:{de:'Tippe auf einen Tag für Details. In der App: lange drücken, um einen Periodenbeginn zu markieren.',en:'Tap a day for details. In the app: long-press to mark a period start.'},
   lgPeriod:{de:'Periode',en:'Period'}, lgPred:{de:'Erwartete Periode',en:'Predicted period'}, lgPre:{de:'Tage vor der Periode',en:'Pre-period window'}, lgLogged:{de:'Etwas eingetragen',en:'Something logged'},
   lgFert:{de:'Fruchtbares Fenster (Schätzung)',en:'Fertile window (estimate)'}, lgOv:{de:'Eisprung · höchste Chance',en:'Ovulation · peak day'},
+  // ring explainer (tap the ring or its ⓘ): only what the ring shows right now
+  ringHelpT:{de:'So liest du den Ring',en:'Reading the ring'}, ringHelpA:{de:'Ring erklären',en:'Explain the ring'},
+  ringIntro:{de:'Der Ring ist dein aktueller Zyklus: ein Abschnitt pro Tag, im Uhrzeigersinn. Er beginnt unten links mit dem ersten Tag deiner Periode.',en:'The ring is your current cycle: one segment per day, clockwise. It starts at the bottom left with the first day of your period.'},
+  rhToday:{de:'Heute',en:'Today'}, rhTodayS:{de:'Wo du gerade in deinem Zyklus stehst.',en:'Where you are in your cycle right now.'},
+  rhPeriodS:{de:'Tage, an denen du eine Blutung eingetragen hast.',en:'Days you logged bleeding.'},
+  rhPreS:{de:'Die 7 Tage, bevor deine Periode frühestens beginnen kann.',en:'The 7 days before your period could start at the earliest.'},
+  rhPredS:{de:'Der gestrichelte Bogen außen: In diesem Zeitraum beginnt deine nächste Periode wahrscheinlich.',en:'The dashed outer arc: your next period will probably start within this range.'},
+  rhFertS:{de:'Je kräftiger die Farbe, desto höher die Chance, schwanger zu werden. Eine Schätzung, nicht zur Verhütung geeignet.',en:'The stronger the colour, the higher the chance of getting pregnant. An estimate, not for birth control.'},
+  rhOv:{de:'Eisprung (Schätzung)',en:'Ovulation (estimate)'}, rhOvS:{de:'Gestrichelt: vorhergesagt. Durchgezogen: von deinen LH-Tests, deinem Zervixschleim oder deiner Temperatur gestützt.',en:'Dashed: predicted. Solid: backed by your LH tests, cervical mucus or temperature.'},
+  rhRest:{de:'Übrige Tage',en:'Other days'}, rhRestS:{de:'Ohne Blutung und außerhalb der Fenster.',en:'No bleeding, outside the windows.'},
   aPeriod:{de:', Periode',en:', period'}, aPred:{de:', erwartete Periode',en:', predicted period'}, aLogged:{de:', Einträge vorhanden',en:', logged'},
   // insights
   insEmptyT:{de:'Für Einblicke braucht Cyclus etwas mehr Verlauf',en:'Insights need a little history'}, insEmptyB:{de:'Nach deinem ersten vollständigen Zyklus siehst du hier deine Zykluslänge. Muster erscheinen nach 2–3 Zyklen.',en:'After your first full cycle you’ll see your cycle length here. Patterns appear after 2–3 cycles.'},
@@ -1057,6 +1072,7 @@ const I = {
   ins:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M5 20V11M12 20V5M19 20v-7"/></svg>',
   plus:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>',
   back:'<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 5l-7 7 7 7"/></svg>',
+  info:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="12" cy="12" r="8.5"/><path d="M12 11v5.2"/><circle cx="12" cy="7.9" r="1.1" fill="currentColor" stroke="none"/></svg>',
   chev:'<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex:0 0 auto"><path d="M9 6l6 6-6 6"/></svg>',
   left:'<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 6l-6 6 6 6"/></svg>',
   right:'<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg>',
@@ -1231,7 +1247,7 @@ function renderToday(){
   if (v.pred && !v.paused){ const fc = forecastCard(v); cards = (S.mode==='conceive' && v.fertOn) ? cards.replace(`<button class="linkrow" data-act="sheet" data-v="why">`, fc+`<button class="linkrow" data-act="sheet" data-v="why">`) : fc + cards; cards += patternLink(v); }
   const center = `<div class="kicker">${kicker}</div><div class="big" data-max="${bigMax}" style="font-size:${bigMax}px${v.fertOn&&S.mode==='conceive'&&!v.paused&&!v.inPeriod&&v.fert&&v.fert.status!=='occurred'&&v.fert.days[v.fert.todayCd-1].tier?';color:var(--fertile)':''}">${big}</div>${sub?`<div class="sub">${sub}</div>`:''}${S.mode!=='conceive'||!v.fertOn?extra:''}`;
   return `${header(t('tabToday'))}
-  <div class="ringwrap" role="img" aria-label="${ringLabel(v)}">${ringSVG(v)}<div class="ringcenter">${center}</div></div>
+  <div class="ringwrap" role="img" aria-label="${ringLabel(v)}" data-act="sheet" data-v="ring" style="cursor:pointer">${ringSVG(v)}<div class="ringcenter">${center}</div>${v.pred?`<button class="ringinfo" data-act="sheet" data-v="ring" aria-label="${t('ringHelpA')}">${I.info}</button>`:''}</div>
   <div class="under">${under}</div>
   <div class="stack">
     <button class="card" data-act="openLog" style="text-align:left"><div class="row between"><h3>${t('todaysLog')}</h3><span class="muted">${I.chev}</span></div>${todayLogSummary()}</button>
@@ -1424,6 +1440,29 @@ function renderWhySheet(){
     <div class="card"><h3>${conc}</h3><p>${t('whyBody')}</p></div>
     <p class="tiny muted">${t('whyFoot')}</p></div>`;
 }
+function renderRingSheet(){
+  const v = vm(); if (!v.pred) return '';
+  const p = v.pred, N = Math.max(p.hi - p.last + 1, v.cd + 2, 28), bleed = new Set(periodDays(p.last));
+  const kinds = new Set(); for (let cd=1; cd<=N; cd++){ const day=p.last+cd-1, fd=v.fertOn&&v.fert?v.fert.days[cd-1]:null;
+    kinds.add(bleed.has(day)?'bleed':(fd&&fd.tier>0)?'fert':(!v.paused&&day>=p.lo-7&&day<p.lo)?'pre':'rest'); }
+  // swatch: a slice of the ring's top (ring units, 70 wide), drawn like the ring itself
+  const arc=(r,a0,a1)=>{const q=a=>[35+r*Math.cos(a*Math.PI/180),147+r*Math.sin(a*Math.PI/180)];const[x0,y0]=q(a0),[x1,y1]=q(a1);return `M${x0} ${y0} A${r} ${r} 0 0 1 ${x1} ${y1}`;};
+  const seg=(cols,dash)=>cols.map((c,i,a)=>{const per=28/a.length,a0=256+i*per+.9,a1=256+(i+1)*per-.9;return `<path d="${arc(118,a0,a1)}" stroke="${c[0]}" stroke-opacity="${c[1]}" stroke-width="18" fill="none" ${dash?'stroke-dasharray="2 3.2"':''}/>`;}).join('');
+  const sw=x=>`<svg viewBox="0 0 70 45" aria-hidden="true">${x}</svg>`;
+  const grey=seg([['var(--mid)',.32]]);
+  const row=(sv,ti,su)=>`<div>${sw(sv)}<span><b>${ti}</b><span class="tiny muted">${su}</span></span></div>`;
+  const solid = v.fert && v.fert.status!=='predicted';
+  return `<div class="grab"></div><div class="sheethead"><h3 style="text-align:left">${t('ringHelpT')}</h3><button class="x" data-act="close">${t('done')}</button></div>
+  <div class="sheetbody"><p class="muted">${t('ringIntro')}</p><div class="rlegend">
+    ${row(grey+`<circle cx="35" cy="29" r="13" fill="var(--ink)" stroke="var(--bg)" stroke-width="4"/>`, t('rhToday'), t('rhTodayS'))}
+    ${kinds.has('bleed')?row(seg([['var(--period)',1]]), t('lgPeriod'), t('rhPeriodS')):''}
+    ${kinds.has('pre')?row(seg([['var(--pre)',.85]],true), t('lgPre'), t('rhPreS')):''}
+    ${!v.paused?row(grey+`<path d="${arc(137,259,281)}" stroke="var(--period)" stroke-width="3" fill="none" stroke-dasharray="5 4" stroke-linecap="round"/>`, t('lgPred'), t('rhPredS')):''}
+    ${kinds.has('fert')?row(seg([['var(--fertile)',.35],['var(--fertile)',.65],['var(--fertile)',1]]), t('lgFert'), t('rhFertS')):''}
+    ${!v.paused&&v.fertOn&&v.fert?row(seg([['var(--fertile)',.65]])+`<circle cx="35" cy="10" r="7" fill="var(--bg)" stroke="var(--fertile)" stroke-width="2" ${solid?'':'stroke-dasharray="2.5 2"'}/><circle cx="35" cy="10" r="2.6" fill="var(--fertile)"/>`, t('rhOv'), t('rhOvS')):''}
+    ${kinds.has('rest')?row(grey, t('rhRest'), t('rhRestS')):''}
+  </div><button class="linkrow" data-act="sheet" data-v="method">${t('methodT')} ${I.chev}</button></div>`;
+}
 function renderMethodSheet(){
   return `<div class="grab"></div><div class="sheethead"><h3 style="text-align:left">${t('methodT')}</h3><button class="x" data-act="close">${t('done')}</button></div>
   <div class="sheetbody">${t('method').map(x=>`<div class="card"><p style="color:var(--ink)">${x}</p></div>`).join('')}</div>`;
@@ -1593,7 +1632,7 @@ function render(keepScroll=true){
   const keep = sel => { const el = app.querySelector(sel); return el ? el.scrollTop : 0; };
   const st = keep('.main'), sst = keep('.sheet .sheetbody'), pst = keep('.push .pushbody');
   const view = S.tab==='today'?renderToday():S.tab==='calendar'?renderCalendar():renderInsights();
-  const sheet = {log:renderLogSheet, day:renderDaySheet, why:renderWhySheet, method:renderMethodSheet, erase:renderEraseSheet}[S.layer];
+  const sheet = {log:renderLogSheet, day:renderDaySheet, why:renderWhySheet, ring:renderRingSheet, method:renderMethodSheet, erase:renderEraseSheet}[S.layer];
   const push = {privacy:renderPrivacy, settings:renderSettings, report:renderReport}[S.push];
   app.innerHTML = `
   <div class="statusbar"><span class="num">9:41</span><span class="sb-icons" aria-hidden="true">

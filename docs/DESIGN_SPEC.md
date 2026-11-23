@@ -395,6 +395,8 @@ SF Symbols (hierarchical rendering). Custom symbols (SF Symbols template format)
 │   Today      Calendar      Insights  │  tab bar (glass)
 └──────────────────────────────────────┘
 ```
+
+**Ring explainer (2026-11-23).** The ring is a tap target; a quiet ⓘ (18 dp glyph, 44 dp touch target, `ink2` at 75 %) sits in its empty bottom gap so the tap is discoverable without adding a row. Both open „So liest du den Ring“: one intro line (one segment per day, clockwise, starting bottom left with day 1) and a legend of only the elements the ring shows right now, each swatch a slice of the ring drawn with the same colours, strokes and dashes, then a link to „So funktionieren Prognosen“. TalkBack: the ring node is a button „Ring erklären“; its description stays the spoken summary.
 States:
 | State | Ring centre | Subtitle |
 |---|---|---|

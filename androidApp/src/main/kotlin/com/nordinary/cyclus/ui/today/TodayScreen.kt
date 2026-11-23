@@ -25,6 +25,8 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
@@ -86,6 +88,7 @@ fun TodayContent(
     onChangeStage: () -> Unit,
     onLh: (LhResult) -> Unit = {},
     onWhy: () -> Unit = {},
+    onMethod: () -> Unit = {},
     /** In-context opt-in for „Periode bald“ (nothing is armed before the user says yes, on every API level). */
     reminderOffer: Boolean = false,
     onReminderOffer: (Boolean) -> Unit = {},
@@ -98,10 +101,13 @@ fun TodayContent(
         verticalArrangement = Arrangement.spacedBy(0.dp),
     ) {
         val hero = state.hero
+        var ringHelp by androidx.compose.runtime.saveable.rememberSaveable { androidx.compose.runtime.mutableStateOf(false) }
         CycleRing(
             state.ring, ringA11y(state, fmt),
             Modifier.fillMaxWidth(.82f).align(Alignment.CenterHorizontally).padding(top = 4.dp),
+            onExplain = { ringHelp = true }, explainLabel = fmt.s("ringHelpA"),
         ) { RingCenter(hero, fmt) }
+        if (ringHelp) com.nordinary.cyclus.ui.sheets.RingHelpSheet(state.ring, fmt, onMethod = { ringHelp = false; onMethod() }) { ringHelp = false }
 
         // under the ring
         Column(

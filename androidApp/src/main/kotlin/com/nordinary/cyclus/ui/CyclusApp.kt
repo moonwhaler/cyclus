@@ -429,7 +429,7 @@ private fun MainScreen(
                     onPatterns = onPatterns, // the Muster screen directly: the count promises the list
                     onChangeStage = onSettings,
                     onLh = vm::todayLh,
-                    onWhy = onWhy,
+                    onWhy = onWhy, onMethod = onMethod,
                     reminderOffer = NotifyPrefs.from(m.settings).let { !it.consent && !it.asked } &&
                         m.snapshot.prediction != null && !m.snapshot.paused,
                     onReminderOffer = onReminderOffer,

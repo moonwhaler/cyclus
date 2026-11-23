@@ -13,7 +13,7 @@ Status values: `—` not started · `wip` · `done` · `off` (feature-flagged of
 | E-005 | Outlook („Ausblick“) | 11.13 | engine | done | — | n/a | Shared Kotlin, golden vectors |
 | S-001 | Encrypted local store | 11.2–11.3 | — | done | — | n/a | Android: SQLCipher + Keystore. iOS: Data Protection `.complete` |
 | S-002 | Backup / encrypted export | 11.9 | Privacy | done | — | | `.cyclus` v1 export/import (merge/replace) + E2E-only device backup with restore. CSV export pending |
-| F-001 | Today ring | 7.2 | Heute | done | — | | |
+| F-001 | Today ring | 7.2 | Heute | done | — | | **2026-11-23 (prototype changed too):** tapping the ring, or the quiet ⓘ in its bottom gap, opens „So liest du den Ring“: a legend of only what the ring shows right now (today, period, pre-period days, predicted period, fertile window by strength, ovulation dashed/solid, other days), each swatch drawn like the ring itself, plus a link to „So funktionieren Prognosen“. TalkBack: the ring is a button „Ring erklären“. |
 | F-002 | Today states (empty, between, pre, expected, later, in period, paused) | 7.2 | Heute | done | — | | Episodes UI (start/stop a pause) in F-018 **2026-11-22 review (iOS to follow):** pinned symptoms as one-tap chips on the „Heute eingetragen“ card; the date subtitle only on Heute; the Eintragen button shrinks to its icon while scrolling down. **2026-11-22 (prototype changed too):** next period shows the most likely date first („um den 6. Dez.“) and „möglich: 2.–11. Dez.“ below; in the pre-period phase „etwa N Tagen“. |
 | F-003 | „Periode hat heute begonnen“ + undo | 7.2 | Heute | done | — | | |
 | F-004 | Ausblick card | 11.13 | Heute | done | — | | |
