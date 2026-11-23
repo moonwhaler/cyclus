@@ -16,8 +16,8 @@ No servers, no accounts, no tracking; all intelligence runs on the device. **And
 | [`CHANGELOG.md`](CHANGELOG.md) | Release history |
 | [`docs/archive/`](docs/archive/) | First plan and its sceptic review (history; resolved in the spec §0.3) |
 
-## Status — 1.1.1 (2026-11-23)
-**Android: first stable milestone, feature-complete for v1 (phases A0–A5)**:
+## Status — 1.0.0 (2026-11-23), first public release
+**Android: feature-complete for v1 (phases A0–A5)**:
 - engines ported from the prototype and checked against its golden vectors (prediction, fertility, learning, Your patterns, Outlook);
 - encrypted store (SQLCipher, hardware-held key, automatic recovery after unlock), app lock (biometrics + Cyclus PIN, keeps your place);
 - Today (customizable: card order, hide/library, large/compact ring, Your quick picks, Coming up, This week, Cycle vs. usual, Temperature curve, Mood & energy, Questions for your doctor, Cycle phase, ring explainer), Log sheet, Calendar, Insights + patterns, trying-to-conceive mode;
@@ -41,7 +41,7 @@ ANDROID_SERIAL=emulator-5554 ./gradlew :androidApp:generateReleaseBaselineProfil
 python3 tools/screens/capture.py # reference screenshots (emulator only)
 ```
 - **Never run instrumented tests or the screenshot script on your own phone:** they erase the app's data.
-- Release signing: `storeFile`, `storePassword`, `keyAlias`, `keyPassword` in an untracked `keystore.properties` (ignored by git, like `*.jks`).
+- Release signing: `storeFile`, `storePassword`, `keyAlias`, `keyPassword` in an untracked `keystore.properties` (ignored by git, like `*.jks`). Keep the key file outside the repo (a `git clean -x` must never reach it) and backed up: every update must be signed with the same key. `./gradlew :androidApp:assembleRelease` (APK) / `bundleRelease` (Play AAB).
 - Strings come from the prototype's translation table: `node tools/strings/export.mjs`. Golden vectors: `node tools/golden/export.mjs`.
 - Backups: `.cyclus` format in `docs/export/FORMAT.md`; reference decoder `tools/export/cyclus_decode.py`.
 - Debug builds (`com.nordinary.cyclus.debug`): long-press the screen title Today for the demo-data menu (prototype scenarios, erase).
