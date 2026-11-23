@@ -409,7 +409,10 @@ private fun ForecastCard(fc: Forecast, fmt: Fmt) {
 }
 
 @Composable
-internal fun CardTitle(text: String) = Text(text, fontSize = 15.sp, fontWeight = FontWeight.SemiBold, color = Cyclus.colors.ink)
+internal fun CardTitle(text: String) = Text(
+    text, fontSize = 15.sp, fontWeight = FontWeight.SemiBold, color = Cyclus.colors.ink,
+    style = androidx.compose.material3.LocalTextStyle.current.copy(lineBreak = androidx.compose.ui.text.style.LineBreak.Heading, hyphens = androidx.compose.ui.text.style.Hyphens.None),
+)
 
 @Composable
 internal fun CardBody(text: String) = Text(text, fontSize = 14.sp, color = Cyclus.colors.ink2)

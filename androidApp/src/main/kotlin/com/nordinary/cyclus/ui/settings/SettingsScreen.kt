@@ -1,6 +1,8 @@
 package com.nordinary.cyclus.ui.settings
 
 import android.app.LocaleManager
+import com.nordinary.cyclus.ui.common.LanguageOption
+import com.nordinary.cyclus.ui.common.LanguagePicker
 import android.os.Build
 import android.os.LocaleList
 import androidx.compose.foundation.background
@@ -10,6 +12,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
@@ -145,15 +148,18 @@ fun SettingsScreen(
 }
 
 /** In-app language (Android 13+ per-app locale; the system shows the same choice under Apps › Cyclus). */
+@androidx.annotation.RequiresApi(Build.VERSION_CODES.TIRAMISU)
 @Composable
 private fun LanguageSection(fmt: Fmt) {
     val ctx = LocalContext.current
-    val current = LocalConfiguration.current.locales[0].language
+    val lm = ctx.getSystemService(LocaleManager::class.java)
+    // empty = follows the phone; otherwise matched by language only (the system list stores "pt", the picker "pt-PT")
+    val chosen = lm.applicationLocales.takeIf { !it.isEmpty }?.get(0)
+    val options = listOf(LanguageOption(null, fmt.s("langSys"), fmt.s("langSysS"))) +
+        com.nordinary.cyclus.i18n.AppLanguages.ALL.map { LanguageOption(it.tag, it.endonym) }
     Section(fmt.s("langT")) {
-        Segments(listOf("Deutsch", "English"), if (current == "en") 1 else 0) { i ->
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-                ctx.getSystemService(LocaleManager::class.java).applicationLocales = LocaleList.forLanguageTags(if (i == 1) "en" else "de")
-            }
+        LanguagePicker(fmt, fmt.s("langT"), options, com.nordinary.cyclus.i18n.AppLanguages.of(chosen)?.tag) { tag ->
+            lm.applicationLocales = if (tag == null) LocaleList.getEmptyLocaleList() else LocaleList.forLanguageTags(tag)
         }
     }
 }
@@ -175,12 +181,14 @@ private fun Group(content: @Composable () -> Unit) {
 @Composable
 internal fun Segments(labels: List<String>, selected: Int, onSelect: (Int) -> Unit) {
     val c = Cyclus.colors
-    SingleChoiceSegmentedButtonRow(Modifier.fillMaxWidth()) {
+    // a label that wraps (longer languages) makes every segment as tall as the tallest, text centred
+    SingleChoiceSegmentedButtonRow(Modifier.fillMaxWidth().height(androidx.compose.foundation.layout.IntrinsicSize.Min)) {
         labels.forEachIndexed { i, l ->
             SegmentedButton(
                 selected = selected == i, onClick = { onSelect(i) }, shape = SegmentedButtonDefaults.itemShape(i, labels.size),
+                modifier = Modifier.fillMaxHeight(),
                 colors = SegmentedButtonDefaults.colors(activeContainerColor = c.accent.copy(alpha = .14f), activeContentColor = c.ink, inactiveContainerColor = c.surface),
-            ) { Text(l, fontWeight = FontWeight.SemiBold) }
+            ) { Text(l, fontWeight = FontWeight.SemiBold, textAlign = androidx.compose.ui.text.style.TextAlign.Center, maxLines = 2) }
         }
     }
 }

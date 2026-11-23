@@ -220,7 +220,8 @@ fun OnboardingScreen(vm: AppViewModel, fmt: Fmt) {
 
 @Composable
 private fun Title(t: String, center: Boolean = false) =
-    Text(t, Modifier.fillMaxWidth(), fontSize = 26.sp, fontWeight = FontWeight.Bold, color = Cyclus.colors.ink, textAlign = if (center) TextAlign.Center else TextAlign.Start, lineHeight = 32.sp)
+    Text(t, Modifier.fillMaxWidth(), fontSize = 26.sp, fontWeight = FontWeight.Bold, color = Cyclus.colors.ink, textAlign = if (center) TextAlign.Center else TextAlign.Start, lineHeight = 32.sp,
+        style = androidx.compose.material3.LocalTextStyle.current.copy(lineBreak = androidx.compose.ui.text.style.LineBreak.Heading, hyphens = androidx.compose.ui.text.style.Hyphens.None))
 
 @Composable
 private fun Body(t: String, center: Boolean = false, small: Boolean = false) =

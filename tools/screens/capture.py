@@ -24,38 +24,53 @@ PKG = "com.nordinary.cyclus.debug"
 ACT = "com.nordinary.cyclus.MainActivity"
 ROOT = Path(__file__).resolve().parents[2]
 
-# UI text per language (generated strings; keep in sync with strings_tx.xml / strings.xml)
-T = {
-    "de": dict(
-        start="Los geht", cont="Weiter", read="Ich habe das gelesen", agree="Zustimmen und weiter", skip="Überspringen",
-        noMemory="Weiß ich nicht mehr", notNow="Jetzt nicht", today="Heute", calendar="Kalender", insights="Einblicke",
-        day12="Tag 12", expected="Periode fällig", period="Periodentag 2", hbc="Mit Pille", conceive="Kinderwunsch · vor LH+",
-        twoww="Kinderwunsch · nach Temperaturanstieg", ringHelp="Ring erklären", done="Fertig", cancel="Abbrechen",
-        customize="Ansicht anpassen", compact="Kompakt", large="Groß", addWeek="Hinzufügen: Woche", editQuick="Schnellauswahl bearbeiten",
-        reset="Auf Standard zurücksetzen", log="Eintragen", more="Weitere Angaben", allPatterns="Muster ansehen", how="So funktioniert",
-        report="Arztbericht", privacy="Datenschutz", settings="Einstellungen", notice="Wichtiger Hinweis", erase="Alles löschen",
-        export="Verschlüsselte Sicherung erstellen", notifications="Mitteilungen", custom="Eigene", pin="Cyclus-PIN",
-        appLock="App-Sperre", why="Warum dieses Fenster", preview="Vorschau", back="Zurück", close="Schließen",
-        about="Über Cyclus", oss="Open-Source-Lizenzen", sqlc="SQLCipher",
-        cards=["Zyklus vs. üblich", "Temperaturkurve", "Stimmung & Energie", "Fragen für die Ärztin", "Phasen-Hinweis"],
-        showCard="Hinzufügen", dqPlus="+ Frage hinzufügen", dqAdd="Frage hinzufügen", question="Ist das noch normal?",
-    ),
-    "en": dict(
-        start="Get started", cont="Continue", read="I have read", agree="Agree and continue", skip="Skip",
-        noMemory="remember", notNow="Not now", today="Today", calendar="Calendar", insights="Insights",
-        day12="Day 12", expected="Period due", period="Period day 2", hbc="On the pill", conceive="Trying · before LH+",
-        twoww="Trying · after temperature rise", ringHelp="Explain the ring", done="Done", cancel="Cancel",
-        customize="Customize", compact="Compact", large="Large", addWeek="Add: This week", editQuick="Edit quick picks",
-        reset="Reset to default", log="Log", more="More details", allPatterns="patterns", how="How it works",
-        report="Doctor Visit Pack", privacy="Privacy", settings="Settings", notice="Important notice", erase="Erase everything",
-        export="Create encrypted backup", notifications="Notifications", custom="Custom", pin="Cyclus PIN",
-        appLock="App lock", why="Why this window", preview="Preview", back="Back", close="Close",
-        about="About Cyclus", oss="Open-source licenses", sqlc="SQLCipher",
-        cards=["Cycle vs. usual", "Temperature curve", "Mood & energy", "Questions for your doctor", "Cycle phase"],
-        showCard="Add", dqPlus="+ Add question", dqAdd="Add question", question="Is this still normal?",
-    ),
-}
+# UI text per language, read from the app's own string resources (so every language works without a label list)
+LANG_DIRS = {"en": "values", "de": "values-de", "fr": "values-fr", "es": "values-es", "pt": "values-pt", "it": "values-it"}
+LOCALE_TAGS = {"en": "en-US", "de": "de-DE", "fr": "fr-FR", "es": "es-ES", "pt": "pt-PT", "it": "it-IT"}
 
+
+def res_strings(lang: str) -> dict:
+    out = {}
+    d = ROOT / "androidApp" / "src" / "main" / "res" / LANG_DIRS[lang]
+    for f in ("strings_tx.xml", "strings.xml"):
+        x = (d / f).read_text(encoding="utf-8")
+        for m in re.finditer(r'<string name="([^"]+)"[^>]*>(.*?)</string>', x, re.S):
+            out[m.group(1)] = m.group(2)
+        for m in re.finditer(r'<plurals name="([^"]+)">(.*?)</plurals>', x, re.S):
+            for q in re.finditer(r'<item quantity="([a-z]+)">(.*?)</item>', m.group(2), re.S):
+                out[f"{m.group(1)}#{q.group(1)}"] = q.group(2)
+    def clean(t):
+        t = html.unescape(t).replace("\\'", "'").replace('\\"', '"').replace("\\n", "\n")
+        return re.sub(r"\\u([0-9a-fA-F]{4})", lambda m: chr(int(m.group(1), 16)), t).replace("{b}", "").replace("{/b}", "")
+    return {k: clean(v) for k, v in out.items()}
+
+
+def labels(lang: str) -> dict:
+    r = res_strings(lang)
+    s = lambda k: r["tx_" + k] if "tx_" + k in r else r[k]
+    # a stable piece of a formatted text (the longest part without placeholders)
+    frag = lambda t: max(re.split(r"%\d+\$[sd]", t), key=len).strip()
+    return dict(
+        start=s("getStarted"), cont=s("cont"), read=s("noticeChk"), agree=s("agreeCont"), skip=s("skip"),
+        noMemory=s("dontRemember"), notNow=s("notNow"), today=s("tabToday"), calendar=s("tabCal"), insights=s("tabIns"),
+        day12=s("debug_sc_day12"), expected=s("debug_sc_expected"), period=s("debug_sc_period"), hbc=s("debug_sc_hbc"),
+        conceive=s("debug_sc_conceive"), twoww=s("debug_sc_conceive2ww"), ringHelp=s("ringHelpA"), done=s("done"),
+        cancel=s("cancel"), customize=s("customize"), compact=s("ringCompact"), large=s("ringLarge"),
+        addWeek=f'{s("showCard")}: {s("card_week")}', editQuick=s("editQuick"), reset=s("resetLayout"), log=s("fab"),
+        more=s("log_more"), allPatterns=frag(r["pat_all#other"]), how=s("howWorks"), report=s("reportT"),
+        privacy=s("aPrivacy"), settings=s("aSettings"), notice=s("noticeRow"), erase=s("eraseT"), export=s("encBk"),
+        notifications=s("notifT"), custom=s("pal_custom"), pin=s("pinT"), appLock=s("faceLock"),
+        why=s("whyLink").rstrip("?  "), preview=s("previewBtn"), back=s("back"), close=s("close"),
+        about=s("aboutT"), oss=s("ossT"), sqlc="SQLCipher",
+        cards=[s(k) for k in ("card_usual", "card_temp", "card_mood", "card_doctor", "card_phase")],
+        showCard=s("showCard"), dqPlus="+ " + s("dqAdd"), dqAdd=s("dqAdd"),
+        # typed with adb, so plain ASCII
+        question={"de": "Ist das noch normal?", "en": "Is this still normal?", "fr": "Est-ce normal?",
+                  "es": "Es normal esto?", "pt": "Isto e normal?", "it": "E normale?"}[lang],
+    )
+
+
+T = {lang: labels(lang) for lang in LANG_DIRS}
 
 class Emu:
     def __init__(self, serial: str, out: Path, scale: float):
@@ -110,6 +125,11 @@ class Emu:
             if required:
                 raise RuntimeError(f"not on screen: {label!r}")
             return False
+        # the floating "Log" button covers the bottom right (wider in long languages): bring the target up first
+        if p[1] > self.h * 0.72:
+            self.sh(f"input swipe {self.w // 2} {int(self.h * .70)} {self.w // 2} {int(self.h * .45)} 400")
+            time.sleep(0.8)
+            p = self.find(label, desc, tries=1) or p
         self.sh(f"input tap {p[0]} {p[1]}")
         time.sleep(wait)
         return True
@@ -183,7 +203,7 @@ def run(e: Emu, lang: str, only: str | None, dark: bool):
     print("reset")
     e.sh(f"pm clear {PKG}")
     e.sh("cmd uimode night no")
-    e.sh(f"cmd locale set-app-locales {PKG} --locales {'de-DE' if lang == 'de' else 'en-US'}")
+    e.sh(f"cmd locale set-app-locales {PKG} --locales {LOCALE_TAGS[lang]}")
     e.sh(f"am start -n {PKG}/{ACT}")
     time.sleep(3)
 
@@ -349,12 +369,14 @@ def run(e: Emu, lang: str, only: str | None, dark: bool):
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--serial", default="emulator-5554")
-    ap.add_argument("--lang", choices=["de", "en"], default="de")
+    ap.add_argument("--lang", choices=list(LANG_DIRS), default="de")
     ap.add_argument("--only")
     ap.add_argument("--scale", type=float, default=0.5)
     ap.add_argument("--no-dark", action="store_true")
     a = ap.parse_args()
-    out = ROOT / "docs" / "screens" / ("android" if a.lang == "de" else "android-en")
+    # the German set is the committed reference; other languages go to build/ for review only
+    out = ROOT / "docs" / "screens" / "android" if a.lang == "de" else ROOT / "build" / "screens" / a.lang
+    out.mkdir(parents=True, exist_ok=True)
     e = Emu(a.serial, out, a.scale)
     run(e, a.lang, a.only, dark=not a.no_dark)
 

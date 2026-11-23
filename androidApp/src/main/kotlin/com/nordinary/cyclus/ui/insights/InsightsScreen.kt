@@ -256,7 +256,7 @@ internal fun TemperatureChartView(t: TemperatureChart, fmt: Fmt) {
         }
         text.textAlign = Paint.Align.CENTER
         for (cd in listOf(1, 7, 14, 21, 28).filter { it <= n }) {
-            drawContext.canvas.nativeCanvas.drawText("${if (fmt.isDe) "ZT" else "CD"} $cd", sx(cd) * u, (150 - 8) * u, text)
+            drawContext.canvas.nativeCanvas.drawText(fmt.s("cdAxis", cd), sx(cd) * u, (150 - 8) * u, text)
         }
     }
 }

@@ -126,7 +126,19 @@ val RobotoFlex = FontFamily(flex(400), flex(500), flex(600), flex(700), flex(800
 val Nunito = FontFamily(nunito(600), nunito(700), nunito(800))
 
 private fun typography(): Typography {
-    val b = Typography()
+    // Line breaking for six languages: headings balanced (no lone last word), body text high quality with
+    // hyphenation (long German, French, Italian … words), short UI labels high quality without hyphens.
+    val b0 = Typography()
+    fun TextStyle.heading() = copy(lineBreak = androidx.compose.ui.text.style.LineBreak.Heading)
+    fun TextStyle.para() = copy(lineBreak = androidx.compose.ui.text.style.LineBreak.Paragraph, hyphens = androidx.compose.ui.text.style.Hyphens.Auto)
+    fun TextStyle.label() = copy(lineBreak = androidx.compose.ui.text.style.LineBreak.Paragraph)
+    val b = Typography(
+        displayLarge = b0.displayLarge.heading(), displayMedium = b0.displayMedium.heading(), displaySmall = b0.displaySmall.heading(),
+        headlineLarge = b0.headlineLarge.heading(), headlineMedium = b0.headlineMedium.heading(), headlineSmall = b0.headlineSmall.heading(),
+        titleLarge = b0.titleLarge.heading(), titleMedium = b0.titleMedium.label(), titleSmall = b0.titleSmall.label(),
+        bodyLarge = b0.bodyLarge.para(), bodyMedium = b0.bodyMedium.para(), bodySmall = b0.bodySmall.para(),
+        labelLarge = b0.labelLarge.label(), labelMedium = b0.labelMedium.label(), labelSmall = b0.labelSmall.label(),
+    )
     fun TextStyle.f() = copy(fontFamily = RobotoFlex)
     return Typography(
         displayLarge = b.displayLarge.f(), displayMedium = b.displayMedium.f(), displaySmall = b.displaySmall.f(),

@@ -5,6 +5,8 @@ at 10200 (internal test builds before it reached 10101).
 
 ## Unreleased
 
+- **Four more languages:** French, Spanish, Portuguese and Italian. Choose one in Settings › Language or follow your
+  phone; phones in other languages get English. The Doctor Visit Pack can be created in any of the six languages.
 - **About Cyclus › License:** Cyclus is free software under the GNU GPL 3.0; the notice and the full license text are
   now in the app.
 

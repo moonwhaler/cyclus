@@ -26,14 +26,14 @@ class ReportActions internal constructor(private val c: VmContext, private val m
     val file = MutableStateFlow<File?>(null)
     val working = MutableStateFlow(false)
     /** PDF language: the single source for the toggle and the renderer. */
-    val locale = MutableStateFlow(java.util.Locale.GERMAN)
+    val locale = MutableStateFlow(java.util.Locale.ENGLISH)
 
     fun start(defaultQuestions: String, uiLocale: java.util.Locale) {
         if (options.value == null) {
             // the open appointment questions, one per line; the sample question only when there are none
             val open = model()?.doctorQuestions?.let { com.nordinary.cyclus.presenter.DoctorQuestions.open(it) }.orEmpty()
             options.value = ReportOptions(questions = if (open.isEmpty()) defaultQuestions else open.joinToString("\n") { "– ${it.text}" })
-            locale.value = if (uiLocale.language == "en") java.util.Locale.ENGLISH else java.util.Locale.GERMAN
+            locale.value = com.nordinary.cyclus.i18n.AppLanguages.pdfDefault(uiLocale)
             // the name is remembered on this device only (encrypted DB, never exported)
             c.launch {
                 repo.setting(SettingKeys.REPORT_NAME)?.let { n -> update { if (it.name.isEmpty()) it.copy(name = n) else it } }
@@ -57,7 +57,8 @@ class ReportActions internal constructor(private val c: VmContext, private val m
                 val pdf = withContext(Dispatchers.Default) {
                     val r = ReportPresenter.build(m.snapshot, opts, m.muted, m.episodes) ?: return@withContext null
                     val bytes = ReportPdf.render(app, r, locale, ReportPdf.paperFor(regionLocale))
-                    val name = (if (locale.language == "de") "Zyklusbericht-" else "Cycle-summary-") + LocalDate.now() + ".pdf"
+                    // the file name in the PDF's language (not the app's), ASCII only for share targets
+                    val name = ReportPdf.localized(app, locale).getString(R.string.tx_pdfName) + "-" + LocalDate.now() + ".pdf"
                     ReportFiles.write(app, name, bytes)
                 }
                 file.value = pdf

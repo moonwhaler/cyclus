@@ -15,6 +15,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
@@ -99,7 +100,6 @@ fun ReportScreen(vm: AppViewModel, fmt: Fmt, snackbar: SnackbarHostState, onBack
     val file by vm.report.file.collectAsStateWithLifecycle()
     val working by vm.report.working.collectAsStateWithLifecycle()
     val pdfLocale by vm.report.locale.collectAsStateWithLifecycle()
-    val pdfDe = pdfLocale.language == "de"
     val o = options ?: return
     val back = { vm.report.close(); onBack() }
     val scroll = TopAppBarDefaults.exitUntilCollapsedScrollBehavior()
@@ -170,9 +170,11 @@ fun ReportScreen(vm: AppViewModel, fmt: Fmt, snackbar: SnackbarHostState, onBack
             } }
             item { Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                 Label(fmt.s("pdfLang"))
-                Segments(listOf("Deutsch", "English"), if (pdfDe) 0 else 1) { i ->
-                    vm.report.locale.value = if (i == 0) Locale.GERMAN else Locale.ENGLISH
-                }
+                com.nordinary.cyclus.ui.common.LanguagePicker(
+                    fmt, fmt.s("pdfLang"),
+                    com.nordinary.cyclus.i18n.AppLanguages.ALL.map { com.nordinary.cyclus.ui.common.LanguageOption(it.tag, it.endonym) },
+                    com.nordinary.cyclus.i18n.AppLanguages.of(pdfLocale)?.tag,
+                ) { tag -> if (tag != null) vm.report.locale.value = java.util.Locale.forLanguageTag(tag) }
             } }
             item { Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                 if (working) {
@@ -248,12 +250,14 @@ private fun Label(t: String) = Text(t.uppercase(), Modifier.padding(horizontal =
 @Composable
 private fun Segments(labels: List<String>, selected: Int, onSelect: (Int) -> Unit) {
     val c = Cyclus.colors
-    SingleChoiceSegmentedButtonRow(Modifier.fillMaxWidth()) {
+    // a label that wraps (longer languages) makes every segment as tall as the tallest, text centred
+    SingleChoiceSegmentedButtonRow(Modifier.fillMaxWidth().height(androidx.compose.foundation.layout.IntrinsicSize.Min)) {
         labels.forEachIndexed { i, l ->
             SegmentedButton(
                 selected = selected == i, onClick = { onSelect(i) }, shape = SegmentedButtonDefaults.itemShape(i, labels.size),
+                modifier = Modifier.fillMaxHeight(),
                 colors = SegmentedButtonDefaults.colors(activeContainerColor = c.accent.copy(alpha = .14f), activeContentColor = c.ink, inactiveContainerColor = c.surface),
-            ) { Text(l, fontWeight = FontWeight.SemiBold) }
+            ) { Text(l, fontWeight = FontWeight.SemiBold, textAlign = androidx.compose.ui.text.style.TextAlign.Center, maxLines = 2) }
         }
     }
 }

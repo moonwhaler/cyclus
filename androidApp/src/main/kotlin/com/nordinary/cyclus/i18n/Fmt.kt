@@ -24,9 +24,13 @@ import java.util.Locale
  * numbers (rounding half away from zero like Intl) and [Txt] keys → generated string resources.
  */
 class Fmt(private val res: Resources, val locale: Locale) {
-    val isDe: Boolean = locale.language == "de"
     private fun df(skeleton: String) = DateFormat.getInstanceForSkeleton(skeleton, locale).apply { timeZone = TimeZone.GMT_ZONE }
     private val fMd = df("MMMd")
+    /** The locale's own day+month pattern ("d. MMM", "MMM d", "d MMM", "d 'de' MMM" …): decides how a range reads. */
+    private val mdPattern = (fMd as? android.icu.text.SimpleDateFormat)?.toPattern() ?: "MMM d"
+    private val dayFirst = mdPattern.indexOf('d').let { d -> d >= 0 && d < mdPattern.indexOf('M') }
+    /** What follows the day number before the month: "." in German, nothing in French, Spanish, Italian, Portuguese. */
+    private val daySuffix = mdPattern.substring(mdPattern.indexOf('d') + 1).takeWhile { it != ' ' && it != 'M' && it != '\'' && it != '/' }
     private val fWmd = df("EEEMMMd")
     private val fW = df("EEE")
     private val fLong = df("EEEEdMMMM")
@@ -37,19 +41,22 @@ class Fmt(private val res: Resources, val locale: Locale) {
     /** "So., 22. Nov." / "Sun, Nov 22" */
     fun wmd(day: Day): String = fWmd.format(date(day))
     /** "So" / "Sun" (no trailing dot, as in the outlook header) */
-    fun weekday(day: Day): String = fW.format(date(day)).replace(".", "")
+    fun weekday(day: Day): String = fW.format(date(day)).replace(".", "").let { w ->
+        // some locales' short form is the full word (pt-PT "terça", "sábado"): narrow column headers need three letters
+        if (w.length > 4) w.take(3) else w
+    }
     fun long(day: Day): String = fLong.format(date(day))
     /** A moment in the device's time zone, with year and time: "23. Nov. 2026, 14:05" / "Nov 23, 2026, 2:05 PM". */
     fun dateTime(epochMillis: Long): String =
         DateFormat.getInstanceForSkeleton("yMMMdjmm", locale).apply { timeZone = TimeZone.getDefault() }.format(Date(epochMillis))
     fun dayOfMonth(day: Day): Int = java.time.LocalDate.ofEpochDay(day.toLong()).dayOfMonth
 
-    /** Prototype `range(a, b)`: "3.–8. Dez." / "Dec 3–8" / "28. Nov. – 3. Dez." */
+    /** Prototype `range(a, b)`: "3.–8. Dez." / "Dec 3–8" / "3–8 déc." / "28. Nov. – 3. Dez." */
     fun range(a: Day, b: Day): String {
         if (a == b) return md(a)
         val la = java.time.LocalDate.ofEpochDay(a.toLong())
         val lb = java.time.LocalDate.ofEpochDay(b.toLong())
-        if (la.month == lb.month && la.year == lb.year) return if (isDe) "${la.dayOfMonth}.–${md(b)}" else "${md(a)}–${lb.dayOfMonth}"
+        if (la.month == lb.month && la.year == lb.year) return if (dayFirst) "${la.dayOfMonth}$daySuffix–${md(b)}" else "${md(a)}–${lb.dayOfMonth}"
         return "${md(a)} – ${md(b)}"
     }
 

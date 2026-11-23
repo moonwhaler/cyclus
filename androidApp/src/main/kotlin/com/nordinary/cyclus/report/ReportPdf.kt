@@ -37,9 +37,12 @@ object ReportPdf {
 
     fun paperFor(locale: Locale) = if (locale.country in setOf("US", "CA")) Paper.LETTER else Paper.A4
 
+    /** A context whose resources speak [locale] (the PDF's language, independent of the app's). */
+    fun localized(context: Context, locale: Locale): Context =
+        context.createConfigurationContext(Configuration(context.resources.configuration).apply { setLocale(locale) })
+
     fun render(context: Context, model: ReportModel, pdfLocale: Locale, paper: Paper): ByteArray {
-        val cfg = Configuration(context.resources.configuration).apply { setLocale(pdfLocale) }
-        val ctx = context.createConfigurationContext(cfg)
+        val ctx = localized(context, pdfLocale)
         val fmt = Fmt(ctx.resources, pdfLocale)
         val pages = Writer(ctx, fmt, paper, total = 0).also { it.draw(model); it.close() }.pageCount // pass 1: count
         val w = Writer(ctx, fmt, paper, total = pages)
@@ -236,10 +239,14 @@ object ReportPdf {
             y += h + 6
         }
 
+        /** One line that must fit [width]: shortened with "…" (long symptom names in French, Italian, Portuguese). */
+        private fun fit(t: String, p: Paint, width: Float): String =
+            if (p.measureText(t) <= width) t else android.text.TextUtils.ellipsize(t, TextPaint(p), width, android.text.TextUtils.TruncateAt.END).toString()
+
         private fun bar(label: String, value: Int, max: Int) {
             ensure(16f)
             val lp = paint(9f); val labelW = 150f
-            c.drawText(label, m, y + 9, lp)
+            c.drawText(fit(label, lp, labelW - 6), m, y + 9, lp)
             val w = (contentW - labelW - 30) * value / max
             c.drawRect(m + labelW, y + 1, m + labelW + w, y + 11, Paint().apply { color = INK })
             c.drawText("$value", m + labelW + w + 4, y + 10, paint(9f, bold))
@@ -263,13 +270,16 @@ object ReportPdf {
         }
 
         private fun legend() {
-            ensure(18f)
+            ensure(32f) // room for a second line in long languages
             var x = m
             val p = paint(8f, color = INK2)
             for ((f, id) in listOf(Flow.HEAVY to R.string.rep_heavy, Flow.MEDIUM to R.string.rep_medium, Flow.LIGHT to R.string.rep_light,
                 Flow.UNSPECIFIED to R.string.rep_unspec, Flow.SPOTTING to R.string.rep_spotting)) {
+                val t = s(id)
+                // longer languages: continue on the next line instead of running off the page
+                if (x + 12 + p.measureText(t) > m + contentW) { y += 14; x = m }
                 flowCell(f, x, y, 9f)
-                val t = s(id); c.drawText(t, x + 12, y + 8, p); x += 18 + p.measureText(t) + 8
+                c.drawText(t, x + 12, y + 8, p); x += 18 + p.measureText(t) + 8
             }
             y += 18
         }
@@ -313,7 +323,8 @@ object ReportPdf {
             y += 14
             h.symptoms.forEachIndexed { si, sym ->
                 ensure(16f)
-                c.drawText(fmt.item(sym), m, y + 10, paint(9f))
+                val np = paint(9f)
+                c.drawText(fit(fmt.item(sym), np, labelW - 6), m, y + 10, np)
                 h.rates[si].forEachIndexed { i, v ->
                     val gray = (255 - (v * 215)).toInt().coerceIn(40, 255)
                     c.drawRect(m + labelW + i * cw + 1, y + 1, m + labelW + (i + 1) * cw - 1, y + 13, Paint().apply { color = Color.rgb(gray, gray, gray) })

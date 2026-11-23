@@ -11,7 +11,7 @@ python3 tools/screens/capture.py --lang en   # English set → docs/screens/andr
 python3 tools/screens/capture.py --only today # one area
 ```
 
-Dates shown are relative to the capture day (2026-11-23). Images are 640 px wide (50 %), 256-colour PNG.
+Dates shown are relative to the capture day (2026-11-24). Images are 640 px wide (50 %), 256-colour PNG.
 
 ## Onboarding
 

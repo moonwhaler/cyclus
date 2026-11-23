@@ -1,9 +1,12 @@
 // Generates Android string resources from the prototype's translation table (prototype/index.html `TX` + item
-// labels). Until the shared string source exists (PARITY X-001), the prototype is the single copy source, so the
-// apps say exactly what the prototype says. German is the default locale (values/), English is values-en/.
+// labels). Until the shared string source exists (PARITY X-001), the prototype is the copy source for German and
+// English, so the apps say exactly what the prototype says. English is the base locale (values/), German values-de/.
+// French, Spanish (es-ES), Portuguese (pt-PT) and Italian come from tools/strings/i18n/<lang>.json, translated from
+// the generated English source (tools/strings/i18n/en.json, plain text). Every locale is checked against English:
+// same keys, same placeholders (%1$s …) and bold markers ({b}…{/b}), no banned wording (spec §9.3).
 //
 //   node tools/strings/export.mjs
-import { readFileSync, writeFileSync, mkdirSync } from 'node:fs';
+import { readFileSync, writeFileSync, mkdirSync, rmSync, existsSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -98,7 +101,9 @@ const esc = (s) => s
   .replace(/\\/g, '\\\\').replace(/'/g, "\\'").replace(/"/g, '\\"').replace(/\n/g, '\\n')
   .replace(/^([@?])/, '\\$1');
 const resName = (prefix, key) => prefix + key.replace(/[^A-Za-z0-9]/g, '_');
+const PH = /%(\d+)\$([sd])/g;
 
+/** Prototype template function → plain text with Android placeholders (%1$s …); literal text untouched. */
 function fromFunction(key, fn) {
   const src = fn.toString();
   const arrow = src.indexOf('=>');
@@ -106,43 +111,29 @@ function fromFunction(key, fn) {
   let body = src.slice(arrow + 2).trim();
   if (!/^`[^`]*`$/.test(body)) throw new Error(`unsupported template for ${key}: ${src}`);
   body = boldMarkers(body.slice(1, -1));
-  let out = '', last = 0;
-  for (const m of body.matchAll(/\$\{([^}]*)\}/g)) {
-    out += esc(body.slice(last, m.index)).replace(/%/g, '%%');
-    const expr = m[1].trim().replace(/\.toLowerCase\(\)$/, '');
-    const i = params.indexOf(expr);
-    if (i < 0) throw new Error(`unsupported expression in ${key}: ${m[1]}`);
-    out += `%${i + 1}$s`;
-    last = m.index + m[0].length;
-  }
-  return out + esc(body.slice(last)).replace(/%/g, '%%');
+  return body.replace(/\$\{([^}]*)\}/g, (_, e) => {
+    const i = params.indexOf(e.trim().replace(/\.toLowerCase\(\)$/, ''));
+    if (i < 0) throw new Error(`unsupported expression in ${key}: ${e}`);
+    return `%${i + 1}$s`;
+  });
 }
 
-const out = { de: [], en: [] };
-const arrays = { de: [], en: [] };
-const plurals = { de: [], en: [] };
+// ---- plain-text source per language: { strings: {key: {text, fmt}}, plurals: {key: {one, other}}, arrays, items }
+const src = { de: { strings: {}, plurals: {}, arrays: {}, items: {} }, en: { strings: {}, plurals: {}, arrays: {}, items: {} } };
 const keys = [];
 for (const [key, v] of Object.entries(TX)) {
   if (SKIP.test(key)) continue;
-  if (PLURALS[key]) {
-    for (const L of ['de', 'en']) plurals[L].push(`    <plurals name="${resName('tx_', key)}">\n        <item quantity="one">${esc(PLURALS[key][L].one)}</item>\n        <item quantity="other">${esc(PLURALS[key][L].other)}</item>\n    </plurals>`);
-    continue;
-  }
-  if (Array.isArray(v.de)) {
-    for (const L of ['de', 'en']) arrays[L].push(`    <string-array name="${resName('tx_', key)}">\n${v[L].map((x) => `        <item>${esc(String(x))}</item>`).join('\n')}\n    </string-array>`);
-    continue;
-  }
+  if (PLURALS[key]) { for (const L of ['de', 'en']) src[L].plurals[key] = PLURALS[key][L]; continue; }
+  if (Array.isArray(v.de)) { for (const L of ['de', 'en']) src[L].arrays[key] = v[L].map(String); continue; }
   for (const L of ['de', 'en']) {
     const x = v[L];
-    const text = typeof x === 'function' ? fromFunction(key, x) : esc(boldMarkers(String(x)));
-    const noFormat = typeof x !== 'function' && text.includes('%') ? ' formatted="false"' : '';
-    out[L].push(`    <string name="${resName('tx_', key)}"${noFormat}>${text}</string>`);
+    src[L].strings[key] = typeof x === 'function' ? { text: fromFunction(key, x), fmt: true } : { text: boldMarkers(String(x)), fmt: false };
   }
   keys.push(key);
 }
 // item labels (engine keys → text)
-const items = [
-  ['sym_', Object.entries(tables.SYM).map(([k, v]) => [k, v])],
+const itemTables = [
+  ['sym_', Object.entries(tables.SYM)],
   ['emo_', Object.entries(tables.EMO)],
   ['flow_', Object.entries(tables.FLOWL)],
   ['mucus_', Object.entries(tables.MUCL)],
@@ -150,20 +141,144 @@ const items = [
   ['region_', tables.REGIONS.map((r) => [r.id, r.l])],
 ];
 const itemKeys = {};
-for (const [prefix, entries] of items) {
+for (const [prefix, entries] of itemTables) {
   itemKeys[prefix] = entries.map(([k]) => k);
-  for (const [k, [de, en]] of entries) {
-    out.de.push(`    <string name="${resName(prefix, k)}">${esc(de)}</string>`);
-    out.en.push(`    <string name="${resName(prefix, k)}">${esc(en)}</string>`);
-  }
+  for (const [k, [de, en]] of entries) { src.de.items[prefix + k] = de; src.en.items[prefix + k] = en; }
 }
 
-const header = '<?xml version="1.0" encoding="utf-8"?>\n<!-- GENERATED by tools/strings/export.mjs from prototype/index.html. Do not edit by hand. -->\n<resources>\n';
-for (const [L, dir] of [['de', 'values'], ['en', 'values-en']]) {
-  const d = join(ROOT, 'androidApp', 'src', 'main', 'res', dir);
-  mkdirSync(d, { recursive: true });
-  writeFileSync(join(d, 'strings_tx.xml'), header + [...out[L], ...plurals[L], ...arrays[L]].join('\n') + '\n</resources>\n');
+// ---- translations: same shape as en.json (plain text); "fmt" follows English
+const I18N = join(ROOT, 'tools', 'strings', 'i18n');
+mkdirSync(I18N, { recursive: true });
+const plainOf = (L) => ({
+  strings: Object.fromEntries(Object.entries(src[L].strings).map(([k, v]) => [k, v.text])),
+  plurals: src[L].plurals, arrays: src[L].arrays, items: src[L].items,
+});
+writeFileSync(join(I18N, 'en.json'), JSON.stringify({ _note: 'GENERATED source for translations (English). Do not edit; edit the prototype.', ...plainOf('en') }, null, 1) + '\n');
+
+// banned wording per language (spec §9.3), case-insensitive substrings
+const BANNED = {
+  en: ['safe days', 'infertile days', 'unsafe days', "can't get pregnant", 'cannot get pregnant', 'confirmed ovulation', 'you ovulated', 'diagnos'],
+  de: ['sichere tage', 'unfruchtbare tage', 'bestätigter eisprung', 'diagnostizier'],
+  fr: ['jours sûrs', 'jours sans risque', 'jours infertiles', 'jours non fertiles', 'ovulation confirmée', 'diagnostiqu'],
+  es: ['días seguros', 'días infértiles', 'días no fértiles', 'ovulación confirmada', 'diagnóstic', 'diagnostic'],
+  pt: ['dias seguros', 'dias inférteis', 'dias não férteis', 'ovulação confirmada', 'diagnóstic', 'diagnostic'],
+  it: ['giorni sicuri', 'giorni infertili', 'giorni non fertili', 'ovulazione confermata', 'diagnostic', 'diagnosi'],
+};
+// "diagnosis" itself is allowed only in the disclaimers ("keine Diagnose", "not a diagnosis")
+const DISCLAIMER_OK = /(keine diagnose|stellt keine diagnosen|not a diagnosis|does not diagnose|pas un diagnostic|ne pose aucun diagnostic|no es un diagnóstico|no hace diagnósticos|não é um diagnóstico|não faz diagnósticos|non è una diagnosi|non fa diagnosi|nessuna diagnosi)/i;
+
+const errors = [];
+const phSet = (t) => [...String(t).matchAll(PH)].map((m) => m[0]).sort().join(',');
+const boldCount = (t) => (String(t).match(/\{b\}/g) || []).length + '/' + (String(t).match(/\{\/b\}/g) || []).length;
+function check(L, data) {
+  const en = plainOf('en');
+  for (const part of ['strings', 'plurals', 'arrays', 'items']) {
+    const a = Object.keys(en[part]), b = Object.keys(data[part] || {});
+    for (const k of a) if (!(k in (data[part] || {}))) errors.push(`${L}: missing ${part}.${k}`);
+    for (const k of b) if (!(k in en[part])) errors.push(`${L}: extra ${part}.${k}`);
+  }
+  for (const [k, t] of Object.entries(data.strings || {})) if (k in en.strings) {
+    if (phSet(t) !== phSet(en.strings[k])) errors.push(`${L}: placeholders differ in ${k}: "${t}"`);
+    if (boldCount(t) !== boldCount(en.strings[k])) errors.push(`${L}: bold markers differ in ${k}`);
+  }
+  for (const [k, f] of Object.entries(data.plurals || {})) if (k in en.plurals) {
+    for (const q of ['one', 'other']) if (!f[q]) errors.push(`${L}: plural ${k} lacks ${q}`);
+    for (const q of Object.keys(f)) if (phSet(f[q]) !== phSet(en.plurals[k].other)) errors.push(`${L}: placeholders differ in plural ${k}.${q}`);
+  }
+  for (const [k, arr] of Object.entries(data.arrays || {})) if (k in en.arrays && arr.length !== en.arrays[k].length) errors.push(`${L}: array ${k} length`);
+  const all = [...Object.values(data.strings || {}), ...Object.values(data.items || {}), ...Object.values(data.arrays || {}).flat(),
+    ...Object.values(data.plurals || {}).flatMap((f) => Object.values(f))];
+  for (const t of all) for (const w of BANNED[L] || []) {
+    const low = String(t).toLowerCase();
+    if (low.includes(w) && !(w.startsWith('diagnos') || w.startsWith('diagnós') ? DISCLAIMER_OK.test(t) : false)) errors.push(`${L}: banned wording "${w}" in "${t}"`);
+  }
 }
+const LOCALES = { de: 'values-de', en: 'values' };
+const data = { de: plainOf('de'), en: plainOf('en') };
+for (const L of ['fr', 'es', 'pt', 'it']) {
+  const f = join(I18N, `${L}.json`);
+  if (!existsSync(f)) { console.warn(`strings: ${L}.json missing, skipped`); continue; }
+  data[L] = JSON.parse(readFileSync(f, 'utf8'));
+  LOCALES[L] = `values-${L}`;
+}
+// French typography: no line break before : ; ! ? » % or after « (non-breaking spaces, written at export time)
+const frSpace = (t) => typeof t !== 'string' ? t : t.replace(/ ([:;!?»])/g, '\u00a0$1').replace(/ %(?!\d+\$)/g, '\u00a0%').replace(/« /g, '«\u00a0');
+const mapText = (d, f) => ({
+  ...d,
+  strings: Object.fromEntries(Object.entries(d.strings).map(([k, v]) => [k, f(v)])),
+  plurals: Object.fromEntries(Object.entries(d.plurals).map(([k, v]) => [k, Object.fromEntries(Object.entries(v).map(([q, t]) => [q, f(t)]))])),
+  arrays: Object.fromEntries(Object.entries(d.arrays).map(([k, v]) => [k, v.map(f)])),
+  items: Object.fromEntries(Object.entries(d.items).map(([k, v]) => [k, f(v)])),
+});
+if (data.fr) data.fr = mapText(data.fr, frSpace);
+// every language: a number placeholder stays on the line of the word after it ("8 cycles", "29 jours")
+const keepUnit = (t) => typeof t !== 'string' ? t : t.replace(/(%\d+\$[sd]) (?=\p{Ll})/gu, '$1\u00a0');
+for (const L of Object.keys(data)) data[L] = mapText(data[L], keepUnit);
+for (const L of Object.keys(data)) check(L, data[L]);
+// hand-written Android strings (strings.xml): same keys and placeholders as English, no banned wording
+const RES = join(ROOT, 'androidApp', 'src', 'main', 'res');
+const handStrings = (dir) => {
+  const f = join(RES, dir, 'strings.xml');
+  if (!existsSync(f)) return null;
+  const x = readFileSync(f, 'utf8');
+  const out = {};
+  for (const m of x.matchAll(/<string name="([^"]+)"([^>]*)>([\s\S]*?)<\/string>/g)) if (!/translatable="false"/.test(m[2])) out[m[1]] = m[3];
+  for (const m of x.matchAll(/<plurals name="([^"]+)">([\s\S]*?)<\/plurals>/g))
+    for (const q of m[2].matchAll(/<item quantity="([a-z]+)">([\s\S]*?)<\/item>/g)) out[`${m[1]}#${q[1]}`] = q[2];
+  return out;
+};
+const handEn = handStrings('values');
+const phAny = (t) => [...String(t).matchAll(/%(\d+\$)?[sd]/g)].map((m) => m[0]).sort().join(',');
+for (const [L, dir] of Object.entries(LOCALES)) {
+  if (L === 'en') continue;
+  const h = handStrings(dir);
+  if (!h) { errors.push(`${L}: ${dir}/strings.xml missing`); continue; }
+  for (const k of Object.keys(handEn)) {
+    const base = k.split('#')[0];
+    const has = k in h || (k.includes('#') && Object.keys(h).some((x) => x.startsWith(base + '#')));
+    if (!has) errors.push(`${L}: strings.xml missing ${k}`);
+  }
+  for (const [k, t] of Object.entries(h)) {
+    const enK = k in handEn ? k : (k.includes('#') ? `${k.split('#')[0]}#other` : null);
+    if (!enK || !(enK in handEn)) { errors.push(`${L}: strings.xml extra ${k}`); continue; }
+    if (phAny(t) !== phAny(handEn[enK])) errors.push(`${L}: strings.xml placeholders differ in ${k}: "${t}"`);
+    for (const w of BANNED[L] || []) if (t.toLowerCase().includes(w) && !DISCLAIMER_OK.test(t)) errors.push(`${L}: strings.xml banned "${w}" in ${k}`);
+    if (L === 'fr' && / [:;!?»]|« /.test(t)) errors.push(`fr: strings.xml needs a non-breaking space in ${k}: "${t}"`);
+  }
+}
+if (errors.length) { console.error(errors.join('\n')); console.error(`strings: ${errors.length} problem(s), nothing written`); process.exit(1); }
+
+// ---- emit XML
+const isFmt = (k) => src.en.strings[k]?.fmt;
+const emitText = (t, fmt) => {
+  if (!fmt) return esc(t);
+  // literal % doubled, placeholders kept
+  return esc(t).replace(/%(?!\d+\$[sd])/g, '%%');
+};
+const header = '<?xml version="1.0" encoding="utf-8"?>\n<!-- GENERATED by tools/strings/export.mjs. Do not edit by hand. -->\n<resources>\n';
+// many: Romance languages use it for large numbers (CLDR); same text as other
+const MANY = new Set(['fr', 'es', 'pt', 'it']);
+for (const [L, dir] of Object.entries(LOCALES)) {
+  const d = data[L];
+  const lines = [];
+  for (const k of keys) {
+    const fmt = isFmt(k);
+    const text = emitText(d.strings[k], fmt);
+    const noFormat = !fmt && text.includes('%') ? ' formatted="false"' : '';
+    lines.push(`    <string name="${resName('tx_', k)}"${noFormat}>${text}</string>`);
+  }
+  for (const [prefix] of itemTables) for (const k of itemKeys[prefix]) lines.push(`    <string name="${resName(prefix, k)}">${esc(d.items[prefix + k])}</string>`);
+  for (const [k, f] of Object.entries(d.plurals)) {
+    const q = [['one', f.one], ...(MANY.has(L) ? [['many', f.many || f.other]] : []), ['other', f.other]];
+    lines.push(`    <plurals name="${resName('tx_', k)}">\n${q.map(([n, t]) => `        <item quantity="${n}">${esc(t)}</item>`).join('\n')}\n    </plurals>`);
+  }
+  for (const [k, arr] of Object.entries(d.arrays)) lines.push(`    <string-array name="${resName('tx_', k)}">\n${arr.map((x) => `        <item>${esc(String(x))}</item>`).join('\n')}\n    </string-array>`);
+  const out = join(ROOT, 'androidApp', 'src', 'main', 'res', dir);
+  mkdirSync(out, { recursive: true });
+  writeFileSync(join(out, 'strings_tx.xml'), header + lines.join('\n') + '\n</resources>\n');
+}
+// English moved to values/ (2026-11-23): an old values-en/ copy would shadow it
+rmSync(join(ROOT, 'androidApp', 'src', 'main', 'res', 'values-en', 'strings_tx.xml'), { force: true });
 
 // Kotlin lookup tables (no reflection / getIdentifier)
 const kt = [
@@ -179,7 +294,7 @@ const kt = [
   '    val plurals: Map<String, Int> = mapOf(',
   ...Object.keys(PLURALS).map((k) => `        "${k}" to R.plurals.${resName('tx_', k)},`),
   '    )',
-  ...items.map(([prefix]) => [
+  ...itemTables.map(([prefix]) => [
     `    val ${prefix.slice(0, -1)}: Map<String, Int> = mapOf(`,
     ...itemKeys[prefix].map((k) => `        "${k}" to R.string.${resName(prefix, k)},`),
     '    )',
@@ -192,4 +307,4 @@ const kt = [
 const ktDir = join(ROOT, 'androidApp', 'src', 'main', 'kotlin', 'com', 'nordinary', 'cyclus', 'i18n');
 mkdirSync(ktDir, { recursive: true });
 writeFileSync(join(ktDir, 'TxRes.kt'), kt.join('\n'));
-console.log(`strings: ${keys.length}, plurals: ${Object.keys(PLURALS).length}, arrays: ${arrays.de.length}, items: ${Object.values(itemKeys).flat().length}`);
+console.log(`strings: ${keys.length}, plurals: ${Object.keys(PLURALS).length}, arrays: ${Object.keys(src.en.arrays).length}, items: ${Object.values(itemKeys).flat().length}, locales: ${Object.keys(LOCALES).join(' ')}`);

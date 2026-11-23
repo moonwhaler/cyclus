@@ -82,7 +82,7 @@ cyclus/
 | Notifications schedule (what & when) | ✅ | Delivery (UNUserNotificationCenter / NotificationManager + WorkManager) |
 | Report content | ✅ `ReportModel` | PDF drawing (PDFKit vs `android.graphics.pdf.PdfDocument`) |
 | Backup format, crypto | ✅ format; PBKDF2-HMAC-SHA256 + AES-256-GCM via `expect/actual` (javax.crypto / CommonCrypto + CryptoKit) | File pickers (SAF / UIDocumentPicker) |
-| Strings | ✅ single source → generated `strings.xml` (+ plurals) and `Localizable.xcstrings` | — |
+| Strings | ✅ single source → generated `strings.xml` (+ plurals) and `Localizable.xcstrings`; base locale English (`values/`), plus `values-de`, `-fr`, `-es`, `-pt`, `-it` (2026-11-23); per-app language list generated from the folders (`generateLocaleConfig`, `resources.properties` = en) | — |
 | LLM phrasing (v1.5) | ✅ prompt + post-checks | Model call (Foundation Models / Gemini Nano) |
 
 ### 2.3 Key libraries (Android)
@@ -188,7 +188,7 @@ Pin exact versions at project start and record them in the SOUP list.
 | Chips (symptoms, feelings, tags, LH) | `FilterChip` (selected = check icon + `primaryContainer`; LH uses the `tertiary` variant) | Suggested chips: dashed outline (custom border) |
 | Flow droplets (5) | Custom toggle tiles in a 5-column row (`selectable` semantics, role = RadioButton) | Same labels incl. "Spotting" hyphenation |
 | 1–5 scale | Expressive `ButtonGroup` (connected), single select | End labels below, as prototype |
-| Segmented control (goal, language, period of time, PDF language) | `SingleChoiceSegmentedButtonRow` | — |
+| Segmented control (goal, period of time; language and PDF language use a sheet with six endonyms) | `SingleChoiceSegmentedButtonRow` | — |
 | iOS switch rows | `ListItem` + `Switch` (thumb icon) | Whole row clickable |
 | Status / tier badges | Custom pill `Surface` (non-interactive). Pattern statuses: filled / dashed / success text | Same wording |
 | Grouped lists | `Card` containing `ListItem`s with dividers (`outlineVariant`) | — |

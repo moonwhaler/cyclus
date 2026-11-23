@@ -48,8 +48,8 @@ class ReportDeviceTest {
         }.also { f.delete() }
     }
 
-    @Test fun pdfInBothLanguagesWithoutMetadata() {
-        for (loc in listOf(Locale.GERMAN, Locale.ENGLISH)) {
+    @Test fun pdfInEveryLanguageWithoutMetadata() {
+        for (loc in com.nordinary.cyclus.i18n.AppLanguages.ALL.map { it.locale }) {
             val bytes = ReportPdf.render(ctx, model(), loc, ReportPdf.Paper.A4)
             val (n, size) = pages(bytes)
             assertEquals(4, n, "summary, calendar, symptoms, notes/questions")
