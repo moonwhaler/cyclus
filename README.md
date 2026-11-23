@@ -1,6 +1,6 @@
 # Cyclus
 
-Private, local-first cycle tracker. **German first.** „Deinen Zyklus verstehen. Privat und sicher.“
+Private, local-first cycle tracker. German is the default language, English is complete. "Understand your cycle. Private and secure."
 No servers, no accounts, no tracking; all intelligence runs on the device. **Android is built first and is the reference implementation**; iOS follows with 100% parity on the same Kotlin Multiplatform core.
 
 ## Documents
@@ -18,12 +18,12 @@ No servers, no accounts, no tracking; all intelligence runs on the device. **And
 
 ## Status — 1.1.0 (2026-11-23)
 **Android: first stable milestone, feature-complete for v1 (phases A0–A5)**:
-- engines ported from the prototype and checked against its golden vectors (prediction, fertility, learning, „Deine Muster“, „Ausblick“);
+- engines ported from the prototype and checked against its golden vectors (prediction, fertility, learning, Your patterns, Outlook);
 - encrypted store (SQLCipher, hardware-held key, automatic recovery after unlock), app lock (biometrics + Cyclus PIN, keeps your place);
-- Today (customizable: card order, hide/library, Groß/Kompakt ring, Deine Schnellauswahl, Demnächst, Woche, Zyklus vs. üblich, Temperaturkurve, Stimmung & Energie, Fragen für die Ärztin, Phasen-Hinweis, ring explainer), Log sheet, Calendar, Insights + Muster, Kinderwunsch mode;
-- onboarding with the required „Bevor du startest“ notice and recorded consent (re-asked yearly and before fertility is shown);
-- Über Cyclus: version, the notice with its confirmations, how predictions work, open-source licenses (generated at build time);
-- Arztbericht (PDF, DE/EN), Datenschutz-Center, encrypted export/import (cross-platform), E2E-only device backup with restore, crypto-shred erase;
+- Today (customizable: card order, hide/library, large/compact ring, Your quick picks, Coming up, This week, Cycle vs. usual, Temperature curve, Mood & energy, Questions for your doctor, Cycle phase, ring explainer), Log sheet, Calendar, Insights + patterns, trying-to-conceive mode;
+- onboarding with the required Before you start notice and recorded consent (re-asked yearly and before fertility is shown);
+- About Cyclus: version, the notice with its confirmations, how predictions work, open-source licenses (generated at build time);
+- Doctor Visit Pack (PDF, DE/EN), Privacy Center, encrypted export/import (cross-platform), E2E-only device backup with restore, crypto-shred erase;
 - Health Connect (import + opt-in write, foreground only), widgets, Quick Settings tile, opt-in shortcut, discreet opt-in notifications, colour themes incl. Material You, tablets/foldables.
 
 **Next:** open `.cyclus` files from other apps + moving guide (PARITY S-005), CSV export; iOS per `IOS_PLAN.md` (needs a Mac); joint closed beta.
@@ -44,11 +44,11 @@ python3 tools/screens/capture.py # reference screenshots (emulator only)
 - Release signing: `storeFile`, `storePassword`, `keyAlias`, `keyPassword` in an untracked `keystore.properties` (ignored by git, like `*.jks`).
 - Strings come from the prototype's translation table: `node tools/strings/export.mjs`. Golden vectors: `node tools/golden/export.mjs`.
 - Backups: `.cyclus` format in `docs/export/FORMAT.md`; reference decoder `tools/export/cyclus_decode.py`.
-- Debug builds (`com.nordinary.cyclus.debug`): long-press the screen title „Heute“ for the demo-data menu (prototype scenarios, erase).
+- Debug builds (`com.nordinary.cyclus.debug`): long-press the screen title Today for the demo-data menu (prototype scenarios, erase).
 
 Troubleshooting: if Gradle reports `Plugin ... was not found` or `Could not find androidx...` although the version exists,
 Google Maven may be failing over IPv4 on your network (seen behind a VPN). Run Gradle with IPv6 preferred:
 `./gradlew --stop && JAVA_TOOL_OPTIONS=-Djava.net.preferIPv6Addresses=true ./gradlew --refresh-dependencies build`.
-The same failure can leave POMs marked missing in Gradle's cache; the open-source license list (Über Cyclus) then silently
+The same failure can leave POMs marked missing in Gradle's cache; the open-source license list (About Cyclus) then silently
 lacks the AndroidX libraries. Check: `androidApp/build/generated/aboutLibraries/aboutlibraries.json` should list > 100 libraries;
 if not, rerun the command above.

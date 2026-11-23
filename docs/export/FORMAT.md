@@ -16,7 +16,7 @@ All integers big-endian. The first 40 bytes are the **header**.
 | 40 | n | ciphertext | AES-256-GCM of the compressed payload |
 | 40+n | 16 | tag | GCM authentication tag |
 
-- **Key (mode 1):** `PBKDF2-HMAC-SHA256(UTF-8(NFC(passphrase)), salt, iterations, 32 bytes)`. The passphrase is Unicode-normalized to **NFC** first, so the same visible passphrase gives the same key on every platform and keyboard („ä“ precomposed or as „a“ + combining mark). Readers must also try the passphrase exactly as typed when the NFC form fails: files written before 2026-11-23 used it un-normalized.
+- **Key (mode 1):** `PBKDF2-HMAC-SHA256(UTF-8(NFC(passphrase)), salt, iterations, 32 bytes)`. The passphrase is Unicode-normalized to **NFC** first, so the same visible passphrase gives the same key on every platform and keyboard ("ä" precomposed or as "a" + combining mark). Readers must also try the passphrase exactly as typed when the NFC form fails: files written before 2026-11-23 used it un-normalized.
 - **Key (mode 2):** a random 256-bit key held by the device (Android: wrapped by the hardware keystore; travels only inside an end-to-end encrypted system backup).
 - **Associated data:** the 40 header bytes. Any change to magic, mode, salt, iterations or nonce makes decryption fail.
 - **Compression:** raw DEFLATE (RFC 1951, no zlib/gzip header) of the UTF-8 JSON payload. Readers should cap the inflated size (Cyclus: 32 MB).

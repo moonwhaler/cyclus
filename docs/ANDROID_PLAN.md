@@ -9,20 +9,20 @@
 
 | # | Decision | Recommendation | Why |
 |---|---|---|---|
-| **D10** | Code-sharing strategy | ✅ **Confirmed 2026-11-22.** **Kotlin Multiplatform (KMP) shared core + native UI on each platform.** The shared Kotlin module holds the domain model, storage schema, cycle/fertility engines, „Deine Muster“, „Ausblick“, report model, backup format/crypto and all strings. **SwiftUI** on iOS, **Jetpack Compose + Material 3 Expressive** on Android. | One algorithm = one validation, and one medical-device software item instead of two diverging copies (regulatory, §8). Native UI keeps the Apple feel on iOS and Google standards on Android. No iOS code exists yet, so switching costs nothing now. |
+| **D10** | Code-sharing strategy | ✅ **Confirmed 2026-11-22.** **Kotlin Multiplatform (KMP) shared core + native UI on each platform.** The shared Kotlin module holds the domain model, storage schema, cycle/fertility engines, "Your patterns", "Outlook", report model, backup format/crypto and all strings. **SwiftUI** on iOS, **Jetpack Compose + Material 3 Expressive** on Android. | One algorithm = one validation, and one medical-device software item instead of two diverging copies (regulatory, §8). Native UI keeps the Apple feel on iOS and Google standards on Android. No iOS code exists yet, so switching costs nothing now. |
 | D10-alt A | Two fully native code bases (Swift + Kotlin) | ✗ | Engine written and validated twice; parity drifts; double regulatory evidence. |
 | D10-alt B | Compose Multiplatform UI on both | ✗ | One UI, but iOS loses the native feel (Liquid Glass, SwiftUI behaviours). It conflicts with the iOS principle "feels like Apple built it". |
 | D10-alt C | Flutter / React Native | ✗ | Rewrite of everything; neither platform's standard look; more third-party runtime code (SOUP). |
 | **D11** | Platform order | ✅ **Revised 2026-11-22: Android first.** Shared core from day 1; Android UI is built first, iOS (SwiftUI on the same `shared/` module) follows. Launch rule unchanged: a release ships when the parity matrix is complete on both platforms, or a feature is flagged off on both (§10). | The Android toolchain is available first. Parity is guaranteed by the shared core and the parity matrix, not by build order. |
 | **D12** | Android baseline | ✅ `minSdk 29` (Android 10), `targetSdk 36` (Android 16, **required by Play since 31 Aug 2026**), compile with the latest SDK. Re-check API 37 requirements before launch. | Covers the vast majority of DACH devices; Health Connect is available from Android 9 via Play and built into 14+. |
-| **D13** | Material You dynamic colour | ✅ **Revised 2026-11-22 (owner):** part of Settings › Erscheinungsbild next to curated palettes, custom colours and Light/Dark/System; default stays Cyclus Rosé (= prototype). Wallpaper colours drive the **accent roles and surfaces** (bg = `surface`, cards = `surfaceContainerLowest`, surface2 = `surfaceContainer`, ink = `onSurface`, ink2 = `onSurfaceVariant`, line = `outlineVariant`, mid = `outline`, inverse accent = `inversePrimary`). Period, pre-period, fertile, success, warning and danger never change, because they carry meaning. | Google-standard personalisation without touching what the cycle colours mean. |
+| **D13** | Material You dynamic colour | ✅ **Revised 2026-11-22 (owner):** part of Settings › Appearance next to curated palettes, custom colours and Light/Dark/System; default stays Cyclus Rosé (= prototype). Wallpaper colours drive the **accent roles and surfaces** (bg = `surface`, cards = `surfaceContainerLowest`, surface2 = `surfaceContainer`, ink = `onSurface`, ink2 = `onSurfaceVariant`, line = `outlineVariant`, mid = `outline`, inverse accent = `inversePrimary`). Period, pre-period, fertile, success, warning and danger never change, because they carry meaning. | Google-standard personalisation without touching what the cycle colours mean. |
 | **D14** | Play account | ✅ **Organization account** (same legal entity as D3, D-U-N-S). | Required anyway for health apps (credibility, liability). New *personal* accounts (after 13 Nov 2023) must run a 12-tester, 14-day closed test before production. Organization accounts are widely reported as exempt (verify in Play Console). |
 
 ### 0.1 Trust rules (hard, owner 2026-11-22)
 Local first, data security and trust beat every feature.
 1. **No network:** the manifest never contains `INTERNET` or `ACCESS_NETWORK_STATE`. A build check (`verifyNoInternet`) fails the build otherwise.
 2. **No third-party runtime services:** no Google Play services, Firebase, analytics, ads or crash SDKs.
-3. **Intelligence is on-device:** prediction, fertility, „Deine Muster“ and „Ausblick“ are deterministic local statistics. The language model (v1.5) runs on-device only (Gemini Nano / Foundation Models), templates otherwise. Any cloud AI would be a separate owner decision with explicit opt-in, and it would break rule 1, so it is not planned.
+3. **Intelligence is on-device:** prediction, fertility, "Your patterns" and "Outlook" are deterministic local statistics. The language model (v1.5) runs on-device only (Gemini Nano / Foundation Models), templates otherwise. Any cloud AI would be a separate owner decision with explicit opt-in, and it would break rule 1, so it is not planned.
 4. **Encrypted at rest from the first build:** SQLCipher with a Keystore-wrapped key (§2.4).
 5. **Never lose data silently:** key or DB errors show a blocking error; the app never deletes or recreates an existing database on its own.
 6. **No backup or device transfer** of the database until §6.4 is decided (`allowBackup=false` + `dataExtractionRules` excluding everything).
@@ -35,7 +35,7 @@ Local first, data security and trust beat every feature.
 
 **Same features, same data, same algorithms, same words. Native interaction.**
 
-1. **Feature parity:** every feature in DESIGN_SPEC (incl. fertility, „Deine Muster“, „Ausblick“, Doctor Visit Pack, Privacy Center) ships on both platforms in the same release, behind the same feature flags (e.g. `fertility(region:)`).
+1. **Feature parity:** every feature in DESIGN_SPEC (incl. fertility, "Your patterns", "Outlook", Doctor Visit Pack, Privacy Center) ships on both platforms in the same release, behind the same feature flags (e.g. `fertility(region:)`).
 2. **Data parity:** the same `.cyclus` encrypted backup opens on both platforms. **iPhone → Android migration (and back) works.** CSV columns are identical.
 3. **Algorithm parity:** one Kotlin implementation (shared module). Golden test vectors run on JVM, Android and iOS.
 4. **Copy parity:** one German-first string source generates both platforms' resources. Banned-term lint runs once.
@@ -61,7 +61,7 @@ cyclus/
 ├── shared/                       Kotlin Multiplatform module (commonMain / androidMain / iosMain)
 │   ├── core/                     LocalDate, DayLog, Episode, Tag, enums (pure)
 │   ├── engine/                   cycle detection, prediction (§11.5), fertility (§11.11), learning
-│   ├── insights/                 „Deine Muster“ (§11.12), „Ausblick“ (§11.13), templates
+│   ├── insights/                 "Your patterns" (§11.12), "Outlook" (§11.13), templates
 │   ├── store/                    SQLDelight schema + migrations, repositories, pending-event queue
 │   ├── report/                   ReportModel (what goes into the PDF; rendering is native)
 │   ├── backup/                   .cyclus format, CSV, crypto (expect/actual → platform crypto)
@@ -90,7 +90,7 @@ Pin exact versions at project start and record them in the SOUP list.
 - Kotlin 2.x (K2), Coroutines, kotlinx-datetime, kotlinx-serialization.
 - **SQLDelight** (KMP) with **SQLCipher** Android driver (encryption at rest).
 - **Compose Material 3 1.5** (stable; Expressive APIs such as `ButtonGroup`, `MotionScheme.expressive()` and `MaterialExpressiveTheme` are public from 1.5, not 1.4) and `material3-adaptive` (navigation suite, list-detail).
-- **Navigation 3** (decided 2026-11-22, slice 2): saveable back stack of `@Serializable` keys for pushed screens (Settings, later Privacy/Arztbericht), predictive back; tabs stay a `NavigationSuiteScaffold` state.
+- **Navigation 3** (decided 2026-11-22, slice 2): saveable back stack of `@Serializable` keys for pushed screens (Settings, later Privacy/Doctor Visit Pack), predictive back; tabs stay a `NavigationSuiteScaffold` state.
 - **Glance** (widgets), **WorkManager**, **Biometric** (`BiometricPrompt`), **Health Connect client** (`androidx.health.connect`).
 - Testing: JUnit 5 (JVM shared tests), Compose UI test, **Roborazzi** or Compose Preview Screenshot Testing, Accessibility Test Framework.
 - iOS bridge: **SKIE** (Flows → AsyncSequence, sealed classes → Swift enums). Revisit Kotlin **Swift Export** when it leaves alpha.
@@ -98,8 +98,8 @@ Pin exact versions at project start and record them in the SOUP list.
 
 ### 2.4 Process & storage (Android counterpart of spec §11.2 / §3.3)
 - **Single writer:** the app process. Widgets and QS tile intents run in the app process, behind an unlock requirement.
-- **Encryption at rest:** the SQLDelight DB uses SQLCipher. The 256-bit DB key is random, stored **wrapped by an Android Keystore AES key** (StrongBox if available). On **Android 15+** that key is created with `setUnlockedDeviceRequired(true)`: while the device is locked the key cannot be unwrapped, the Android equivalent of iOS `.complete`. **Android 10–14 get the key without that rule** (decision 2026-11-22, reproduced on emulators): there Keystore fails to create such a key on a phone without a screen lock, and deletes it when the screen lock is removed later, which would make the data unreadable. The wrapped file's version byte records the rule; a mismatch is re-wrapped on the next open (existing installs on 10–14, OS upgrades). A „device locked“ failure is detected via the keyguard and retried automatically on unlock (`ACTION_USER_PRESENT`) and when the app returns to the foreground.
-- **Widget snapshot:** `files/widget/snapshot.sealed` (AES-GCM, Keystore key `cyclus_side_kek_v1`, usable while locked) with days only (last start, range, last bleeding day, paused), written **only while „Details im Widget“ is on**; the widget computes the cycle day from today, so it stays right after midnight. Readable without the DB key.
+- **Encryption at rest:** the SQLDelight DB uses SQLCipher. The 256-bit DB key is random, stored **wrapped by an Android Keystore AES key** (StrongBox if available). On **Android 15+** that key is created with `setUnlockedDeviceRequired(true)`: while the device is locked the key cannot be unwrapped, the Android equivalent of iOS `.complete`. **Android 10–14 get the key without that rule** (decision 2026-11-22, reproduced on emulators): there Keystore fails to create such a key on a phone without a screen lock, and deletes it when the screen lock is removed later, which would make the data unreadable. The wrapped file's version byte records the rule; a mismatch is re-wrapped on the next open (existing installs on 10–14, OS upgrades). A "device locked" failure is detected via the keyguard and retried automatically on unlock (`ACTION_USER_PRESENT`) and when the app returns to the foreground.
+- **Widget snapshot:** `files/widget/snapshot.sealed` (AES-GCM, Keystore key `cyclus_side_kek_v1`, usable while locked) with days only (last start, range, last bleeding day, paused), written **only while "Details in widget" is on**; the widget computes the cycle day from today, so it stays right after midnight. Readable without the DB key.
 - **Reminder plan:** `files/notify/plan.sealed` (same key; reminder kinds, days, local times, discreet flag). Plaintext `.json` files of earlier versions are read once after an update and replaced on the next write. Planning happens only in the app with the DB open; one DB-free inexact alarm re-arms from this file (boot, update, clock and time-zone change, midnight). Receivers never open the DB.
 - **No pending-event queue on Android (implemented 2026-11-22):** widget, tile and shortcut actions open the app through the non-exported alias `.ActionEntry` and run there after the app lock, exactly once (stripped from the intent, dropped during onboarding). Nothing writes outside the app UI, so there is nothing to queue. The exported launcher entry ignores action extras.
 - **App lock:** `BiometricPrompt` (Class 3, device credential fallback) **plus** optional Cyclus PIN and "PIN only" (same as iOS).
@@ -139,10 +139,10 @@ Pin exact versions at project start and record them in the SOUP list.
 
 - **Accent vs meaning (2026-11-22):** `primary`/`secondary` (+ containers, `inversePrimary`) come from the chosen theme (`CyclusColors.accent*`): buttons, links, selection, FAB. `period`, `pre`, `fertile`, `success`, `warning` stay fixed and are used only where something means bleeding / a cycle phase / a status. `error` = fixed `danger` (today's period red) for errors and destructive actions. Theme palettes, OKLCH contrast correction and tests: `shared/.../presenter/Appearance.kt`. The table above is the default theme (Rosé).
 - Appearance is a device setting in SharedPreferences (`appearance`), not health data: read before the encrypted DB opens (no theme flash on the lock screen), never exported or backed up, reset by erase. Night mode: `UiModeManager.setApplicationNightMode` on Android 12+, a base-context `uiMode` override (+ recreate) before.
-- Today layout (spec §7.2): `today.layout`, `today.ring`, `quick.picks` and `doctor.questions` are user prefs (`SettingKeys.USER_PREFS`: exported, merged, in device snapshots) but not engine settings (`SettingKeys.ENGINE` = mode, fertile window, muted patterns), so editing Today never recomputes the engine; they are also excluded from `SystemSurfaces.sync` (no reminder/widget replanning). Edit-mode drags are kept locally and saved on drop. Appointment questions change through one VM writer (mutex, read-modify-write on the stored list), so the card and the sheet never overwrite each other; the Arztbericht builder starts from the open ones.
+- Today layout (spec §7.2): `today.layout`, `today.ring`, `quick.picks` and `doctor.questions` are user prefs (`SettingKeys.USER_PREFS`: exported, merged, in device snapshots) but not engine settings (`SettingKeys.ENGINE` = mode, fertile window, muted patterns), so editing Today never recomputes the engine; they are also excluded from `SystemSurfaces.sync` (no reminder/widget replanning). Edit-mode drags are kept locally and saved on drop. Appointment questions change through one VM writer (mutex, read-modify-write on the stored list), so the card and the sheet never overwrite each other; the Doctor Visit Pack builder starts from the open ones.
 - Notice consent (`consent.notice`, spec §7.1) lives in the encrypted DB settings as device bookkeeping: `version|millis;…` (newest last, ≤ 20), not in `USER_PREFS` (never exported) nor `SECURITY` (not in the device snapshot), kept by replace-import, removed by erase. `Consent.needed` (shared) drives the gate in `MainActivity` after the lock, re-checked on resume.
 - **Contrast:** values are already WCAG-verified (spec §5.1). Provide M3 *medium* and *high* contrast schemes (Android 14+ contrast setting) by darkening fills 15% (light) / lightening 10% (dark), mirroring iOS "Increase Contrast".
-- Dynamic colour and themes per D13 (Settings › Erscheinungsbild).
+- Dynamic colour and themes per D13 (Settings › Appearance).
 
 ### 3.2 Shape, elevation, spacing
 - **Shapes:** M3 shape scale: `extraSmall 8` (scale buttons), `medium 16` (cards = prototype 16), `large 24` (sheets = prototype 24), `full` (chips, FAB, badges). Use M3 Expressive **shape morphing** only on press for the FAB and button groups.
@@ -152,7 +152,7 @@ Pin exact versions at project start and record them in the SOUP list.
 ### 3.3 Typography
 | Role | Prototype / iOS | Android (M3 role) | Face |
 |---|---|---|---|
-| Screen title („Heute“) | 32 bold | `headlineLarge` in **LargeFlexibleTopAppBar** with date as subtitle | Roboto Flex 700 |
+| Screen title ("Today") | 32 bold | `headlineLarge` in **LargeFlexibleTopAppBar** with date as subtitle | Roboto Flex 700 |
 | Ring big value | 40–46 rounded, shrink-to-fit | `displayMedium` + `TextAutoSize` (min 18 sp), single line | **Nunito 800** |
 | Ring kicker / sub | 13 | `labelLarge` / `bodySmall` | Roboto Flex |
 | Range | 18–20 rounded | `titleLarge` | Nunito 700 |
@@ -179,26 +179,26 @@ Pin exact versions at project start and record them in the SOUP list.
 
 | Prototype / iOS | Android (Compose M3) | Notes |
 |---|---|---|
-| Tab bar (glass, 3 tabs) | `NavigationBar` (Expressive "short" bar) via `NavigationSuiteScaffold` → `NavigationRail` on ≥ 600 dp | Labels always shown (Heute / Kalender / Einblicke) |
-| Floating „+ Eintragen“ | `ExtendedFloatingActionButton` (medium), above the nav bar, collapses to icon on scroll | Same label, same position (bottom-end) |
+| Tab bar (glass, 3 tabs) | `NavigationBar` (Expressive "short" bar) via `NavigationSuiteScaffold` → `NavigationRail` on ≥ 600 dp | Labels always shown (Today / Calendar / Insights) |
+| Floating "+ Log" | `ExtendedFloatingActionButton` (medium), above the nav bar, collapses to icon on scroll | Same label, same position (bottom-end) |
 | Nav header (date + title + 2 icon buttons) | `LargeFlexibleTopAppBar` (title + subtitle) with two `IconButton`s (Privacy shield, Settings) | Collapses on scroll |
 | Cycle ring | Custom `Canvas` composable, identical geometry (270°, segments, dashed predicted arc, knob, ◎/✦) | Semantics: one node with the full sentence + custom actions |
 | Bottom sheets (Log, Day, Why, Method, Erase) | `ModalBottomSheet` with drag handle; Log sheet opens expanded at large font scale | Predictive back closes the sheet |
-| Pushed screens (Privacy, Settings, Arztbericht) | Full-screen destinations with `LargeFlexibleTopAppBar` + back arrow | Predictive back animation |
+| Pushed screens (Privacy, Settings, Doctor Visit Pack) | Full-screen destinations with `LargeFlexibleTopAppBar` + back arrow | Predictive back animation |
 | Chips (symptoms, feelings, tags, LH) | `FilterChip` (selected = check icon + `primaryContainer`; LH uses the `tertiary` variant) | Suggested chips: dashed outline (custom border) |
-| Flow droplets (5) | Custom toggle tiles in a 5-column row (`selectable` semantics, role = RadioButton) | Same labels incl. „Schmier­blutung“ hyphenation |
+| Flow droplets (5) | Custom toggle tiles in a 5-column row (`selectable` semantics, role = RadioButton) | Same labels incl. "Spotting" hyphenation |
 | 1–5 scale | Expressive `ButtonGroup` (connected), single select | End labels below, as prototype |
-| Segmented control (Ziel, Sprache, Zeitraum, PDF-Sprache) | `SingleChoiceSegmentedButtonRow` | — |
+| Segmented control (goal, language, period of time, PDF language) | `SingleChoiceSegmentedButtonRow` | — |
 | iOS switch rows | `ListItem` + `Switch` (thumb icon) | Whole row clickable |
 | Status / tier badges | Custom pill `Surface` (non-interactive). Pattern statuses: filled / dashed / success text | Same wording |
 | Grouped lists | `Card` containing `ListItem`s with dividers (`outlineVariant`) | — |
-| Toast with „Rückgängig“ | `Snackbar` with action (5 s for undo) | Above FAB and nav bar |
+| Toast with "Undo" | `Snackbar` with action (5 s for undo) | Above FAB and nav bar |
 | Pain map | Custom `Canvas` with region hit-testing + M3 `Slider` (11 stops, value label) | TalkBack: list fallback |
 | Date header arrows in log sheet | `IconButton`s + horizontal swipe | — |
 | Onboarding date | `DatePicker` (M3, dialog or inline) | Locale de-DE, Monday first |
 | Calendar month grid | Custom `LazyVerticalGrid` (7 columns), identical cell semantics | Same legend |
-| Charts (cycle bars, temperature, heatmaps, Ausblick grid) | Custom `Canvas` (no chart library, so pixel parity with prototype and less SOUP) | Semantics summary text, same as iOS audio-graph text |
-| „Warum?“ disclosure | Expandable row with `AnimatedVisibility` | — |
+| Charts (cycle bars, temperature, heatmaps, Outlook grid) | Custom `Canvas` (no chart library, so pixel parity with prototype and less SOUP) | Semantics summary text, same as iOS audio-graph text |
+| "Why?" disclosure | Expandable row with `AnimatedVisibility` | — |
 | App lock screen | Full-screen composable + `BiometricPrompt` | — |
 | Progress (import) | `LinearWavyProgressIndicator` (Expressive) | — |
 
@@ -209,13 +209,13 @@ Pin exact versions at project start and record them in the SOUP list.
 | Screen | Same as | Android specifics |
 |---|---|---|
 | Onboarding (6 steps) | §7.1 | Health Connect availability check. If missing (Android ≤ 13): "Health Connect installieren" → Play link, or skip. Import requests read + `READ_HEALTH_DATA_HISTORY` (otherwise only 30 days are readable). Notification permission (`POST_NOTIFICATIONS`, API 33+) asked in context later, as on iOS |
-| Today (Track / Conceive / Period / Paused / Empty) | §7.2, §7.14, prototype | Ring + "Periode hat heute begonnen" button; Ausblick card; "N Muster gefunden" link. Top app bar collapses; FAB shrinks on scroll |
-| Log sheet | §7.3 | Same stable section order incl. Gefühle and Lust auf Sex. `imePadding()` for the note field |
-| Calendar + Day sheet | §7.4 | Long-press → context menu "Als Periodenbeginn markieren" |
-| Insights („Deine Muster“, charts, Arztbericht, history) | §7.5, §11.12 | On ≥ 600 dp: list-detail (history list ↔ cycle detail) |
+| Today (Track / Conceive / Period / Paused / Empty) | §7.2, §7.14, prototype | Ring + "Period started today" button; Outlook card; "N patterns found" link. Top app bar collapses; FAB shrinks on scroll |
+| Log sheet | §7.3 | Same stable section order incl. Feelings and Libido. `imePadding()` for the note field |
+| Calendar + Day sheet | §7.4 | Long-press → context menu "Mark as period start" |
+| Insights ("Your patterns", charts, Doctor Visit Pack, history) | §7.5, §11.12 | On ≥ 600 dp: list-detail (history list ↔ cycle detail) |
 | Why this window? | §7.14 | — |
 | Doctor Visit Pack | §7.7 | `PdfDocument` + `Canvas`, A4 / Letter by locale. Shared via `FileProvider` URI from `cacheDir/share/` (the same file is previewed), deleted at the next build, at app start and on erase — not on the share result, because the target app may read it later. Metadata: only Skia's /Producer (spec m11) |
-| Privacy Center | §7.8 | Extra rows: „Bildschirmfotos verhindern“ (FLAG_SECURE), „In Private Space verschieben“ (explainer, Android 15+), Health Connect categories (§6.1), backup (§6.4) |
+| Privacy Center | §7.8 | Extra rows: "Block screenshots" (FLAG_SECURE), "Move to Private space" (explainer, Android 15+), Health Connect categories (§6.1), backup (§6.4) |
 | Settings | spec §4 | Language via per-app locale (`LocaleManager` / AppCompat). Follow system theme. Dynamic colour toggle (D13) |
 | App lock | §7.12 | `BiometricPrompt` + PIN pad |
 | Large screens | — | Two-pane: Today + Calendar on tablets/foldables. Log sheet becomes a side sheet. No orientation lock (Android 16 ignores it on large screens anyway) |
@@ -240,13 +240,13 @@ Pin exact versions at project start and record them in the SOUP list.
 | Pregnancy / lactation / contraceptive | HK types | No equivalent (verify) | Android: Cyclus only |
 | Sleep, resting HR, HRV (v1.5) | read | `SleepSessionRecord`, `RestingHeartRateRecord`, `HeartRateVariabilityRmssdRecord` | read |
 
-**Implemented 2026-11-22 (slice 6).** Owner decisions: import + opt-in write; sync **only while the app is open** (app start/resume, 3 s after the person's own entries or the Health Connect toggles change, „Jetzt synchronisieren“); no background permission, no WorkManager jobs. Notes from the implementation:
+**Implemented 2026-11-22 (slice 6).** Owner decisions: import + opt-in write; sync **only while the app is open** (app start/resume, 3 s after the person's own entries or the Health Connect toggles change, "Sync now"); no background permission, no WorkManager jobs. Notes from the implementation:
 - Health Connect values are merged **before** `CycleData` (`HealthMerge`), so the engine and its golden vectors are unchanged; they fill only fields the person left empty. A user `flow = none` hides an external flow; other external values can't be hidden yet.
 - External `MenstruationPeriodRecord` days become bleeding without a level, so the engine finds the start itself (no external START overrides).
 - Writes come from the person's own entries only; `clientRecordVersion = max(previous + 1, now)` so imports with older timestamps still update. Local deletes keep a `deleting` tombstone until Health Connect confirms.
-- Reinstall recovery (rule 7) only into an empty store and only after an explicit „In Cyclus übernehmen“ in the Privacy Center (offer shown once per connection), so deleted, erased or deliberately unmirrored entries never come back on their own.
+- Reinstall recovery (rule 7) only into an empty store and only after an explicit "Bring them back" in the Privacy Center (offer shown once per connection), so deleted, erased or deliberately unmirrored entries never come back on their own.
 - Reads run outside the erase lock; each page is stored together with its changes token in one transaction; writes run inside the lock for the current store only.
-- Imported samples, links and tokens are device data: not in `.cyclus` exports or device snapshots; gone with erase and „Trennen“.
+- Imported samples, links and tokens are device data: not in `.cyclus` exports or device snapshots; gone with erase and "Disconnect".
 - Release task: Play **Health apps declaration** with the per-type justification (read: import; write: opt-in mirror).
 
 **Sync rules** are the same shared state machine (spec §11.4). Health Connect equivalents:
@@ -262,28 +262,28 @@ Pin exact versions at project start and record them in the SOUP list.
 - Play requires the **Health apps declaration** plus a justification for each Health Connect type.
 
 ### 6.2 Widgets, tiles, shortcuts (implemented 2026-11-22, slice 5)
-- **Glance widgets:** small (2×2: ring, „Tag N“, range) and medium (4×2: plus „Periode eintragen“ / „Eintragen“). **„Details im Widget“ is off by default** (Privacy Center › Sichtbarkeit): the widget then shows only the app glyph and „Cyclus“, and no widget file exists. Buttons open the app (app lock applies); „Periode eintragen“ logs the period start with Undo, or opens the log sheet if today already has bleeding.
-- **Quick Settings tile** „Cyclus · Eintragen“ → `startActivityAndCollapse` (the system asks for the device unlock on the lock screen) → log sheet behind the app lock. Note: wrapping it in `unlockAndRun` made SystemUI drop the start after unlocking (API 36).
-- **App shortcut** „Eintragen“ (long-press icon): **off by default**, opt-in in Privacy Center › Sichtbarkeit (parity with iOS no-auto-App-Shortcuts). App Functions / Gemini integration is a v2 consideration for both platforms.
+- **Glance widgets:** small (2×2: ring, "Day N", range) and medium (4×2: plus "Log period" / "Log"). **"Details in widget" is off by default** (Privacy Center › Visibility): the widget then shows only the app glyph and "Cyclus", and no widget file exists. Buttons open the app (app lock applies); "Log period" logs the period start with Undo, or opens the log sheet if today already has bleeding.
+- **Quick Settings tile** "Cyclus · Log" → `startActivityAndCollapse` (the system asks for the device unlock on the lock screen) → log sheet behind the app lock. Note: wrapping it in `unlockAndRun` made SystemUI drop the start after unlocking (API 36).
+- **App shortcut** "Log" (long-press icon): **off by default**, opt-in in Privacy Center › Visibility (parity with iOS no-auto-App-Shortcuts). App Functions / Gemini integration is a v2 consideration for both platforms.
 - Glance brings WorkManager; its `ACCESS_NETWORK_STATE` and `FOREGROUND_SERVICE` permissions are removed in the manifest (`verifyNoInternet` checks the merged manifest).
 
 ### 6.3 Notifications (implemented 2026-11-22, slice 5)
-- **Opt-in on every API level:** nothing is planned until the user says yes (Today card „Vor deiner Periode erinnern?“ or Einstellungen › Mitteilungen). Android 13+ then asks for `POST_NOTIFICATIONS`. A restore or new phone starts without reminders (the `notify.*` settings are device settings, not in exports or snapshots).
-- **Defaults after opt-in:** „Periode bald“ (2 days before the earliest expected start, 09:00) on; „Später als sonst“ off (spec m9); daily reminder, backup reminder off; Conceive: fertile window and LH test on, temperature off.
-- **Discreet by default:** title „Cyclus · Check-in“ / „Cyclus · Erinnerung“ / „Cyclus · Sicherung“, text „Tippe, um Cyclus zu öffnen.“ Detailed mode shows a fixed sentence, never dates, numbers or symptoms. `VISIBILITY_PRIVATE` with a public version that shows only the neutral title.
-- Channels „Periode“, „Fruchtbarkeit“, „Erinnerungen“, „Sicherung“.
+- **Opt-in on every API level:** nothing is planned until the user says yes (Today card "Remind you before your period?" or Settings › Notifications). Android 13+ then asks for `POST_NOTIFICATIONS`. A restore or new phone starts without reminders (the `notify.*` settings are device settings, not in exports or snapshots).
+- **Defaults after opt-in:** "Period soon" (2 days before the earliest expected start, 09:00) on; "Later than usual" off (spec m9); daily reminder, backup reminder off; Conceive: fertile window and LH test on, temperature off.
+- **Discreet by default:** title "Cyclus · Check-in" / "Cyclus · Reminder" / "Cyclus · Backup", text "Tap to open Cyclus." Detailed mode shows a fixed sentence, never dates, numbers or symptoms. `VISIBILITY_PRIVATE` with a public version that shows only the neutral title.
+- Channels "Period", "Fertility", "Reminders", "Backup".
 - **Scheduling:** one `setAndAllowWhileIdle` (inexact, up to about an hour late) for the next item of the plan file; **no exact-alarm permission**, no WorkManager jobs. Missed reminders older than 12 h are dropped instead of shown late.
 
 ### 6.4 Backup & transfer (decided 2026-11-22, implemented in slice 3)
-- **Decision (owner):** spec D5 parity. An encrypted snapshot goes into Android backup **only** when the transport is end-to-end encrypted (client-side encryption with the screen lock) or a device-to-device transfer. Toggle „Nur auf dem Gerät“ turns it off. Plus passphrase-encrypted `.cyclus` export/import (`docs/export/FORMAT.md`).
+- **Decision (owner):** spec D5 parity. An encrypted snapshot goes into Android backup **only** when the transport is end-to-end encrypted (client-side encryption with the screen lock) or a device-to-device transfer. Toggle "Device only" turns it off. Plus passphrase-encrypted `.cyclus` export/import (`docs/export/FORMAT.md`).
 - **Mechanism:** `CyclusBackupAgent` (full backup, custom) reads files only, never the database (it runs restricted, often while locked):
   - `files/backup/snapshot.cyclus` = mode-2 `.cyclus` of all data incl. app-lock settings, written when the app goes to the background after a change;
   - the 256-bit backup key, wrapped by Keystore key `cyclus_backup_kek_v1` (no unlocked-device requirement, so nightly backups work);
   - `.device-only` marker, `snapshot.absent` marker, `status.json` (shown in the Privacy Center).
-- **Backup run:** device-only, no E2E/D2D flag or intentionally no snapshot → nothing written. Everything (key unwrap + full snapshot authentication) is validated before the first byte; on failure nothing is written and the status says „failed“. Only then the snapshot and a transient plain copy of the key are streamed (deleted in `finally`; stale copies swept in `Application.onCreate`). Observed with LocalTransport: an empty run is rejected by the transport, so no empty set is committed (not promised to users).
-- **Restore:** `onRestoreFile` wraps the backup key from the stream for the new device (no plaintext key on disk) into `restore/`; `onRestoreFinished` marks `restore/pending` only if snapshot and key both arrived. The first launch imports atomically into a fresh encrypted DB, promotes the key, and on failure deletes only that fresh DB (Retry / „Neu beginnen“).
+- **Backup run:** device-only, no E2E/D2D flag or intentionally no snapshot → nothing written. Everything (key unwrap + full snapshot authentication) is validated before the first byte; on failure nothing is written and the status says "failed". Only then the snapshot and a transient plain copy of the key are streamed (deleted in `finally`; stale copies swept in `Application.onCreate`). Observed with LocalTransport: an empty run is rejected by the transport, so no empty set is committed (not promised to users).
+- **Restore:** `onRestoreFile` wraps the backup key from the stream for the new device (no plaintext key on disk) into `restore/`; `onRestoreFinished` marks `restore/pending` only if snapshot and key both arrived. The first launch imports atomically into a fresh encrypted DB, promotes the key, and on failure deletes only that fresh DB (Retry / "Start fresh").
 - **Never backed up:** the database, its Keystore-wrapped key, preferences. Rules XML include exactly the two backup files (defence in depth).
-- **Encrypted export/import** via the Storage Access Framework (`CreateDocument` / `OpenDocument`). Same `.cyclus` v1 format → cross-platform migration. Exports never contain app-lock/PIN settings. **Cross-platform requirement (owner 2026-11-23):** a file from Android opens on iPhone and vice versa; passphrase normalized to NFC (with fallback for older files), see `docs/export/FORMAT.md` and IOS_PLAN §6.4.4. Still to add on Android: open a `.cyclus` file from other apps (intent filters) and the „Auf ein neues Handy umziehen“ guide.
+- **Encrypted export/import** via the Storage Access Framework (`CreateDocument` / `OpenDocument`). Same `.cyclus` v1 format → cross-platform migration. Exports never contain app-lock/PIN settings. **Cross-platform requirement (owner 2026-11-23):** a file from Android opens on iPhone and vice versa; passphrase normalized to NFC (with fallback for older files), see `docs/export/FORMAT.md` and IOS_PLAN §6.4.4. Still to add on Android: open a `.cyclus` file from other apps (intent filters) and the "Move to a new phone" guide.
 
 ### 6.5 On-device language model (v1.5, parity with iOS)
 - Gemini Nano via the **ML Kit GenAI Prompt API**. Device list is limited (e.g. Pixel 10, Galaxy S26, recent vivo/Xiaomi). Inference runs only while the app is in the foreground.
@@ -299,15 +299,15 @@ Compose for Wear OS + Wear M3 (Expressive): log period/symptom, glance at cycle 
 |---|---|---|
 | A2/A3 person with device PIN | Can open apps | Cyclus PIN / "PIN only"; recommend **Private Space** (Android 15+) |
 | A4 seizure | FBE credential-encrypted storage + SQLCipher key bound to unlocked device (Android 15+; 10–14: hardware-bound only, see §2.4) | `setUnlockedDeviceRequired(true)` on 15+ |
-| A5 cloud | Google backup is E2E with the screen lock | Toggle „Nur auf dem Gerät“; honest copy |
+| A5 cloud | Google backup is E2E with the screen lock | Toggle "Device only"; honest copy |
 | Other apps with Health Connect access | The user may have granted other apps cycle read access | Every write category off by default (both platforms); Privacy Center says Health Connect has no own lock and that other apps with access can read what Cyclus writes |
 | Health Connect permission rationale | Must be reachable by the system and reviewers | Static `HealthRationaleActivity` with text only (no data, no app lock); the `VIEW_PERMISSION_USAGE` alias requires `START_VIEW_PERMISSION_USAGE` |
 | Screenshots / screen sharing | Possible | Optional `FLAG_SECURE`; recents thumbnail hidden by default |
 | OEM cloud features (e.g. Samsung) | OEM backup/sync of app data varies | Same `dataExtractionRules`; document tested OEMs |
 | Rooted devices | Keystore can be weaker | No blocking (accessibility/fairness); disclosure in FAQ |
 | Network | **No `INTERNET` permission** | OS-enforced "no data leaves via the app" (privacy label claim is verifiable) |
-| Device backup snapshot | The snapshot key is hardware-wrapped and not usable from a disk image, but **code running as Cyclus on a locked phone after first unlock can decrypt the snapshot** (the DB key needs an unlocked device) | Accepted for automatic backups; only sent over E2E/D2D; „Nur auf dem Gerät“ removes snapshot and key |
-| Reminder plan / widget file | `files/notify/plan.sealed` (reminder kinds and days, which hint at the predicted period) and, only with „Details im Widget“, `files/widget/snapshot.sealed` are outside the encrypted DB, sealed with their own Keystore key that works while locked, so alarms and widgets work while the phone is locked; readable by code running as Cyclus after first unlock (the DB is not) | Sealed + credential-encrypted storage (a disk image alone can't read them), never in backups (include-only rules), files and key deleted on erase; honest note in Privacy Center › Sichtbarkeit; AlarmManager holds the same times anyway |
+| Device backup snapshot | The snapshot key is hardware-wrapped and not usable from a disk image, but **code running as Cyclus on a locked phone after first unlock can decrypt the snapshot** (the DB key needs an unlocked device) | Accepted for automatic backups; only sent over E2E/D2D; "Device only" removes snapshot and key |
+| Reminder plan / widget file | `files/notify/plan.sealed` (reminder kinds and days, which hint at the predicted period) and, only with "Details in widget", `files/widget/snapshot.sealed` are outside the encrypted DB, sealed with their own Keystore key that works while locked, so alarms and widgets work while the phone is locked; readable by code running as Cyclus after first unlock (the DB is not) | Sealed + credential-encrypted storage (a disk image alone can't read them), never in backups (include-only rules), files and key deleted on erase; honest note in Privacy Center › Visibility; AlarmManager holds the same times anyway |
 | Widget / tile / shortcut actions | Other apps could try to send actions to the exported launcher activity | Actions are honoured only through the non-exported `.ActionEntry` alias; they run after the app lock, once |
 | Cyclus PIN | UI gate only: its hash lives inside the encrypted DB | Back-off after 5 wrong tries (elapsedRealtime); not presented as data encryption |
 
@@ -353,8 +353,8 @@ Phases with exit criteria, no effort or time estimates (same rule as DESIGN_SPEC
 1. **KMP setup** (first): shared module, SQLDelight, golden-vector pipeline from the prototype. SKIE bridge and iOS CI when iOS work starts.
 2. **Android foundations:** scaffold, Gradle conventions, lint (banned terms, no `INTERNET`), CI.
 3. **Design system:** theme, tokens, type, shapes, ring, droplets, body map, charts, heat grids.
-4. **Core screens:** Today (Track, Conceive, Period, Paused, Empty; Ausblick card), Log sheet, Calendar + Day sheet.
-5. **Insights:** „Deine Muster“, charts, history, Why/Method sheets.
+4. **Core screens:** Today (Track, Conceive, Period, Paused, Empty; Outlook card), Log sheet, Calendar + Day sheet.
+5. **Insights:** "Your patterns", charts, history, Why/Method sheets.
 6. **Completeness:** onboarding (Health Connect availability and permissions), Privacy Center, app lock (Biometric + PIN), FLAG_SECURE, erase, settings, episodes, per-app language, dynamic-colour toggle, Doctor Visit Pack PDF + share.
 7. **Platform services:**
    - Health Connect adapter (history import, write-own, changes API) + device tests;
@@ -376,8 +376,8 @@ Phases with exit criteria, no effort or time estimates (same rule as DESIGN_SPEC
 |---|---|---|
 | A0 | KMP shared module; engines/insights ported from `prototype/index.html`; golden vectors from the prototype harness | Golden vectors green on JVM **and** on device |
 | A1 (slice 1) | Scaffold, theme/tokens, encrypted store (SQLCipher + Keystore), Today + Log sheet, deploy script; create `docs/PARITY.md` | Runs on a physical device; `verifyNoInternet` green |
-| A2 | Calendar + Day sheet, Insights, Deine Muster, Ausblick detail, Why/Method sheets, Conceive UI | Screenshot pairs with prototype approved |
-| A3 | Arztbericht, Privacy Center, Settings, Onboarding, app lock, backup/export (§6.4 decided) | Parity rows done |
+| A2 | Calendar + Day sheet, Insights, Your patterns, Outlook detail, Why/Method sheets, Conceive UI | Screenshot pairs with prototype approved |
+| A3 | Doctor Visit Pack, Privacy Center, Settings, Onboarding, app lock, backup/export (§6.4 decided) | Parity rows done |
 | A4 | Health Connect, widgets, QS tile, notifications, adaptive layouts | Device checklist passes |
 | A5 | Accessibility, localisation, device matrix | **Internal testing** track |
 | I1–I3 | iOS: add `iosArm64` targets + SKIE, SwiftUI shell, HealthKit, WidgetKit, against the same parity rows | Parity rows done on iOS |
@@ -389,7 +389,7 @@ Phases with exit criteria, no effort or time estimates (same rule as DESIGN_SPEC
 |---|---|
 | KMP ↔ Swift friction (Flows, sealed types, generics) | SKIE; keep the shared API small and presenter-shaped; Swift Export later |
 | Health Connect gaps (no symptoms/mood types) and OEM differences | Cyclus remains source of truth; honest Privacy Center copy; test Samsung Health |
-| Fragmentation, OEM battery killers delaying notifications | Inexact alarms + WorkManager; "Benachrichtigungen kommen zu spät?" help page per OEM |
+| Fragmentation, OEM battery killers delaying notifications | Inexact alarms + WorkManager; "Notifications arrive late?" help page per OEM |
 | Font/OEM rendering differences | Bundled fonts; screenshot tests on Samsung + Pixel |
 | Gemini Nano availability | Templates are the product; LLM is polish |
 | Backup key handling bug → data loss | Spike + device-transfer and restore tests before beta |

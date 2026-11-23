@@ -17,12 +17,12 @@ Defaults are marked ✅. The rest of this spec is written against them. Changing
 |---|---|---|---|
 | **D1** | Fertility features (fertile window, Conceive mode, ovulation estimate) | ✅ **IN v1 — owner decision 2026-11-22.** Multi-signal fertility engine (§11.11) + Conceive mode (§7.14). Shipped per region behind a feature flag once the regulatory path for that region is cleared (§1.4). Cycle-deviation nudges stay gated. | — (decided) |
 | **D2** | Positioning vs. iOS 27 Apple Health | ✅ Three wedges (§1.2): **deep fast logging**, **condition-first** (PCOS/endo/irregular), **Doctor Visit Pack**. Validate in phase 1 with current Apple Health users. | Pick one wedge only |
-| **D3** | Publisher | ✅ **Legal entity + Organization developer account** before submission (UG (haftungsbeschränkt) or e.V.; D-U-N-S number). Start now, because it takes 4–8 weeks. | Individual account (rejection risk under guideline 5.1.1(ix), personal liability) |
+| **D3** | Publisher | ✅ **Legal entity + Organization developer account** before submission (a German UG (haftungsbeschränkt), i.e. limited company, or an e.V., i.e. registered association; D-U-N-S number). Start now, because it takes 4–8 weeks. | Individual account (rejection risk under guideline 5.1.1(ix), personal liability) |
 | **D4** | Delivery | ✅ **Phase-based plan, no effort or time estimates** (owner decision 2026-11-22: built AI-assisted, effort numbers don't apply). Full v1 scope in ordered phases with exit criteria (§13.1); only outside lead times are planned in calendar time. Fertility can go live per region later than the core app (feature flag). | Fallback scope list (§13.1) |
-| **D5** | Backup | ✅ **Revised 2026-11-22/23 (both platforms): end-to-end only.** The database itself is never backed up; an encrypted snapshot goes into device backups only where Apple/Google can't read it (Android: E2E/device-to-device transport, ANDROID_PLAN §6.4; iOS: snapshot key only in iCloud Keychain, IOS_PLAN §6.4), "Nur auf dem Gerät" toggle, plus **encrypted export**. Original draft: store included in backups with a "Device only" toggle. | Exclude by default (max privacy, real data-loss risk) |
+| **D5** | Backup | ✅ **Revised 2026-11-22/23 (both platforms): end-to-end only.** The database itself is never backed up; an encrypted snapshot goes into device backups only where Apple/Google can't read it (Android: E2E/device-to-device transport, ANDROID_PLAN §6.4; iOS: snapshot key only in iCloud Keychain, IOS_PLAN §6.4), "Device only" toggle, plus **encrypted export**. Original draft: store included in backups with a "Device only" toggle. | Exclude by default (max privacy, real data-loss risk) |
 | **D6** | Money | ✅ Strictly free. **No tip jar in v1** (it would make the developer a DSA trader, whose address is published). | Tip jar via IAP after the entity exists |
 | **D7** | Platform baseline | ✅ **Deployment target iOS 26.0, built with the iOS 27 SDK.** Use iOS 27 APIs behind `if #available`. | iOS 27 minimum (smaller audience, simpler code) |
-| **D9** | Patterns & outlook | ✅ **In v1 (owner decision 2026-11-22).** „Deine Muster“ (§11.12) watches body, mood & feelings, lifestyle, fertility and cycle health. „Ausblick“ (§11.13) turns patterns into a 7-day outlook. Fertility and cycle-health watchers follow the same regulatory gate as fertility (§1.4). | — (decided) |
+| **D9** | Patterns & outlook | ✅ **In v1 (owner decision 2026-11-22).** "Your patterns" (§11.12) watches body, mood & feelings, lifestyle, fertility and cycle health. "Outlook" (§11.13) turns patterns into a 7-day outlook. Fertility and cycle-health watchers follow the same regulatory gate as fertility (§1.4). | — (decided) |
 | **D10** | Platforms & code sharing | ✅ **Confirmed 2026-11-22, Android first (ANDROID_PLAN D11):** Android with 100% feature parity. **Kotlin Multiplatform shared core** (model, store schema, all engines, patterns, outlook, report model, backup, strings) + native UI (SwiftUI / Compose M3 Expressive). Changes §11.1–11.3 and §12.1 as listed in `ANDROID_PLAN.md` §2.5. | Fully native twice, or Compose Multiplatform UI (see ANDROID_PLAN §0) |
 | **D8** | Markets & languages | ✅ **German first** (owner decision 2026-11-22): DACH is the primary market, all copy is authored in German (source language), App Store primary locale `de-DE`, German screenshots first, in-app language selector (Deutsch / English). English second. EU + US. | — (decided) |
 
@@ -40,7 +40,7 @@ Defaults are marked ✅. The rest of this spec is written against them. Changing
   - threat model;
   - HealthKit sync state machine;
   - posterior-predictive engine with age-band priors and missed-log detection.
-- **Re-positioned:** from "smartest tracker" to *„Deinen Zyklus verstehen. Privat und sicher.“* (EN "Understand your cycle. Private and secure."; owner 2026-11-23, replacing "Your cycle, understood. Never uploaded.") The intelligence is honest stats now and on-device language later.
+- **Re-positioned:** from "smartest tracker" to *"Understand your cycle. Private and secure."* (EN "Understand your cycle. Private and secure."; owner 2026-11-23, replacing "Your cycle, understood. Never uploaded.") The intelligence is honest stats now and on-device language later.
 
 ### 0.3 Review resolution map
 | Finding | Resolution | Where |
@@ -87,7 +87,7 @@ Defaults are marked ✅. The rest of this spec is written against them. Changing
 ## 1. Product definition
 
 ### 1.1 Positioning
-**„Deinen Zyklus verstehen. Privat und sicher.“** (EN "Understand your cycle. Private and secure.")
+**"Understand your cycle. Private and secure."** (EN "Understand your cycle. Private and secure.")
 A free, beautiful, deeply private cycle and symptom diary for iPhone. It is the best tool to *understand your own patterns* and *walk into a doctor's appointment with evidence*. There are no servers, accounts, ads or trackers. The developer never receives your data.
 
 ### 1.2 Wedges vs. Apple Health (iOS 27)
@@ -156,7 +156,7 @@ Contraception or conception support, diagnosis, community/social features, conte
 
 **v1.1:** Control Center control, App Intents (auth-required, no automatic App Shortcuts), StandBy widget, perimenopause symptom set refinements from iOS 27 HealthKit types, iPad layout.
 
-**Also v1.0:** „Deine Muster“ (§11.12) and „Ausblick“ (§11.13) with template text; feelings and libido logging.
+**Also v1.0:** "Your patterns" (§11.12) and "Outlook" (§11.13) with template text; feelings and libido logging.
 
 **v1.5:** on-device LLM phrasing of pattern text (§11.8); HealthKit sleep/resting-HR watchers; pill/patch/ring schedule within the hormonal-contraception episode; Apple Watch app (log + glance).
 
@@ -208,11 +208,11 @@ Mapped to HealthKit `.contraceptive` / `.pregnancy` / `.lactation` where a type 
 |---|---|---|---|---|
 | Main store (SQLite + SQLCipher, shared schema) | Everything | App container; key held by the hardware keystore, usable only while unlocked (Android 15+ / iOS); file protection on iOS | — | Unreadable while locked (intended) |
 | ~~Pending-event queue~~ | — | **None:** widget, tile/control and shortcut actions open the app and run after the app lock | — | — |
-| Widget snapshot | Days only (last start, range, last bleeding day, paused) | Sealed side file (own key, usable while locked) | **Only while „Details im Widget“ is on**; otherwise no file and a neutral widget | Readable after first unlock; minimal |
+| Widget snapshot | Days only (last start, range, last bleeding day, paused) | Sealed side file (own key, usable while locked) | **Only while "Details in widget" is on**; otherwise no file and a neutral widget | Readable after first unlock; minimal |
 | Reminder plan | Reminder kinds, days, local times | Sealed side file | Only after notification opt-in | Hints at the predicted period; never in backups |
 | Notifications (pending requests) | Trigger date + copy | System | **Discreet copy** ("Cyclus · Check-in"); "late period" **off** | Content mirrors to Apple Watch |
 | Health store mirror (HealthKit / Health Connect) | Per category | Platform health store | **Every write category off** until switched on (decision 2026-11-22) | No per-app lock in the health store; other apps with access can read it |
-| Device backup | Sealed snapshot (`.cyclus` mode 2), never the database | Platform backup | **End-to-end only** (D5 revised): Android E2E/device-to-device transport; iOS key only in iCloud Keychain. „Nur auf dem Gerät“ toggle | Restores only on the same platform; cross-platform moves use the passphrase export |
+| Device backup | Sealed snapshot (`.cyclus` mode 2), never the database | Platform backup | **End-to-end only** (D5 revised): Android E2E/device-to-device transport; iOS key only in iCloud Keychain. "Device only" toggle | Restores only on the same platform; cross-platform moves use the passphrase export |
 | Encrypted export `.cyclus` | Everything | User-chosen location | Default export format | Safe at rest if passphrase strong |
 | Plain CSV export | Everything chosen | User-chosen location | Secondary option behind a warning | Largest leak vector; warning copy |
 | Doctor Visit Pack PDF | Chosen sections | Rendered in memory, shared via share sheet | Sexual activity, contraception, notes **excluded** by default | Watermark; metadata stripped |
@@ -236,19 +236,19 @@ Mapped to HealthKit `.contraceptive` / `.pregnancy` / `.lactation` where a type 
 ## 4. Information architecture
 
 ```
-Tabs: Heute · Kalender · Einblicke   (iOS: Liquid Glass tab bar · Android: navigation bar / rail)
-├── Heute (default)
-│   ├── top bar: date subtitle, Datenschutz (shield), Einstellungen (gear)
-│   ├── ring (Groß/Kompakt, tap → „So liest du den Ring“), status line, quick actions
-│   ├── cards in the person's order (§7.2) + „Ansicht anpassen“
-│   └── floating „Eintragen“ → Log sheet
-├── Kalender: month grid, selected day's detail inline (Bearbeiten, Periodenbeginn), legend
-└── Einblicke: Muster summary → Muster screen · Arztbericht → builder → PDF preview → share · stats & charts · history
-Einstellungen (pushed): Erscheinungsbild · Sprache · Ziel (Zyklus / Kinderwunsch) · Fruchtbares Fenster · Lebensphase · Mitteilungen · Datenschutz · Über Cyclus (§7.15) · intended purpose
-Datenschutz (pushed): Wo deine Daten sind · Schutz (App-Sperre, PIN, Sperren nach, …) · Sichtbarkeit · Health store · Backups (Nur auf dem Gerät, Export, Import) · Rechtliches · Alles löschen
+Tabs: Today · Calendar · Insights   (iOS: Liquid Glass tab bar · Android: navigation bar / rail)
+├── Today (default)
+│   ├── top bar: date subtitle, Privacy (shield), Settings (gear)
+│   ├── ring (large/compact, tap → "Reading the ring"), status line, quick actions
+│   ├── cards in the person's order (§7.2) + "Customize"
+│   └── floating "Log" → Log sheet
+├── Calendar: month grid, selected day's detail inline (Edit, Period start), legend
+└── Insights: patterns summary → Patterns screen · Doctor Visit Pack → builder → PDF preview → share · stats & charts · history
+Settings (pushed): Appearance · Language · Goal (track cycle / trying to conceive) · Fertile window · Life stage · Notifications · Privacy · About Cyclus (§7.15) · intended purpose
+Privacy (pushed): Where your data is · Protection (App lock, PIN, Lock after, …) · Visibility · Health store · Backups (Device only, Export, Import) · Legal · Erase everything
 Full-screen gates: app lock · store error · restore · notice consent (§7.1)
 ```
-The Log sheet is reachable from Today (floating button), the calendar day detail („Bearbeiten“), widgets, the QS tile / Control and the opt-in icon shortcut.
+The Log sheet is reachable from Today (floating button), the calendar day detail ("Edit"), widgets, the QS tile / Control and the opt-in icon shortcut.
 
 ---
 
@@ -275,7 +275,7 @@ Rules:
 - **Fertility tokens:** `fertile` `#13706F` / `#5FD0C8` (5.6:1 / 10.1:1 vs bg; white text on light fill 5.9:1, ink on dark fill 10.1:1). Fertility is shown in **3 intensities** (Possible 30% fill, High 65%, Peak 100% + ✦ glyph) **plus a dot-density pattern**. `fertile` and `period` have near-equal luminance (1.1:1), so they are distinguished by hue + glyph + pattern, never by lightness alone. Ovulation marker: ◎ glyph (dashed = predicted, solid = likely / likely occurred).
 - **Never green-coded "low"**: "Lower chance" days get no fill at all, to avoid a "safe" reading.
 - High-contrast mode (`colorSchemeContrast == .increased`): darken light-mode fills 15%, use solid outlines instead of dashed.
-- **Themes (2026-11-22):** Settings › Appearance lets the person pick a palette (Rosé = these tokens, Lavendel, Salbei, Ozean, Terrakotta, Graphit), custom primary/secondary colours (lightness corrected in OKLCH until WCAG holds) and Light/Dark/System (Android also offers wallpaper colours). Themes change only the **accent** (interaction: buttons, links, selection) and the tint of the neutrals. `period`, `prePeriod`, `fertile`, `success`, `warning` and the error/destructive colour (= `period`) are identical in every theme, so a colour always means the same thing.
+- **Themes (2026-11-22):** Settings › Appearance lets the person pick a palette (Rosé = these tokens, Lavender, Sage, Ocean, Terracotta, Graphite), custom primary/secondary colours (lightness corrected in OKLCH until WCAG holds) and Light/Dark/System (Android also offers wallpaper colours). Themes change only the **accent** (interaction: buttons, links, selection) and the tint of the neutrals. `period`, `prePeriod`, `fertile`, `success`, `warning` and the error/destructive colour (= `period`) are identical in every theme, so a colour always means the same thing.
 
 ### 5.2 Typography
 System **SF Pro** text styles only, so Dynamic Type works up to AX5. Numerals use **SF Pro Rounded** with `.monospacedDigit()`.
@@ -345,17 +345,17 @@ SF Symbols (hierarchical rendering). Custom symbols (SF Symbols template format)
 ### 7.1 Onboarding (≤ 60 s, every step skippable except the notice)
 | # | Screen | Content | Primary / secondary |
 |---|---|---|---|
-| 1 | Welcome | Ring glyph, „Deinen Zyklus verstehen. Privat und sicher.“ | **Los geht's** |
-| 2 | Privacy promise | „Kein Konto. Keine Server.“ · „Wir sehen deine Daten nie.“ · „Du bestimmst, was du teilst.“ + backup note | **Weiter** |
-| 3 | Notice „Bevor du startest“ (required) | Four points: **Keine Verhütung** (never rely on Cyclus to avoid pregnancy; low or no fertility shown ≠ can't get pregnant), **Nur Schätzungen**, **Kein Medizinprodukt**, **Deine Entscheidung** (developer not liable for consequences, except intent, gross negligence, injury to life/body/health and product liability law). Checkbox „Ich habe das gelesen und verstanden. Ich nutze Cyclus nicht, um eine Schwangerschaft zu vermeiden.“ | **Zustimmen und weiter** (disabled until ticked; no skip) |
-| 4 | Import | „Hast du eine Cyclus-Sicherung?“ → `.cyclus` file from any platform, or the health store (then step 5 is skipped) | **Sicherung importieren** / health store / Überspringen |
-| 5 | Last period | Date picker (no future); „Blutest du noch?“ / „Wie viele Tage ungefähr?“ → only the stated days are logged as bleeding without a level | **Weiter** / „Weiß ich nicht mehr“ |
-| 6 | Anything affecting your cycle? | Chips: Kinderwunsch · Hormonelle Verhütung · Schwanger · Nach der Geburt / Stillzeit · (conditions hidden until the engine widens ranges for them) · Nichts davon | **Weiter** |
-| 7 | App lock | „Cyclus sperren?“ (biometrics/screen lock; PIN setup when nothing else can unlock) | **Einschalten** / Jetzt nicht |
+| 1 | Welcome | Ring glyph, "Understand your cycle. Private and secure." | **Los geht's** |
+| 2 | Privacy promise | "No account. No servers." · "We never see your data." · "You decide what you share." + backup note | **Weiter** |
+| 3 | Notice "Before you start" (required) | Four points: **Not for birth control** (never rely on Cyclus to avoid pregnancy; low or no fertility shown ≠ can't get pregnant), **Estimates only**, **Not a medical device**, **Your decision** (developer not liable for consequences, except intent, gross negligence, injury to life/body/health and product liability law). Checkbox "I have read and understood this. I will not use Cyclus to avoid pregnancy." | **Agree and continue** (disabled until ticked; no skip) |
+| 4 | Import | "Do you have a Cyclus backup?" → `.cyclus` file from any platform, or the health store (then step 5 is skipped) | **Import backup** / health store / Skip |
+| 5 | Last period | Date picker (no future); "Are you still bleeding?" / "About how many days?" → only the stated days are logged as bleeding without a level | **Weiter** / "I don’t remember" |
+| 6 | Anything affecting your cycle? | Chips: Trying to get pregnant · Hormonal birth control · Pregnant · Postpartum or breastfeeding · (conditions hidden until the engine widens ranges for them) · None of these | **Continue** |
+| 7 | App lock | "Lock Cyclus?" (biometrics/screen lock; PIN setup when nothing else can unlock) | **Turn on** / Not now |
 
 Every step after the welcome has a back arrow (and system back) to the step the person came from — after a health-store connection or an import, that is the import step — with every answer kept and changeable; going back to the notice keeps it agreed and records no second confirmation. Birth year is not asked (no age-band priors yet). Screenshots: `screens/android/01-onboarding-*.png`.
 
-**Notice consent (2026-11-23).** Agreeing stores version + time (device only: not in exports, not in device snapshots; erase removes it). It is asked again, full screen after unlock, when the last confirmation of the current wording is older than 12 months, when the wording version is raised, and on a restored or new phone. That screen keeps „Datenschutz“ reachable (export, erase), so nobody is locked out of their own data by not agreeing. Switching on the fertile window or Kinderwunsch shows the notice as a sheet first; the switch only changes after agreeing. Datenschutz › Rechtliches › „Wichtiger Hinweis“ shows the last confirmation; its sheet lists every confirmation (date, time, version). The wording is not legal advice and needs a lawyer's review before public release.
+**Notice consent (2026-11-23).** Agreeing stores version + time (device only: not in exports, not in device snapshots; erase removes it). It is asked again, full screen after unlock, when the last confirmation of the current wording is older than 12 months, when the wording version is raised, and on a restored or new phone. That screen keeps "Privacy" reachable (export, erase), so nobody is locked out of their own data by not agreeing. Switching on the fertile window or trying-to-conceive mode shows the notice as a sheet first; the switch only changes after agreeing. Privacy › Legal › "Important notice" shows the last confirmation; its sheet lists every confirmation (date, time, version). The wording is not legal advice and needs a lawyer's review before public release.
 
 - Health store write permissions are **not** requested here; each is requested when the person switches that category on in the Privacy Center.
 - Notification permission is requested when the first prediction exists ("Want a heads-up 2 days before your period?").
@@ -389,22 +389,22 @@ Every step after the welcome has a back arrow (and system back) to the step the 
 └──────────────────────────────────────┘
 ```
 
-**Ring explainer (2026-11-23).** The ring is a tap target; a quiet ⓘ (18 dp glyph, 44 dp touch target, `ink2` at 75 %) sits in its empty bottom gap so the tap is discoverable without adding a row. Both open „So liest du den Ring“: one intro line (one segment per day, clockwise, starting bottom left with day 1) and a legend of only the elements the ring shows right now, each swatch a slice of the ring drawn with the same colours, strokes and dashes, then a link to „So funktionieren Prognosen“. TalkBack: the ring node is a button „Ring erklären“; its description stays the spoken summary.
+**Ring explainer (2026-11-23).** The ring is a tap target; a quiet ⓘ (18 dp glyph, 44 dp touch target, `ink2` at 75 %) sits in its empty bottom gap so the tap is discoverable without adding a row. Both open "Reading the ring": one intro line (one segment per day, clockwise, starting bottom left with day 1) and a legend of only the elements the ring shows right now, each swatch a slice of the ring drawn with the same colours, strokes and dashes, then a link to "How predictions work". TalkBack: the ring node is a button "Explain the ring"; its description stays the spoken summary.
 
-**Customizable Today (2026-11-23, step 1 of 3).** Below the ring (always on top; size Groß or Kompakt — a 116 dp ring with its text beside it) Today is a list of cards in the person's order:
+**Customizable Today (2026-11-23, step 1 of 3).** Below the ring (always on top; size Large or Compact — a 116 dp ring with its text beside it) Today is a list of cards in the person's order:
 
 | Card | Default | Appears |
 |---|---|---|
-| Heute eingetragen (+ Deine Schnellauswahl) | on | always |
-| Frühester Test · Beste Tage · LH-Tests · LH-Test heute | on | Kinderwunsch only, when relevant |
-| Ausblick | on | once the outlook has rows |
-| Fruchtbares Fenster | on | track mode with the window switched on |
-| Tage vor der Periode | on | between periods |
-| Demnächst | on | with a prediction, not paused |
-| Gefundene Muster (link) | on | once patterns exist |
-| Woche | library | always |
+| Today’s log (+ Your quick picks) | on | always |
+| Earliest test · Best days · LH tests · LH test today | on | trying to conceive only, when relevant |
+| Outlook | on | once the outlook has rows |
+| Fertile window | on | track mode with the window switched on |
+| Pre-period window | on | between periods |
+| Coming up | on | with a prediction, not paused |
+| Patterns found (link) | on | once patterns exist |
+| This week | library | always |
 
-A quiet „Ansicht anpassen“ link at the bottom opens edit mode in place: ring size, every card that isn't hidden (whether or not it applies today, with a one-line hint such as „Nur bei Kinderwunsch …“), a drag handle and an eye per card, the „Karte hinzufügen“ library and „Auf Standard zurücksetzen“. Nothing is ever deleted, only hidden. Not cards and never hideable: the one-time reminder offer, „Warum dieses Fenster?“ and the „Nicht zur Verhütung geeignet“ line whenever fertility is shown. **Demnächst** lists up to four rows in date order (pre-period days, fertile window, estimated ovulation, next period as „um den X · möglich: A–B“, and the next backup or „später als sonst“ reminder if notifications are on; daily reminders and ones that only echo a row are left out); a row stays while its end is today or later and reads „jetzt bis X“ once it has begun; a tap opens that day in the calendar. **Woche** shows three days back, today and three ahead with the calendar's cell rules; a tap opens the day in the calendar (next to Today on wide screens). **Deine Schnellauswahl**: up to 8 symptoms, feelings or tags, in the order picked; they are Today's one-tap chips and the symptom ones form the log sheet's „Schnellauswahl“ row. **Steps 2–3** (owner decisions 2026-11-23) add five cards, all in the library by default and none while paused: **Zyklus vs. üblich** (from 2 cycles: „Zyklustag N · üblich A–B Tage“ on a track with the usual band, today's dot and the period; the last cycle „im üblichen Bereich / kürzer / länger als üblich“, left out when it lies outside 15–90 days; the period against the typical length; a tap opens Insights). **Temperaturkurve** (the Insights chart of this cycle; only with fertility shown and ≥ 3 temperatures). **Stimmung & Energie** (≥ 3 entries in the last 7 days: a dot per mood/energy entry on the 1–5 scale and, where at least 2 other finished cycles have a value at the same cycle day, a faint line at their mean; a tap opens the day in the calendar). **Fragen für die Ärztin** (the person's own list, never generated from data: up to 3 open questions to tick off on the card, a sheet to add, edit, delete and clear the done ones; ≤ 30 open, ≤ 300 characters; stored encrypted and carried in exports, merged by id; the open ones prefill the Arztbericht's questions). **Phasen-Hinweis** (the phase — Periode, Follikelphase, Rund um den Eisprung (only with fertility shown), Lutealphase — with one neutral line: „Die Gebärmutterschleimhaut wird abgestoßen; Östrogen und Progesteron sind niedrig.“ / „Östrogen steigt, ein Eibläschen reift heran.“ / „Ein LH-Anstieg löst den Eisprung aus. Geschätzt, nicht sicher.“ / „Progesteron ist erhöht; vor der Periode sinken beide Hormone.“; up to two of the person's own patterns for the current window (period, the 7 days before it, mid-cycle) and „Allgemeine Information, keine Diagnose.“; with fertility hidden the card adds „Nicht zur Verhütung geeignet“ itself and never names an ovulation phase).
+A quiet "Customize" link at the bottom opens edit mode in place: ring size, every card that isn't hidden (whether or not it applies today, with a one-line hint such as "Trying to conceive only …"), a drag handle and an eye per card, the "Add a card" library and "Reset to default". Nothing is ever deleted, only hidden. Not cards and never hideable: the one-time reminder offer, "Why this window?" and the "Not for birth control" line whenever fertility is shown. **Coming up** lists up to four rows in date order (pre-period days, fertile window, estimated ovulation, next period as "around X · possible: A–B", and the next backup or "later than usual" reminder if notifications are on; daily reminders and ones that only echo a row are left out); a row stays while its end is today or later and reads "now until X" once it has begun; a tap opens that day in the calendar. **This week** shows three days back, today and three ahead with the calendar's cell rules; a tap opens the day in the calendar (next to Today on wide screens). **Your quick picks**: up to 8 symptoms, feelings or tags, in the order picked; they are Today's one-tap chips and the symptom ones form the log sheet's "Quick picks" row. **Steps 2–3** (owner decisions 2026-11-23) add five cards, all in the library by default and none while paused: **Cycle vs. usual** (from 2 cycles: "Cycle day N · usually A–B days" on a track with the usual band, today's dot and the period; the last cycle "within your usual range / shorter than usual / longer than usual", left out when it lies outside 15–90 days; the period against the typical length; a tap opens Insights). **Temperature curve** (the Insights chart of this cycle; only with fertility shown and ≥ 3 temperatures). **Mood & energy** (≥ 3 entries in the last 7 days: a dot per mood/energy entry on the 1–5 scale and, where at least 2 other finished cycles have a value at the same cycle day, a faint line at their mean; a tap opens the day in the calendar). **Questions for your doctor** (the person's own list, never generated from data: up to 3 open questions to tick off on the card, a sheet to add, edit, delete and clear the done ones; ≤ 30 open, ≤ 300 characters; stored encrypted and carried in exports, merged by id; the open ones prefill the Doctor Visit Pack's questions). **Cycle phase** (the phase — Period, Follicular phase, Around ovulation (only with fertility shown), Luteal phase — with one neutral line: "The uterine lining is shed; oestrogen and progesterone are low." / "Oestrogen rises while a follicle matures." / "An LH surge triggers ovulation. Estimated, not certain." / "Progesterone is raised; before the period both hormones fall."; up to two of the person's own patterns for the current window (period, the 7 days before it, mid-cycle) and "General information, not a diagnosis."; with fertility hidden the card adds "Not for birth control" itself and never names an ovulation phase).
 States:
 | State | Ring centre | Subtitle |
 |---|---|---|
@@ -420,7 +420,7 @@ States:
 ### 7.3 Log sheet
 - Presented as a `.sheet` with detents `.medium` / `.large`. Date header with ‹ › arrows; swipe between days.
 - **Stable section order:** Flow → Pinned → Suggested → Symptoms → Pain → Mood & energy → Sleep → Discharge → Sex (hidden unless enabled) → Temperature → Tags → Note.
-- **Pinned row** (UI label „Schnellauswahl“ / „Quick picks“; „Angeheftet“ was unclear): user-chosen (default: Cramps, Headache, Tired, Bloating). Fixed positions → muscle memory.
+- **Pinned row** (UI label "Quick picks" / "Quick picks"; "Pinned" was unclear): user-chosen (default: Cramps, Headache, Tired, Bloating). Fixed positions → muscle memory.
 - **Suggested row:** separate, up to 4 chips, "Often logged around this time". Never reorders other sections.
 - **"Nothing else today"** button at the bottom marks the day as *observed*, which the pattern engine needs (§11.7). It is **explicit only**, never auto-set on save, because an absent entry ≠ no symptom. Dismissing with "Done" without it leaves unlogged symptoms *unknown*.
 - Save is implicit: every change persists immediately. A "Done" button dismisses. The success haptic fires once.
@@ -429,9 +429,9 @@ States:
 
 ### 7.4 Calendar
 - Month grid (Monday first), swipe or ‹ › between months, today ringed. Day cell: number; bleeding = filled `period` circle; spotting = outline; predicted period = dashed outline; pre-period days = dashed underline; fertile tiers = tint + dot pattern, ◎ ovulation, ✦ peak; logged-anything = small dot.
-- **Tap a day → its detail appears inline under the grid** (today selected at first): entries with source badges for health-store values, „Bearbeiten“ (Log sheet for that day), „Periodenbeginn“ (past/today).
-- Long-press a day (or the accessibility action) → „Als Periodenbeginn markieren“ / „Kein Periodenbeginn“ (override).
-- Legend card at the bottom. Today's Woche / Demnächst cards open the calendar on a given day.
+- **Tap a day → its detail appears inline under the grid** (today selected at first): entries with source badges for health-store values, "Edit" (Log sheet for that day), "Period start" (past/today).
+- Long-press a day (or the accessibility action) → "Mark as period start" / "Not a period start" (override).
+- Legend card at the bottom. Today's This week / Coming up cards open the calendar on a given day.
 - Screenshots: `screens/android/05-calendar-*.png`.
 
 ### 7.5 Insights
@@ -468,15 +468,15 @@ Header: dates, length, period length, episode badges. Day strip with logs. Actio
 
 Rendering: `ImageRenderer` → `CGContext` PDF **in memory**. Document-info metadata stripped (no author, creator "Cyclus" only). Shared via `ShareLink` with a `Transferable` data representation; no temp file outside the protected container.
 
-### 7.8 Privacy Center („Datenschutz“)
+### 7.8 Privacy Center ("Privacy")
 Sections (screenshots `screens/android/08-privacy-*.png`):
-1. **Wo deine Daten sind:** Auf diesem Gerät (encrypted, key works only while unlocked — wording true per platform/OS version) · In Health Connect / Apple Health (written categories or „Nichts“) · In Backups (status, §11.9) · Deine Exporte (count, last date; „Geteilte Kopien können wir nicht löschen.“) · „Wir erhalten deine Daten nie. Es gibt keine Cyclus-Server.“
-2. **Schutz:** App-Sperre (biometrics / screen lock) · Cyclus-PIN (6 digits) · „Nur PIN, keine Biometrie“ · Sperren nach (sofort / 1 / 5 Min.) · screenshot/recording option where the platform allows it · app switcher preview always hidden (info) · „App ausblenden“ explainer (Private Space / Hide and Require Face ID).
-3. **Sichtbarkeit:** diskrete Mitteilungen (on) · Details im Widget (off) · Kurzbefehl „Eintragen“ (off) · note that reminder and widget dates live in sealed side files outside the database.
-4. **Health store** (Health Connect / Apple Health): status, Jetzt synchronisieren, write categories (all off), „In … gelöscht“ review, restore offer („In Cyclus übernehmen“), Trennen.
-5. **Backups:** „Nur auf dem Gerät“ · Verschlüsselte Sicherung erstellen (`.cyclus`, passphrase ≥ 10 chars, strength meter) · Sicherung importieren (preview → Zusammenführen / Ersetzen) · how device backups work and that moving between Android and iPhone uses the export.
-6. **Rechtliches:** „Wichtiger Hinweis“ with the last confirmation; sheet lists every confirmation (§7.1).
-7. **Alles löschen** (§7.9).
+1. **Where your data is:** On this device (encrypted, key works only while unlocked — wording true per platform/OS version) · In Health Connect / Apple Health (written categories or "Nothing") · In backups (status, §11.9) · Exports you’ve made (count, last date; "We can't delete copies you have shared.") · "We never receive your data. There are no Cyclus servers."
+2. **Protection:** App lock (biometrics / screen lock) · Cyclus PIN (6 digits) · "PIN only, no biometrics" · Lock after (immediately / 1 / 5 min) · screenshot/recording option where the platform allows it · app switcher preview always hidden (info) · "Hide app" explainer (Private Space / Hide and Require Face ID).
+3. **Visibility:** Discreet notifications (on) · Details in widget (off) · "Log" shortcut (off) · note that reminder and widget dates live in sealed side files outside the database.
+4. **Health store** (Health Connect / Apple Health): status, Jetzt synchronisieren, write categories (all off), "Deleted in …" review, restore offer ("Bring them back"), Trennen.
+5. **Backups:** "Device only" · Create encrypted backup (`.cyclus`, passphrase ≥ 10 chars, strength meter) · Import backup (preview → Merge / Replace) · how device backups work and that moving between Android and iPhone uses the export.
+6. **Legal:** "Important notice" with the last confirmation; sheet lists every confirmation (§7.1).
+7. **Erase everything** (§7.9).
 
 ### 7.9 Erase everything
 Two-step confirmation. Step 1 lists what happens:
@@ -493,7 +493,7 @@ Part of the Privacy Center (§7.8, item 4); platform details in ANDROID_PLAN §6
 Part of the Privacy Center (§7.8, item 5). CSV export: still open on both platforms (PARITY S-002).
 
 ### 7.12 App lock screen
-Full-screen `bg` with the app glyph, „Cyclus ist gesperrt“, „Deine Daten bleiben verborgen, bis du entsperrst.“, PIN pad when a Cyclus PIN is set, „Entsperren“ for biometrics/screen lock (offered automatically when there is no PIN). Nothing of the content is rendered behind it, and **after unlocking the person is where they were** (tab, pushed screen, open sheet, selected day, scroll). Back-off after 5 wrong PINs. The lock is paused (with a notice in the Privacy Center) when nothing could unlock it. Screenshot: `screens/android/10-lock-screen.png`.
+Full-screen `bg` with the app glyph, "Cyclus is locked", "Your data stays hidden until you unlock.", PIN pad when a Cyclus PIN is set, "Unlock" for biometrics/screen lock (offered automatically when there is no PIN). Nothing of the content is rendered behind it, and **after unlocking the person is where they were** (tab, pushed screen, open sheet, selected day, scroll). Back-off after 5 wrong PINs. The lock is paused (with a notice in the Privacy Center) when nothing could unlock it. Screenshot: `screens/android/10-lock-screen.png`.
 
 ### 7.13 Error & edge states
 | Case | Copy (EN) |
@@ -541,12 +541,12 @@ Selected in onboarding step 6 ("Trying to get pregnant") or in Settings › Life
 - **Log sheet pinned (Conceive default):** LH test · Mucus · BBT · Sex. The BBT field remembers the last value and offers a ±0.05 stepper; the °C/°F unit follows settings.
 - **Calendar:** fertility shading (3 intensities + dot pattern), ◎ ovulation marker, ✦ peak day, LH-positive tick.
 
-### 7.15 Über Cyclus (About)
-Settings › Mehr › „Über Cyclus“ (pushed). Owner decisions 2026-11-23: no publisher line, no contact link (nothing leaves the app).
-- **Header:** app icon, „Cyclus“, „Version x.y.z“ (the installed build), the welcome subline.
-- **Wichtiger Hinweis:** subtitle „Bestätigt am …“; opens the notice with every confirmation (same sheet as Datenschutz › Rechtliches; confirm button when due).
-- **So funktionieren Prognosen:** the method sheet (same as Insights).
-- **Open-Source-Lizenzen** („n Bausteine“): every bundled component, A–Z, with version and license name; tap → its full license text (reflowed for the phone, selectable). The list is generated at build time from the shipped dependencies, never typed by hand; components without usable metadata (SQLCipher, the bundled fonts) are added from checked-in license files. Required: licenses that ask for their notice in the binary distribution (BSD, OFL, Apache NOTICE) are satisfied here.
+### 7.15 About Cyclus
+Settings › More › "About Cyclus" (pushed). Owner decisions 2026-11-23: no publisher line, no contact link (nothing leaves the app).
+- **Header:** app icon, "Cyclus", "Version x.y.z" (the installed build), the welcome subline.
+- **Important notice:** subtitle "Confirmed on …"; opens the notice with every confirmation (same sheet as Privacy › Legal; confirm button when due).
+- **How predictions work:** the method sheet (same as Insights).
+- **Open-source licenses** ("n components"): every bundled component, A–Z, with version and license name; tap → its full license text (reflowed for the phone, selectable). The list is generated at build time from the shipped dependencies, never typed by hand; components without usable metadata (SQLCipher, the bundled fonts) are added from checked-in license files. Required: licenses that ask for their notice in the binary distribution (BSD, OFL, Apache NOTICE) are satisfied here.
 
 ---
 
@@ -555,15 +555,15 @@ Settings › Mehr › „Über Cyclus“ (pushed). Owner decisions 2026-11-23: n
 ### 8.1 Widgets
 | Widget | Content | Default |
 |---|---|---|
-| Small | Mini ring, „Tag N“, „Periode in 6–10 Tagen“ | **„Details im Widget“ off:** only the app glyph and „Cyclus“, and no widget file exists |
-| Medium | Same + „Periode eintragen“ / „Eintragen“ buttons | Buttons open the app (app lock applies) |
+| Small | Mini ring, "Day N", "Period in 6–10 days" | **"Details in widget" off:** only the app glyph and "Cyclus", and no widget file exists |
+| Medium | Same + "Log period" / "Log" buttons | Buttons open the app (app lock applies) |
 | Lock-screen surface | iOS: accessory widgets with the same detail rule; Android: none (phones have no lock-screen widgets) | Neutral unless details are on |
 
-The widget computes the cycle day from stored days, so it stays right after midnight. „Periode eintragen“ logs the period start with Undo, or opens the Log sheet if today already has bleeding.
+The widget computes the cycle day from stored days, so it stays right after midnight. "Log period" logs the period start with Undo, or opens the Log sheet if today already has bleeding.
 
 ### 8.2 Quick actions
-- **Quick Settings tile (Android) / Control Center control (iOS):** „Cyclus · Eintragen“ → device unlock → app lock → Log sheet.
-- **Icon shortcut „Eintragen“** (long-press the app icon): **off by default**, opt-in in Privacy Center › Sichtbarkeit.
+- **Quick Settings tile (Android) / Control Center control (iOS):** "Cyclus · Log" → device unlock → app lock → Log sheet.
+- **Icon shortcut "Log"** (long-press the app icon): **off by default**, opt-in in Privacy Center › Visibility.
 - No Siri/Spotlight/App Shortcuts suggestions; App Functions / Gemini integration is a v2 consideration.
 
 ### 8.3 Notifications (local only)
@@ -577,7 +577,7 @@ The widget computes the cycle day from stored days, so it stays right after midn
 | Window opening (Conceive) | On in Conceive | "Cyclus · Check-in" | "Your fertile window is likely starting." |
 | BBT morning reminder (Conceive, if BBT used) | Off | "Cyclus · Reminder" | "Take your temperature before getting up." |
 
-**Opt-in (owner decision 2026-11-22, both platforms):** no notification is scheduled until the user accepts the in-context offer (Today: „Vor deiner Periode erinnern?“) or turns notifications on in Settings; the „Default“ column applies after that. Detailed copy never contains dates, numbers or symptoms; the lock screen only ever shows the discreet title.
+**Opt-in (owner decision 2026-11-22, both platforms):** no notification is scheduled until the user accepts the in-context offer (Today: "Remind you before your period?") or turns notifications on in Settings; the "Default" column applies after that. Detailed copy never contains dates, numbers or symptoms; the lock screen only ever shows the discreet title.
 
 Copy note in settings (iOS): "Notifications also appear on your Apple Watch." Scheduling per platform: ANDROID_PLAN §6.3 / IOS_PLAN §6.3.
 
@@ -596,7 +596,7 @@ Warm, plain, direct; second person; short sentences. Say "period", "bleeding", "
 ### 9.3 Banned / restricted terms (v1, all surfaces incl. App Store)
 | Term | Rule |
 |---|---|
-| safe days, infertile days, unsafe days, "can't get pregnant", "low risk", protection, birth control (as a claim) — DE: *sichere Tage, unfruchtbare Tage, „kann nicht schwanger werden“, geringes Risiko, Schutz, Verhütung (als Aussage)* | **Banned everywhere.** Only allowed: "Not for birth control." / „Nicht zur Verhütung geeignet.“ |
+| safe days, infertile days, unsafe days, "can't get pregnant", "low risk", protection, birth control (as a claim) — DE: *sichere Tage, unfruchtbare Tage, „kann nicht schwanger werden“, geringes Risiko, Schutz, Verhütung (als Aussage)* | **Banned everywhere.** Only allowed: "Not for birth control." / DE „Nicht zur Verhütung geeignet.“ |
 | DE: *Diagnose, diagnostizieren, erkennen (bei Erkrankungen), bestätigter Eisprung* | Banned (same rules as EN) |
 | fertile, fertile window, ovulation, conceive | Allowed **only** when the fertility flag is on (Conceive mode or Track with "Show fertile window"), always with uncertainty ("likely", "estimated") |
 | "confirmed ovulation", "you ovulated" | Banned. Use "ovulation likely occurred around …" |
@@ -611,7 +611,7 @@ Warm, plain, direct; second person; short sentences. Say "period", "bleeding", "
 A CI lint scans `Localizable.xcstrings` and App Store metadata for banned terms (§12.1).
 
 ### 9.4 Glossary (DE is the source language; EN translation), to be reviewed by a DE-speaking clinician
-Address the user with informal **„du“** throughout (gender-neutral, standard for consumer health apps in DACH). Avoid gendered nouns for the user; for clinicians use both forms („deine Gynäkologin oder dein Gynäkologe“).
+Address the user with informal **„du“** throughout (gender-neutral, standard for consumer health apps in DACH). Avoid gendered nouns for the user; for clinicians use both forms (DE „deine Gynäkologin oder dein Gynäkologe“).
 | EN | DE |
 |---|---|
 | Period | Periode |
@@ -626,7 +626,7 @@ Address the user with informal **„du“** throughout (gender-neutral, standard
 | Hormonal birth control | Hormonelle Verhütung |
 | Doctor Visit Pack | Arztbericht |
 | Trying to conceive (mode) | Kinderwunsch |
-| Egg-white mucus | Spinnbarer Zervixschleim (chip: „Spinnbar“) |
+| Egg-white mucus | Spinnbarer Zervixschleim (chip: "Egg white") |
 | Fertility tiers: Lower / Possible / High / Peak | Geringer / Möglich / Hoch / Am höchsten |
 | Fertile window (estimate) | Fruchtbares Fenster (Schätzung) |
 | Ovulation likely occurred | Eisprung wahrscheinlich um den … |
@@ -656,12 +656,12 @@ Address the user with informal **„du“** throughout (gender-neutral, standard
 ## 11. Technical design
 
 ### 11.1 Stack & modules
-**Kotlin Multiplatform shared core + native UI** (D10). The shared module (`shared/`) holds the domain model, the SQLDelight schema and repository, all engines (prediction, fertility, learning, „Deine Muster“, „Ausblick“), presenters (one immutable UI state per screen), the report model, the `.cyclus` format and the platform-neutral rules (layout, quick picks, consent, notifications plan, appearance). Native: Jetpack Compose + Material 3 Expressive (Android, ANDROID_PLAN §2) and SwiftUI (iOS, IOS_PLAN §2), plus health store, widgets, notifications, PDF drawing, authentication. No third-party runtime services on either platform.
+**Kotlin Multiplatform shared core + native UI** (D10). The shared module (`shared/`) holds the domain model, the SQLDelight schema and repository, all engines (prediction, fertility, learning, "Your patterns", "Outlook"), presenters (one immutable UI state per screen), the report model, the `.cyclus` format and the platform-neutral rules (layout, quick picks, consent, notifications plan, appearance). Native: Jetpack Compose + Material 3 Expressive (Android, ANDROID_PLAN §2) and SwiftUI (iOS, IOS_PLAN §2), plus health store, widgets, notifications, PDF drawing, authentication. No third-party runtime services on either platform.
 
 ### 11.2 Process & storage layout
 - **Single writer:** only the app process opens the store; widgets, tiles/controls and shortcuts open the app (§3.3).
 - **Store:** SQLite with SQLCipher; random 256-bit key held by the hardware keystore (Android Keystore/StrongBox; iOS Keychain + Secure Enclave), usable only while the device is unlocked (Android 15+ and iOS; Android 10–14 hardware-bound without that rule, ANDROID_PLAN §2.4).
-- **Side files** outside the store, sealed with their own key that works while locked: widget snapshot (only with „Details im Widget“) and reminder plan. Never in backups; deleted on erase.
+- **Side files** outside the store, sealed with their own key that works while locked: widget snapshot (only with "Details in widget") and reminder plan. Never in backups; deleted on erase.
 - **Device settings** outside the store (not health data, readable before unlock): appearance. Notification, consent and health-store bookkeeping live in the store but are never exported.
 
 ### 11.3 Data model (shared SQLDelight schema; illustrated in Swift syntax from the first draft)
@@ -719,12 +719,12 @@ struct LocalDate: Codable, Hashable, Comparable, Sendable { // civil date, no ti
 4. **Precedence per (day, field):** Cyclus user entry > Apple Health / Apple Watch entry > other apps. Lower-precedence values are kept and shown in day detail but not counted. **Never double-count flow.**
 5. **Cycle start flag.** On write, `HKMetadataKeyMenstrualCycleStart` (required) = Cyclus's detected start (§11.5.1). On import, an external start flag ranks above Cyclus's heuristic and below the user override.
 6. **Deletion of own samples in Health** (seen via the anchored query's `deletedObjects`): keep local data and set `HealthLink.state = .removedInHealth`. Show a non-blocking review in Settings: "3 entries were removed in Apple Health — Keep in Cyclus only / Remove from Cyclus too". Never auto-rewrite.
-7. **Reinstall / recovery.** Own samples (prefix match) found on import can be reconstructed as local `DayLog` fields, which restores data after reinstall for mirrored categories. Only into an empty store and **only after the person agrees** („Frühere Einträge gefunden … In Cyclus übernehmen / Nicht übernehmen“): after an erase that kept the Health Connect records, reconnecting must never silently bring erased entries back.
+7. **Reinstall / recovery.** Own samples (prefix match) found on import can be reconstructed as local `DayLog` fields, which restores data after reinstall for mirrored categories. Only into an empty store and **only after the person agrees** ("Earlier entries found … Bring them back / Don't bring them back"): after an erase that kept the Health Connect records, reconnecting must never silently bring erased entries back.
 8. **Permissions.**
    - Read set requested at import.
    - Write per category, requested when toggled.
    - Read denial is undetectable, so the UX shows help text only.
-9. **Import and sync timing.** All history on first connect, with progress; anchors / changes tokens persisted per type. **Sync only while the app is open** (start/resume, 3 s after the person's own edits or category toggles, „Jetzt synchronisieren“); no background delivery or background jobs (decision 2026-11-22, both platforms).
+9. **Import and sync timing.** All history on first connect, with progress; anchors / changes tokens persisted per type. **Sync only while the app is open** (start/resume, 3 s after the person's own edits or category toggles, "Sync now"); no background delivery or background jobs (decision 2026-11-22, both platforms).
 
 **Android notes (2026-11-22):** values from health stores fill only fields the person left empty and are listed separately with their source in the day sheet; Cyclus writes only the person's own entries; reconstruction from own records (rule 7) only into an empty store; sync only while the app is open. These apply to the iOS implementation as well.
 
@@ -737,7 +737,7 @@ struct LocalDate: Codable, Hashable, Comparable, Sendable { // civil date, no ti
 | flow spotting | `intermenstrualBleeding` | On | Spotting is never written as `menstrualFlow` |
 | symptoms (severity) | Matching symptom category types, `HKCategoryValueSeverity` | On | Cyclus-only symptoms (custom) not mirrored |
 | moodChanges / sleepChanges (HK presence types) | Imported as symptom presence | — | Import-only mapping |
-| mood (1–5) + emotions | `HKStateOfMind` (dailyMood, valence mapped −1…+1; emotions → `HKStateOfMind.Label` where one exists, e.g. irritated, sad, anxious, calm, happy) | **Off** | „Empfindlich“ has no HK label → Cyclus only |
+| mood (1–5) + emotions | `HKStateOfMind` (dailyMood, valence mapped −1…+1; emotions → `HKStateOfMind.Label` where one exists, e.g. irritated, sad, anxious, calm, happy) | **Off** | "Sensitive" has no HK label → Cyclus only |
 | libido | — | Not mirrored | Cyclus only |
 | energy, sleepQuality, pain map, tags, notes | — | Not mirrored | Shown in Privacy Center as "Cyclus only" |
 | discharge | `cervicalMucusQuality` (dry/sticky/creamy/watery/eggWhite) | Off | Cyclus-only options (e.g. "unusual") not mirrored |
@@ -807,7 +807,7 @@ Displayed as 7 days before the predicted **lower bound**. This is a calendar con
   - **Wrist:** an own detector on baseline-corrected deviations (persistent elevation ≥ 0.25 °C for ≥ 3 of 4 nights after ≥ 5 of 7 lower nights), labelled "possible temperature shift". Never fed into period prediction until back-tested on real wrist data.
   - **LH:** ovulation typically 24–48 h after the *first* positive.
 
-### 11.7 Pattern engine — statistical core (used by „Deine Muster“, §11.12)
+### 11.7 Pattern engine — statistical core (used by "Your patterns", §11.12)
 - **Observed day** = any day with `observedComplete == true`, **or** with ≥ 3 logged fields across ≥ 2 sections (heuristic proxy, documented). The denominator is observed days only; symptom absence on non-observed days is *missing*.
 - **Windows (no ovulation dependence):** `P` = period days; `PRE` = days −7…−1 before next start (retrospective); `MID` = the rest.
 - **Unit of analysis = cycle**, which handles within-cycle autocorrelation. For symptom s, window W, cycle c: `k_cW` hits out of `n_cW` observed days.
@@ -848,7 +848,7 @@ struct Insight: Sendable, Codable {
 - **`.cyclus` format v1** (normative: `docs/export/FORMAT.md`, revised 2026-11-22): `magic "CYCLUS1" | mode(1) | salt(16) | iterations(u32 BE) | nonce(12) | AES-256-GCM(raw DEFLATE(JSON)) + tag(16)`, **AAD = the 40 header bytes**. Mode 1 = passphrase, key = PBKDF2-HMAC-SHA256 (CommonCrypto `CCKeyDerivationPBKDF`), 600,000 iterations; mode 2 = raw 256-bit key (device backups). Compression is raw DEFLATE (Apple `COMPRESSION_ZLIB`). JSON per `docs/export/cyclus-export.schema.json` v1; user exports never contain app-lock settings. Test vectors in `shared/golden/export/`; reference decoder `tools/export/cyclus_decode.py`.
 - **CSV:** one row per day, documented columns.
 - **The export schema is published** on the support site under CC-BY. End-of-life pledge: if Cyclus is discontinued, a final update keeps export working, and the schema + a reference decoder stay public.
-- **Device backups (D5 revised):** the database is never backed up; a sealed mode-2 snapshot travels only where the platform can't read it (Android: E2E/device-to-device transport; iOS: snapshot key only in iCloud Keychain). „Nur auf dem Gerät“ removes snapshot and key. Device backups restore only on the same platform.
+- **Device backups (D5 revised):** the database is never backed up; a sealed mode-2 snapshot travels only where the platform can't read it (Android: E2E/device-to-device transport; iOS: snapshot key only in iCloud Keychain). "Device only" removes snapshot and key. Device backups restore only on the same platform.
 - **Cross-platform transfer (owner requirement 2026-11-23):** a passphrase `.cyclus` file from either platform imports on the other (FORMAT.md, IOS_PLAN §6.4.4).
 
 ### 11.10 Privacy manifest
@@ -978,59 +978,59 @@ The posterior over ≤ 60 days × ≤ 40 observations is < 1 ms. The full recomp
 
 ---
 
-### 11.12 „Deine Muster“ — pattern watching (v1, D9)
-User-facing name: **„Deine Muster“** / "Your patterns". (Rejected: „Musterwache“, which sounds odd in German.)
+### 11.12 "Your patterns" — pattern watching (v1, D9)
+User-facing name: **"Your patterns"** / "Your patterns". (Rejected: "Pattern watch", which sounds odd in German.)
 
-**Principle.** Cyclus watches a fixed catalogue of patterns. Each watcher has a minimum amount of data, a statistical test and pre-written wording. A result is shown only if it repeats across cycles. Every result is a *description of the user's own records* with its evidence ("Warum?"), never a diagnosis.
+**Principle.** Cyclus watches a fixed catalogue of patterns. Each watcher has a minimum amount of data, a statistical test and pre-written wording. A result is shown only if it repeats across cycles. Every result is a *description of the user's own records* with its evidence ("Why?"), never a diagnosis.
 
 **Status per watcher:**
-- *Deutliches Muster* (consistent);
-- *Erstes Signal* (early);
-- *Stabil* (watched, nothing changes: also good news);
-- *Kein Muster*;
-- *Braucht mehr Daten*.
+- *Consistent pattern*;
+- *Early signal*;
+- *Stable* (watched, nothing changes: also good news);
+- *No pattern*;
+- *Needs more data*.
 
-Watchers without a pattern stay visible under „Wird beobachtet“, so the user sees what is being checked.
+Watchers without a pattern stay visible under "Being watched", so the user sees what is being checked.
 
 **Windows** (no ovulation needed, so this also works in Track mode):
 - **P** = period days;
 - **PRE** = 7 days before the next start;
-- **MIDC** = cycle days L−16…L−11 ("um die Zyklusmitte");
+- **MIDC** = cycle days L−16…L−11 ("around mid-cycle");
 - **REST**.
 
 In Conceive mode with good ovulation estimates, MIDC can be replaced by an ovulation-relative window (v1.1).
 
 | Area | Watcher | Data | Method | Minimum | Category |
 |---|---|---|---|---|---|
-| Körper | Symptom × window (P / PRE / MIDC), best window per symptom, top 6 | symptoms, observed days | §11.7 cycle-unit beta-binomial risk ratio; consistent: ≥ 4 cycles, P(RR>1.5) ≥ 0.9, same direction ≥ 75%; early: P(RR>1.25) ≥ 0.85, direction ≥ 75% | 2 cycles with ≥ 2 window + ≥ 4 other observed days | A (wellness) |
-| Stimmung & Gefühle | Feelings (gereizt, traurig, ängstlich, empfindlich, ausgeglichen, glücklich) × window | emotions | as above | as above | A |
-| Stimmung & Gefühle | Mood / energy / sleep quality / libido × window | 1–5 scales | per-cycle mean difference window vs rest; consistent: ≥ 4 cycles, abs. diff ≥ 0.5, same sign ≥ 75% | 2 cycles | A |
-| Lebensstil | Tag → symptom/feeling **on the next day** (e.g. "Kopfschmerzen am Tag nach Alkohol") | tags | pooled risk ratio with design effect 1.2; stricter threshold P(RR>1.5) ≥ 0.9 (many combinations), plus **leave-one-cycle-out**: still P(RR>1.25) ≥ 0.8 without any single cycle. Top 2 | ≥ 6 exposure days in ≥ 3 cycles | A |
+| Body | Symptom × window (P / PRE / MIDC), best window per symptom, top 6 | symptoms, observed days | §11.7 cycle-unit beta-binomial risk ratio; consistent: ≥ 4 cycles, P(RR>1.5) ≥ 0.9, same direction ≥ 75%; early: P(RR>1.25) ≥ 0.85, direction ≥ 75% | 2 cycles with ≥ 2 window + ≥ 4 other observed days | A (wellness) |
+| Mood & feelings | Feelings (irritable, sad, anxious, sensitive, calm, happy) × window | emotions | as above | as above | A |
+| Mood & feelings | Mood / energy / sleep quality / libido × window | 1–5 scales | per-cycle mean difference window vs rest; consistent: ≥ 4 cycles, abs. diff ≥ 0.5, same sign ≥ 75% | 2 cycles | A |
+| Lifestyle | Tag → symptom/feeling **on the next day** (e.g. "Headache the day after alcohol") | tags | pooled risk ratio with design effect 1.2; stricter threshold P(RR>1.5) ≥ 0.9 (many combinations), plus **leave-one-cycle-out**: still P(RR>1.25) ≥ 0.8 without any single cycle. Top 2 | ≥ 6 exposure days in ≥ 3 cycles | A |
 | Lebensstil | Stress → cycle length | tags, lengths | ≥ 3 stress days in first 14 days = exposed; early: mean difference ≥ 2 days with ≥ 2 exposed cycles; consistent: ≥ 3 exposed, all longer than every unexposed | 2 + 2 cycles | A |
-| Fruchtbarkeit | Ovulation day range, luteal length, LH→ovulation lag, mucus early-signal offset, stress → later ovulation, temperature rise present | retrospective per-cycle posteriors (§11.11) | only *good* cycles (80% HPD ≤ 3 days, LH or temperature supported). Ovulation range = shortest window covering ≥ ⅔ of cycles | 2 good cycles | B (device scope) |
-| Zyklusgesundheit | Cycle length trend, strongest period pain trend, period length | lengths, pain map | OLS slope with t-based 80% interval; shown as a trend only if the interval excludes 0, otherwise "stabil" | 6 cycles | C (device scope, neutral) |
+| Fertility | Ovulation day range, luteal length, LH→ovulation lag, mucus early-signal offset, stress → later ovulation, temperature rise present | retrospective per-cycle posteriors (§11.11) | only *good* cycles (80% HPD ≤ 3 days, LH or temperature supported). Ovulation range = shortest window covering ≥ ⅔ of cycles | 2 good cycles | B (device scope) |
+| Cycle health | Cycle length trend, strongest period pain trend, period length | lengths, pain map | OLS slope with t-based 80% interval; shown as a trend only if the interval excludes 0, otherwise "stable" | 6 cycles | C (device scope, neutral) |
 
 **Wording & safety rules:**
 - Category **A** text may suggest nothing beyond self-knowledge.
 - **B** follows the fertility copy rules (§9.3).
-- **C** is strictly neutral ("gestiegen von etwa 3 auf 7"). It is **never pushed** as a notification, it is marked "Im Arztbericht enthalten", and it is listed in the Doctor Visit Pack.
+- **C** is strictly neutral ("rose from about 3 to 7"). It is **never pushed** as a notification, it is marked "Included in your Doctor Visit Pack", and it is listed in the Doctor Visit Pack.
 - No watcher says "abnormal", "zu kurz" or names a condition.
-- Every pattern card has „Warum?“ (method, number of cycles, probability) and „Ausblenden“. Hidden patterns stay hidden until the user shows them again; local only.
-- Correlation copy always includes „Ein Zusammenhang ist kein Beweis für eine Ursache.“
+- Every pattern card has "Why?" (method, number of cycles, probability) and "Hide". Hidden patterns stay hidden until the user shows them again; local only.
+- Correlation copy always includes "A connection is not proof of a cause."
 
 **Release gates (CI, extends §11.7):**
-- Null simulation per watcher type with realistic logging sparsity: ≤ 5% of simulated users get any *Deutliches Muster*, ≤ 15% any *Erstes Signal*.
+- Null simulation per watcher type with realistic logging sparsity: ≤ 5% of simulated users get any *Consistent pattern*, ≤ 15% any *Early signal*.
 - The tag watcher is simulated with all 5 default tags × all items.
 - Recall ≥ 70% for planted effects of RR 2 at 6 cycles.
 
 **Where it appears:**
-- Insights › „Deine Muster“: pattern cards, then „Wird beobachtet“.
-- Today: a link "N Muster gefunden".
-- Doctor Visit Pack: an optional section „Beobachtete Muster (selbst erfasst)“, C first.
+- Insights › "Your patterns": pattern cards, then "Being watched".
+- Today: a link "N patterns found".
+- Doctor Visit Pack: an optional section "Observed patterns (self-reported)", C first.
 - No push notifications in v1. An optional weekly digest comes in v1.5.
 
-### 11.13 „Ausblick“ — 7-day outlook (v1, D9)
-Turns the patterns that passed §11.12 into a forecast for today + 6 days, so patterns become **predictions** the user can plan around ("Schlechterer Schlaf heute · Krämpfe ab Di.").
+### 11.13 "Outlook" — 7-day outlook (v1, D9)
+Turns the patterns that passed §11.12 into a forecast for today + 6 days, so patterns become **predictions** the user can plan around ("Worse sleep today · Cramps from Tue").
 
 - **Profiles:** for every item or scale with a pattern, learn a per-person day profile from past cycles:
   - bins **P0…P6** (period days);
@@ -1042,8 +1042,8 @@ Turns the patterns that passed §11.12 into a forecast for today + 6 days, so pa
 - **Inclusion:**
   - an item appears on a day if p ≥ 0.30 **and** p ≥ 1.5 × the person's overall rate;
   - a scale appears if the expected value differs from the person's mean by ≥ 0.5 in the pattern's direction;
-  - only items backed by a „Deine Muster“ result are eligible (no forecast without an explainable pattern).
-- **Lifestyle carry-over:** if yesterday (or today) has a tag with a next-day pattern, today/tomorrow show the item with the tag's observed rate and the reason („nach „Alkohol““).
+  - only items backed by a "Your patterns" result are eligible (no forecast without an explainable pattern).
+- **Lifestyle carry-over:** if yesterday (or today) has a tag with a next-day pattern, today/tomorrow show the item with the tag's observed rate and the reason ("after Alcohol").
 - **Fertility:** in Conceive mode the fertile window stays in its own cards (§7.14); the outlook covers body and mood items only.
 - **UI (Today card):**
   - a two-line summary (first two rows, "ab Do.");
@@ -1110,7 +1110,7 @@ Delivery is planned as **ordered phases with exit criteria**, not as effort or t
 | 3 Core | Core model + engines (§11.5) + store with migrations + pending queue | Engine tests pass; migration test harness |
 | 4 Core screens | Today, Log sheet (incl. pain map, feelings, libido), Calendar | Usability test #1 (n = 5): period start logged ≤ 3 s |
 | 5 Health sync | HealthKit import, write-own, sync state machine (§11.4) | Device integration checklist passes |
-| 6 Intelligence | Fertility engine + Conceive UI (§11.11, §7.14); „Deine Muster“ + „Ausblick“ (§11.12–11.13) | Property tests, null-simulation and recall gates pass |
+| 6 Intelligence | Fertility engine + Conceive UI (§11.11, §7.14); "Your patterns" + "Outlook" (§11.12–11.13) | Property tests, null-simulation and recall gates pass |
 | 7 Completeness | Insights, onboarding, episodes, Privacy Center, lock/PIN, backup/export, Doctor Visit Pack, widgets, notifications | **Internal TestFlight** (incl. on-device back-test screen) |
 | 8 Readiness | DE/EN localisation review, accessibility audit, website & legal docs, regulatory technical file (traceability, risk register, IEC 62304/62366 docs) | Audit checklists pass; regulatory opinion received; clinician review of copy, PDF, templates, fertility explainer |
 | 9 Beta & release | External TestFlight (Beta App Review) for **≥ 2 cycles**; back-test aggregates; store assets; submission (fertility flag per region) | Metrics §12.4 + §11.11.8; privacy report clean |
@@ -1139,7 +1139,7 @@ Apple Developer (Organization) €99/yr · FDA establishment registration fee if
 ## 14. Open questions (owner, as of 2026-11-23)
 1. **Legal entity + organization developer accounts** (Apple, Google; D3/D14) — start early, 4–8 weeks.
 2. **Regulatory specialist** (qualification opinion per region, fertility flag) and **clinician reviewer** (gynaecologist + midwife, DE-speaking).
-3. **Lawyer review** of the „Bevor du startest“ notice wording before public release (§7.1).
+3. **Lawyer review** of the "Before you start" notice wording before public release (§7.1).
 4. **Name & brand:** trademark search EU/US before assets are made.
 5. **App Review question** on guideline 5.1.3(ii) (in writing; decides any sync in v2).
 6. **iOS:** a Mac / macOS CI for iOS builds; test devices (an older iPhone, an iPad); HealthKit-only categories later? (IOS_PLAN I7).
