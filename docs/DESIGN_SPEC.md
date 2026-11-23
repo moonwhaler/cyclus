@@ -1,9 +1,10 @@
 # Cyclus — Design Spec v1.0
 
-> Date: 2026-11-22 · Status: **Draft for owner sign-off** · Supersedes `PLAN.md` v0.1.
-> Incorporates the sceptic review (`REVIEW.md`: 12 MAJOR, 24 MINOR). §0.3 maps every finding to its resolution.
+> Date: 2026-11-22, amended through 2026-11-23 · Status: **v1.0 + owner amendments** (decisions D1–D14 signed; open items in §14) · Supersedes `archive/PLAN.md` v0.1.
+> Incorporates the sceptic review (`archive/REVIEW.md`: 12 MAJOR, 24 MINOR). §0.3 maps every finding to its resolution.
+> **How to read this:** this is the platform-neutral product spec (what and why). Platform how-to lives in `ANDROID_PLAN.md` (reference implementation) and `IOS_PLAN.md`; feature status in `PARITY.md`; reference screenshots in `screens/`.
 > Codename "Cyclus". Final name TBD.
-> **2026-11-23:** iOS implementation details in this spec (written before D10/D11) are superseded where `IOS_PLAN.md` §10 says so. The Android app is the reference implementation; both apps reach 100% parity (`PARITY.md`).
+> **2026-11-23 cleanup:** sections that described the first iOS-only implementation were rewritten platform-neutral (list: `IOS_PLAN.md` §10). Where a section still uses iOS API names, it describes intent; the platform plans decide the implementation. The Android app is the reference implementation; both apps reach 100% parity (`PARITY.md`).
 
 ---
 
@@ -25,7 +26,7 @@ Defaults are marked ✅. The rest of this spec is written against them. Changing
 | **D10** | Platforms & code sharing | ✅ **Confirmed 2026-11-22, Android first (ANDROID_PLAN D11):** Android with 100% feature parity. **Kotlin Multiplatform shared core** (model, store schema, all engines, patterns, outlook, report model, backup, strings) + native UI (SwiftUI / Compose M3 Expressive). Changes §11.1–11.3 and §12.1 as listed in `ANDROID_PLAN.md` §2.5. | Fully native twice, or Compose Multiplatform UI (see ANDROID_PLAN §0) |
 | **D8** | Markets & languages | ✅ **German first** (owner decision 2026-11-22): DACH is the primary market, all copy is authored in German (source language), App Store primary locale `de-DE`, German screenshots first, in-app language selector (Deutsch / English). English second. EU + US. | — (decided) |
 
-### 0.2 What changed vs. PLAN.md (summary)
+### 0.2 What changed vs. the first plan (`archive/PLAN.md`, summary)
 - **Removed from v1:** anomaly/deviation nudges, Siri/App Shortcuts, Control Center control, LLM features.
 - **Fertility (D1 = in, revised 2026-11-22):** calendar-only "ovulation = period − 14" replaced by a **daily Bayesian multi-signal engine** (§11.11): cycle history + LH tests (positive *and* negative) + cervical mucus + BBT + Apple Watch wrist temperature, with personal learning, a smart LH-test planner and "Why this window?" explanations.
 - **Added to v1:**
@@ -205,25 +206,26 @@ Mapped to HealthKit `.contraceptive` / `.pregnancy` / `.lactation` where a type 
 ### 3.2 Data-flow map
 | Surface | Data | Storage / protection | Default | Leak notes |
 |---|---|---|---|---|
-| Main store (SwiftData) | Everything | App container, `NSFileProtectionComplete` on `.store`, `-wal`, `-shm` | — | Unreadable while locked (intended) |
-| Pending-event queue | Event type + date only (e.g. "periodStart 2026-11-22") | App Group file, `.complete` | Written only after authenticated intents | Tiny; drained on next app activation |
-| Widget snapshot | Cycle day, next-period range, status enum | App Group JSON, `.completeUntilFirstUserAuthentication` | Home widget shows; Lock Screen widget **redacted** (`.privacySensitive()`) | Readable AFU; minimal |
+| Main store (SQLite + SQLCipher, shared schema) | Everything | App container; key held by the hardware keystore, usable only while unlocked (Android 15+ / iOS); file protection on iOS | — | Unreadable while locked (intended) |
+| ~~Pending-event queue~~ | — | **None:** widget, tile/control and shortcut actions open the app and run after the app lock | — | — |
+| Widget snapshot | Days only (last start, range, last bleeding day, paused) | Sealed side file (own key, usable while locked) | **Only while „Details im Widget“ is on**; otherwise no file and a neutral widget | Readable after first unlock; minimal |
+| Reminder plan | Reminder kinds, days, local times | Sealed side file | Only after notification opt-in | Hints at the predicted period; never in backups |
 | Notifications (pending requests) | Trigger date + copy | System | **Discreet copy** ("Cyclus · Check-in"); "late period" **off** | Content mirrors to Apple Watch |
-| Apple Health mirror | Per category | HealthKit (E2E iCloud sync) | Flow, spotting, symptoms, BBT **on**; mood (`HKStateOfMind`) **off**; **sexual activity, contraceptive, pregnancy/lactation off** | Health has no per-app lock; Health Sharing may forward to others |
-| Device backup | Main store | iCloud Backup (Apple-held keys unless ADP) / encrypted local backup | Included (D5), "Device only" toggle | Disclosed in Privacy Center + onboarding privacy page |
+| Health store mirror (HealthKit / Health Connect) | Per category | Platform health store | **Every write category off** until switched on (decision 2026-11-22) | No per-app lock in the health store; other apps with access can read it |
+| Device backup | Sealed snapshot (`.cyclus` mode 2), never the database | Platform backup | **End-to-end only** (D5 revised): Android E2E/device-to-device transport; iOS key only in iCloud Keychain. „Nur auf dem Gerät“ toggle | Restores only on the same platform; cross-platform moves use the passphrase export |
 | Encrypted export `.cyclus` | Everything | User-chosen location | Default export format | Safe at rest if passphrase strong |
 | Plain CSV export | Everything chosen | User-chosen location | Secondary option behind a warning | Largest leak vector; warning copy |
 | Doctor Visit Pack PDF | Chosen sections | Rendered in memory, shared via share sheet | Sexual activity, contraception, notes **excluded** by default | Watermark; metadata stripped |
-| App Intents (v1.1) | Query/log | Run in app process | `authenticationPolicy = .requiresAuthentication` for all; **no AppShortcutsProvider** (avoids Spotlight/Siri suggestions) | User adds shortcuts manually |
+| Quick actions (QS tile / Control, icon shortcut, widget buttons) | Open the app at the Log sheet / log period start | App process, after device unlock + app lock | Icon shortcut **off** by default; no Siri/Spotlight suggestions | Nothing is written outside the app UI |
 | Spotlight / donations | — | — | None | — |
 | Feedback mail | Whatever the user writes | Developer inbox | User-initiated | Privacy policy covers it; delete ≤ 90 d |
 
 ### 3.3 Lock-state behaviour (resolves M4)
-- **Single writer:** only the main app process opens the SwiftData store.
-- Lock Screen widget / Control (v1.1) "Log period" button → intent with `requiresAuthentication` → system unlock prompt → intent runs **in the app process** (intent defined in the app target; widget references it). If the app process can't take the write synchronously, it appends to the pending-event queue, and the app drains it on activation.
-- Principle 3 is defined as **"≤ 2 taps after unlock"**. Lock Screen tap + Face ID glance counts as one tap.
-- Failure UX: if a write fails, the widget shows "Couldn't save — open Cyclus" and the event stays queued. Data is never silently dropped.
-- HealthKit is unavailable while locked. The observer handler defers sync to the next unlocked activation.
+- **Single writer:** only the app process opens the store. Widgets, the QS tile / Control and shortcuts only **open the app**; the action (log period start, open the Log sheet) runs there after the device unlock and the app lock, exactly once. There is no pending-event queue (revised 2026-11-22).
+- Principle 3 is **"≤ 2 taps after unlock"**.
+- Reminders and widgets work while the phone is locked from sealed side files (§3.2), never from the database.
+- If the store can't be opened because the device is locked, the app retries automatically after unlock and when it returns to the foreground; other key/store errors show a blocking screen with Retry. Data is never deleted or recreated on its own.
+- The health store is only synced while the app is open.
 
 ### 3.4 Honest privacy copy (resolves M6, m10)
 - Use "We never receive your data. There are no Cyclus servers." **Never** "your data never leaves your phone".
@@ -234,27 +236,19 @@ Mapped to HealthKit `.contraceptive` / `.pregnancy` / `.lactation` where a type 
 ## 4. Information architecture
 
 ```
-Tab bar (Liquid Glass, 3 tabs)
-├── Today            (default)
-│   ├── toolbar: Privacy shield (→ Privacy Center), Settings gear
-│   └── floating Log button (glass) → Log sheet
-├── Calendar
-│   └── Day → Day detail sheet → Edit (Log sheet prefilled)
-└── Insights
-    ├── Cycle overview (stats)
-    ├── Charts: Cycle lengths · Period lengths · Symptom heatmap · Pain · Temperature
-    ├── Cycle history list → Cycle detail
-    └── Doctor Visit Pack → Builder → Preview → Share
-Settings (pushed from Today)
-├── Life stage & conditions (episodes)
-├── Logging (pinned items, custom tags, units)
-├── Notifications
-├── Apple Health (categories, import, sync status)
-├── Privacy Center
-├── Backup & Export
-├── Language · About · Intended purpose · Feedback
+Tabs: Heute · Kalender · Einblicke   (iOS: Liquid Glass tab bar · Android: navigation bar / rail)
+├── Heute (default)
+│   ├── top bar: date subtitle, Datenschutz (shield), Einstellungen (gear)
+│   ├── ring (Groß/Kompakt, tap → „So liest du den Ring“), status line, quick actions
+│   ├── cards in the person's order (§7.2) + „Ansicht anpassen“
+│   └── floating „Eintragen“ → Log sheet
+├── Kalender: month grid, selected day's detail inline (Bearbeiten, Periodenbeginn), legend
+└── Einblicke: Muster summary → Muster screen · Arztbericht → builder → PDF preview → share · stats & charts · history
+Einstellungen (pushed): Erscheinungsbild · Sprache · Ziel (Zyklus / Kinderwunsch) · Fruchtbares Fenster · Lebensphase · Mitteilungen · intended purpose
+Datenschutz (pushed): Wo deine Daten sind · Schutz (App-Sperre, PIN, Sperren nach, …) · Sichtbarkeit · Health store · Backups (Nur auf dem Gerät, Export, Import) · Rechtliches · Alles löschen
+Full-screen gates: app lock · store error · restore · notice consent (§7.1)
 ```
-The Log sheet is reachable from Today (floating button), Calendar (day), widgets and notifications (deep link `cyclus://log?date=`).
+The Log sheet is reachable from Today (floating button), the calendar day detail („Bearbeiten“), widgets, the QS tile / Control and the opt-in icon shortcut.
 
 ---
 
@@ -351,21 +345,19 @@ SF Symbols (hierarchical rendering). Custom symbols (SF Symbols template format)
 ### 7.1 Onboarding (≤ 60 s, every step skippable except the notice)
 | # | Screen | Content | Primary / secondary |
 |---|---|---|---|
-| 1 | Welcome | Wordmark, "Your cycle, understood. Never uploaded." | **Get started** |
-| 2 | Privacy promise | 3 rows: "No account. No servers.", "We never see your data.", "You decide what goes into Apple Health." Link: "What about backups?" (opens §7.8 explainer) | **Continue** |
-| 2a | Notice „Bevor du startest“ (required) | Four points: **Not birth control** (never rely on Cyclus to avoid pregnancy; low or no fertility shown ≠ can't get pregnant), **Estimates only**, **Not a medical device**, **Your decision** (developer not liable for consequences, except intent, gross negligence, injury to life/body/health and product liability law). Checkbox „I have read and understood this. I will not use Cyclus to avoid pregnancy.“ | **Agree and continue** (disabled until ticked; no skip) |
-| 3 | Import | "Bring your history from Apple Health so predictions work from day one." | **Import from Apple Health** / Skip |
-| 3a | Import progress | Read-only permission sheet (menstrual flow, spotting, symptoms, BBT, wrist temp, cervical mucus, contraceptive, pregnancy, lactation). Progress → "Found 37 periods since 2021." | auto-advance |
-| 4 | Last period (if no import) | "When did your last period start?" Inline graphical date picker | **Continue** / "I don't remember" |
-| 5 | Birth year (optional) | "Cycles change with age. This stays on your iPhone." Wheel | **Continue** / Prefer not to say |
-| 6 | Anything affecting your cycle? | Multi-select chips: Hormonal birth control · Pregnant · Postpartum / breastfeeding · Perimenopause · PCOS · Endometriosis · Testosterone / gender-affirming hormones · None of these | **Continue** |
-| 7 | App lock | "Lock Cyclus with Face ID?" | **Turn on** / Not now |
-| 8 | Done | Today screen with first-run coach mark on the Log button | — |
+| 1 | Welcome | Ring glyph, „Dein Zyklus, verstanden. Nie hochgeladen.“ | **Los geht's** |
+| 2 | Privacy promise | „Kein Konto. Keine Server.“ · „Wir sehen deine Daten nie.“ · „Du bestimmst, was du teilst.“ + backup note | **Weiter** |
+| 3 | Notice „Bevor du startest“ (required) | Four points: **Keine Verhütung** (never rely on Cyclus to avoid pregnancy; low or no fertility shown ≠ can't get pregnant), **Nur Schätzungen**, **Kein Medizinprodukt**, **Deine Entscheidung** (developer not liable for consequences, except intent, gross negligence, injury to life/body/health and product liability law). Checkbox „Ich habe das gelesen und verstanden. Ich nutze Cyclus nicht, um eine Schwangerschaft zu vermeiden.“ | **Zustimmen und weiter** (disabled until ticked; no skip) |
+| 4 | Import | „Hast du eine Cyclus-Sicherung?“ → `.cyclus` file from any platform, or the health store (then step 5 is skipped) | **Sicherung importieren** / health store / Überspringen |
+| 5 | Last period | Date picker (no future); „Blutest du noch?“ / „Wie viele Tage ungefähr?“ → only the stated days are logged as bleeding without a level | **Weiter** / „Weiß ich nicht mehr“ |
+| 6 | Anything affecting your cycle? | Chips: Kinderwunsch · Hormonelle Verhütung · Schwanger · Nach der Geburt / Stillzeit · (conditions hidden until the engine widens ranges for them) · Nichts davon | **Weiter** |
+| 7 | App lock | „Cyclus sperren?“ (biometrics/screen lock; PIN setup when nothing else can unlock) | **Einschalten** / Jetzt nicht |
+
+Birth year is not asked (no age-band priors yet). Screenshots: `screens/android/01-onboarding-*.png`.
 
 **Notice consent (2026-11-23).** Agreeing stores version + time (device only: not in exports, not in device snapshots; erase removes it). It is asked again, full screen after unlock, when the last confirmation of the current wording is older than 12 months, when the wording version is raised, and on a restored or new phone. That screen keeps „Datenschutz“ reachable (export, erase), so nobody is locked out of their own data by not agreeing. Switching on the fertile window or Kinderwunsch shows the notice as a sheet first; the switch only changes after agreeing. Datenschutz › Rechtliches › „Wichtiger Hinweis“ shows the last confirmation; its sheet lists every confirmation (date, time, version). The wording is not legal advice and needs a lawyer's review before public release.
 
-- **Android (2026-11-22):** step 3 imports a `.cyclus` backup (Health Connect import arrives with A4); step 4 asks „Blutest du noch?“ / „Wie viele Tage ungefähr?“ and logs only the stated days as bleeding without a level (no invented flow levels); birth year is not asked until the engine uses age-band priors.
-- Write permissions for Apple Health are **not** requested here. They are requested in context when the user turns on mirroring for a category (Settings › Apple Health), avoiding a 35-toggle sheet.
+- Health store write permissions are **not** requested here; each is requested when the person switches that category on in the Privacy Center.
 - Notification permission is requested when the first prediction exists ("Want a heads-up 2 days before your period?").
 - With no history: Today shows "Log your next period to start predictions". If a last-period date is given, it shows a **Rough estimate** range from the prior (wide, labelled).
 
@@ -436,11 +428,11 @@ States:
 - At AX sizes, chips wrap and the sheet opens at `.large`.
 
 ### 7.4 Calendar
-- Month grid, vertical infinite scroll, today ringed.
-- Day cell (min 44×44): number. Bleeding = filled `period` circle + droplet glyph at AX. Predicted period = dashed `period` outline. Pre-period window = dotted underline. Logged-anything = small dot below.
-- Legend button (top right) opens a key.
-- Tap a day → **Day detail** sheet: summary of the log, source badges for imported entries ("From Apple Watch"), **Edit** → Log sheet. Long-press a day → "Mark as period start / Not a period start" (override).
-- v1.1: horizontal timeline view toggle.
+- Month grid (Monday first), swipe or ‹ › between months, today ringed. Day cell: number; bleeding = filled `period` circle; spotting = outline; predicted period = dashed outline; pre-period days = dashed underline; fertile tiers = tint + dot pattern, ◎ ovulation, ✦ peak; logged-anything = small dot.
+- **Tap a day → its detail appears inline under the grid** (today selected at first): entries with source badges for health-store values, „Bearbeiten“ (Log sheet for that day), „Periodenbeginn“ (past/today).
+- Long-press a day (or the accessibility action) → „Als Periodenbeginn markieren“ / „Kein Periodenbeginn“ (override).
+- Legend card at the bottom. Today's Woche / Demnächst cards open the calendar on a given day.
+- Screenshots: `screens/android/05-calendar-*.png`.
 
 ### 7.5 Insights
 1. **Cycle overview card:** typical cycle length *range* (e.g. "27–31 days"), typical period length, variability in words ("Your cycles vary by about 4 days"), confidence badge, number of cycles used. Tap → explanation of the method in plain language.
@@ -476,16 +468,15 @@ Header: dates, length, period length, episode badges. Day strip with logs. Actio
 
 Rendering: `ImageRenderer` → `CGContext` PDF **in memory**. Document-info metadata stripped (no author, creator "Cyclus" only). Shared via `ShareLink` with a `Transferable` data representation; no temp file outside the protected container.
 
-### 7.8 Privacy Center
-Sections:
-1. **Where your data is.** PrivacyRows:
-   - "On this iPhone: encrypted when locked ✓";
-   - "In Apple Health: Flow, Spotting, Symptoms, BBT" (tap → category toggles, each with a one-line consequence, e.g. "Anyone you share Health data with may see this.");
-   - "In backups: Included. With iCloud Backup, Apple holds the keys unless Advanced Data Protection is on." with buttons [Learn about ADP] and toggle "Device only (exclude from backups)" — warning: "If you lose this phone, data not in Apple Health or an export is gone.";
-   - "Exports you've made: 2 (last Nov 3). We can't delete copies you've shared."
-2. **Protection:** Tip row: „App ausblenden“ → explains iOS 18 *Hide and Require Face ID* (Android: Private Space, see ANDROID_PLAN §1.1). App lock (Face ID / passcode) · **Cyclus PIN** (6 digits, independent of device passcode) · "Require PIN, don't allow Face ID" · Lock after: immediately / 1 min / 5 min · Blur in app switcher (always on, shown as info).
-3. **Visibility:** Notification style: Discreet ✓ / Detailed · Lock Screen widget: Hidden details ✓ / Show · StandBy (v1.1).
-4. **Erase everything** (§7.9).
+### 7.8 Privacy Center („Datenschutz“)
+Sections (screenshots `screens/android/08-privacy-*.png`):
+1. **Wo deine Daten sind:** Auf diesem Gerät (encrypted, key works only while unlocked — wording true per platform/OS version) · In Health Connect / Apple Health (written categories or „Nichts“) · In Backups (status, §11.9) · Deine Exporte (count, last date; „Geteilte Kopien können wir nicht löschen.“) · „Wir erhalten deine Daten nie. Es gibt keine Cyclus-Server.“
+2. **Schutz:** App-Sperre (biometrics / screen lock) · Cyclus-PIN (6 digits) · „Nur PIN, keine Biometrie“ · Sperren nach (sofort / 1 / 5 Min.) · screenshot/recording option where the platform allows it · app switcher preview always hidden (info) · „App ausblenden“ explainer (Private Space / Hide and Require Face ID).
+3. **Sichtbarkeit:** diskrete Mitteilungen (on) · Details im Widget (off) · Kurzbefehl „Eintragen“ (off) · note that reminder and widget dates live in sealed side files outside the database.
+4. **Health store** (Health Connect / Apple Health): status, Jetzt synchronisieren, write categories (all off), „In … gelöscht“ review, restore offer („In Cyclus übernehmen“), Trennen.
+5. **Backups:** „Nur auf dem Gerät“ · Verschlüsselte Sicherung erstellen (`.cyclus`, passphrase ≥ 10 chars, strength meter) · Sicherung importieren (preview → Zusammenführen / Ersetzen) · how device backups work and that moving between Android and iPhone uses the export.
+6. **Rechtliches:** „Wichtiger Hinweis“ with the last confirmation; sheet lists every confirmation (§7.1).
+7. **Alles löschen** (§7.9).
 
 ### 7.9 Erase everything
 Two-step confirmation. Step 1 lists what happens:
@@ -495,16 +486,14 @@ Two-step confirmation. Step 1 lists what happens:
 
 Step 2 requires typing "ERASE" (localised) or authenticating. The app then resets to onboarding.
 
-### 7.10 Settings › Apple Health
-Status line ("Last synced 2 min ago · 1,204 entries imported"), category list (Read ✓ / Write toggle), "Re-import everything", "Entries removed in Apple Health: 3 — Review" (§11.4), denied-permission help: "If nothing imports, open Settings › Health › Data Access & Devices › Cyclus."
+### 7.10 Health store settings
+Part of the Privacy Center (§7.8, item 4); platform details in ANDROID_PLAN §6.1 / IOS_PLAN §6.1. Read denial can't be detected on iOS: the status line says so instead of an error.
 
 ### 7.11 Backup & Export
-- **Encrypted backup (.cyclus)** → passphrase (min 10 chars, strength meter) → share sheet. A "Last backup: 34 days ago" row plus an optional monthly reminder.
-- **CSV (unencrypted)** → warning sheet → choose fields.
-- **Import .cyclus** → passphrase → preview counts → merge or replace.
+Part of the Privacy Center (§7.8, item 5). CSV export: still open on both platforms (PARITY S-002).
 
 ### 7.12 App lock screen
-Full-screen `bg` with the app glyph, "Cyclus is locked", and an [Unlock] button that triggers Face ID / PIN. No data rendered behind it; the snapshot for the app switcher is blurred.
+Full-screen `bg` with the app glyph, „Cyclus ist gesperrt“, „Deine Daten bleiben verborgen, bis du entsperrst.“, PIN pad when a Cyclus PIN is set, „Entsperren“ for biometrics/screen lock (offered automatically when there is no PIN). Nothing of the content is rendered behind it, and **after unlocking the person is where they were** (tab, pushed screen, open sheet, selected day, scroll). Back-off after 5 wrong PINs. The lock is paused (with a notice in the Privacy Center) when nothing could unlock it. Screenshot: `screens/android/10-lock-screen.png`.
 
 ### 7.13 Error & edge states
 | Case | Copy (EN) |
@@ -557,18 +546,18 @@ Selected in onboarding step 6 ("Trying to get pregnant") or in Settings › Life
 ## 8. System surfaces
 
 ### 8.1 Widgets
-| Widget | Family | Content (unlocked) | Locked / redacted |
-|---|---|---|---|
-| Ring | systemSmall | Mini ring, "Day 12", "Period in 6–10 d" | Home Screen is visible only unlocked |
-| Ring + log | systemMedium | Ring + "Log period" / "Log symptom" buttons (auth-required intents) | — |
-| Lock circular | accessoryCircular | Ring progress + day number | **Default "Hidden details":** abstract ring, no numbers (`.privacySensitive()`) |
-| Lock rectangular | accessoryRectangular | "Period in 6–10 days" | Redacted to "Cyclus" |
-| StandBy (v1.1) | — | Off by default | — |
+| Widget | Content | Default |
+|---|---|---|
+| Small | Mini ring, „Tag N“, „Periode in 6–10 Tagen“ | **„Details im Widget“ off:** only the app glyph and „Cyclus“, and no widget file exists |
+| Medium | Same + „Periode eintragen“ / „Eintragen“ buttons | Buttons open the app (app lock applies) |
+| Lock-screen surface | iOS: accessory widgets with the same detail rule; Android: none (phones have no lock-screen widgets) | Neutral unless details are on |
 
-Timeline: one entry per day at local midnight, plus a reload after each save (`WidgetCenter.reloadAllTimelines()`).
+The widget computes the cycle day from stored days, so it stays right after midnight. „Periode eintragen“ logs the period start with Undo, or opens the Log sheet if today already has bleeding.
 
-### 8.2 App Intents (v1.1)
-`LogPeriodStartIntent`, `LogPeriodEndIntent`, `LogSymptomIntent(symptom)`, `NextPeriodIntent`. All use `authenticationPolicy = .requiresAuthentication`. **No `AppShortcutsProvider`**, so nothing appears in Spotlight/Siri suggestions automatically. Settings › Logging › "Add to Shortcuts" explains how to opt in.
+### 8.2 Quick actions
+- **Quick Settings tile (Android) / Control Center control (iOS):** „Cyclus · Eintragen“ → device unlock → app lock → Log sheet.
+- **Icon shortcut „Eintragen“** (long-press the app icon): **off by default**, opt-in in Privacy Center › Sichtbarkeit.
+- No Siri/Spotlight/App Shortcuts suggestions; App Functions / Gemini integration is a v2 consideration.
 
 ### 8.3 Notifications (local only)
 | Notification | Default | Discreet copy (default) | Detailed copy |
@@ -583,7 +572,7 @@ Timeline: one entry per day at local midnight, plus a reload after each save (`W
 
 **Opt-in (owner decision 2026-11-22, both platforms):** no notification is scheduled until the user accepts the in-context offer (Today: „Vor deiner Periode erinnern?“) or turns notifications on in Settings; the „Default“ column applies after that. Detailed copy never contains dates, numbers or symptoms; the lock screen only ever shows the discreet title.
 
-Copy note in settings: "Notifications also appear on your Apple Watch."
+Copy note in settings (iOS): "Notifications also appear on your Apple Watch." Scheduling per platform: ANDROID_PLAN §6.3 / IOS_PLAN §6.3.
 
 ---
 
@@ -660,31 +649,15 @@ Address the user with informal **„du“** throughout (gender-neutral, standard
 ## 11. Technical design
 
 ### 11.1 Stack & modules
-Swift 6 (strict concurrency), SwiftUI, Observation, SwiftData, HealthKit, WidgetKit, App Intents, Swift Charts, LocalAuthentication, CryptoKit + CommonCrypto (PBKDF2), UserNotifications. Foundation Models from v1.5. No third-party runtime dependencies. Test-only: `swift-snapshot-testing`.
-
-```
-Cyclus.xcodeproj
-├── Cyclus (app)            UI, navigation, intents (single writer)
-├── CyclusWidgets (ext)     Reads widget snapshot only
-└── Packages/
-    ├── CycleCore           LocalDate, value types, episodes. Pure
-    ├── CycleEngine         Cycle detection, prediction, stats, (gated) temp shift. Pure
-    ├── CycleInsights       Pattern engine (v1.5), templates, FM phrasing
-    ├── CycleStore          SwiftData schema (versioned), repository, pending-event queue drain
-    ├── CycleHealth         HealthKit adapter + sync state machine
-    ├── CycleReport         Doctor Visit Pack renderer
-    ├── CycleBackup         .cyclus format, crypto, CSV
-    └── CycleDesign         Tokens, components
-```
+**Kotlin Multiplatform shared core + native UI** (D10). The shared module (`shared/`) holds the domain model, the SQLDelight schema and repository, all engines (prediction, fertility, learning, „Deine Muster“, „Ausblick“), presenters (one immutable UI state per screen), the report model, the `.cyclus` format and the platform-neutral rules (layout, quick picks, consent, notifications plan, appearance). Native: Jetpack Compose + Material 3 Expressive (Android, ANDROID_PLAN §2) and SwiftUI (iOS, IOS_PLAN §2), plus health store, widgets, notifications, PDF drawing, authentication. No third-party runtime services on either platform.
 
 ### 11.2 Process & storage layout
-- Main store: `Application Support/Cyclus.store` in the **app container** (not the App Group). File protection `.complete` set via the `com.apple.developer.default-data-protection` entitlement = `NSFileProtectionComplete`, plus an explicit `FileManager.setAttributes` on the `.store`/`-wal`/`-shm` files at creation (verified in a test).
-- App Group `group.<bundle>.shared`:
-  - `widget-snapshot.json` (`.completeUntilFirstUserAuthentication`): `{cycleDay, status, nextRange:{lo,hi}, confidenceTier, redactionPreference, generatedAt}`.
-  - `pending-events.jsonl` (`.complete`): `{id, type, localDate, createdAt}`. Drained by the app on `scenePhase == .active` and on launch; idempotent by `id`.
-- Only the app process writes the store. Intents are defined in the app target so they run in-process.
+- **Single writer:** only the app process opens the store; widgets, tiles/controls and shortcuts open the app (§3.3).
+- **Store:** SQLite with SQLCipher; random 256-bit key held by the hardware keystore (Android Keystore/StrongBox; iOS Keychain + Secure Enclave), usable only while the device is unlocked (Android 15+ and iOS; Android 10–14 hardware-bound without that rule, ANDROID_PLAN §2.4).
+- **Side files** outside the store, sealed with their own key that works while locked: widget snapshot (only with „Details im Widget“) and reminder plan. Never in backups; deleted on erase.
+- **Device settings** outside the store (not health data, readable before unlock): appearance. Notification, consent and health-store bookkeeping live in the store but are never exported.
 
-### 11.3 Data model (CycleStore, schema v1)
+### 11.3 Data model (shared SQLDelight schema; illustrated in Swift syntax from the first draft)
 ```swift
 struct LocalDate: Codable, Hashable, Comparable, Sendable { // civil date, no time zone
     var year: Int; var month: Int; var day: Int
@@ -728,9 +701,9 @@ struct LocalDate: Codable, Hashable, Comparable, Sendable { // civil date, no ti
 @Model final class Profile { var birthYear: Int?; var unitsTemperature: UnitChoice; var preferences: Data }
 ```
 - Cycles are **derived**, not stored (recomputed in < 50 ms for 10 years; cached in memory).
-- Schema versioning via `VersionedSchema` + `SchemaMigrationPlan` from day one. Every schema change ships with a migration test (§12.1).
+- Schema versioning via SQLDelight migrations (`verifyMigrations`), currently schema v2 (Health Connect links). Every schema change ships with a migration test (§12.1). Settings are key/value rows; which keys travel in exports is defined in `SettingKeys` (user prefs vs device bookkeeping).
 
-### 11.4 HealthKit sync (CycleHealth)
+### 11.4 Health store sync (shared rules; HealthKit naming from the first draft, Health Connect equivalents in ANDROID_PLAN §6.1)
 
 #### 11.4.1 Rules
 1. **Ownership.** A sample is *own* if its `sourceRevision.source.bundleIdentifier == ours` **and** its metadata has `HKMetadataKeySyncIdentifier` with the prefix `cyclus:`. Everything else is *external*, stored as `ExternalSample`, read-only, and shown with a source badge.
@@ -744,7 +717,7 @@ struct LocalDate: Codable, Hashable, Comparable, Sendable { // civil date, no ti
    - Read set requested at import.
    - Write per category, requested when toggled.
    - Read denial is undetectable, so the UX shows help text only.
-9. **Import.** All history, batched by year with progress; `HKAnchoredObjectQuery` anchors persisted per type; `HKObserverQuery` + `enableBackgroundDelivery(.immediate)` for flow and symptoms, deferred until unlocked.
+9. **Import and sync timing.** All history on first connect, with progress; anchors / changes tokens persisted per type. **Sync only while the app is open** (start/resume, 3 s after the person's own edits or category toggles, „Jetzt synchronisieren“); no background delivery or background jobs (decision 2026-11-22, both platforms).
 
 **Android notes (2026-11-22):** values from health stores fill only fields the person left empty and are listed separately with their source in the day sheet; Cyclus writes only the person's own entries; reconstruction from own records (rule 7) only into an empty store; sync only while the app is open. These apply to the iOS implementation as well.
 
@@ -868,7 +841,8 @@ struct Insight: Sendable, Codable {
 - **`.cyclus` format v1** (normative: `docs/export/FORMAT.md`, revised 2026-11-22): `magic "CYCLUS1" | mode(1) | salt(16) | iterations(u32 BE) | nonce(12) | AES-256-GCM(raw DEFLATE(JSON)) + tag(16)`, **AAD = the 40 header bytes**. Mode 1 = passphrase, key = PBKDF2-HMAC-SHA256 (CommonCrypto `CCKeyDerivationPBKDF`), 600,000 iterations; mode 2 = raw 256-bit key (device backups). Compression is raw DEFLATE (Apple `COMPRESSION_ZLIB`). JSON per `docs/export/cyclus-export.schema.json` v1; user exports never contain app-lock settings. Test vectors in `shared/golden/export/`; reference decoder `tools/export/cyclus_decode.py`.
 - **CSV:** one row per day, documented columns.
 - **The export schema is published** on the support site under CC-BY. End-of-life pledge: if Cyclus is discontinued, a final update keeps export working, and the schema + a reference decoder stay public.
-- **Backup inclusion:** per D5. The "Device only" toggle sets `URLResourceValues.isExcludedFromBackup` on the store files.
+- **Device backups (D5 revised):** the database is never backed up; a sealed mode-2 snapshot travels only where the platform can't read it (Android: E2E/device-to-device transport; iOS: snapshot key only in iCloud Keychain). „Nur auf dem Gerät“ removes snapshot and key. Device backups restore only on the same platform.
+- **Cross-platform transfer (owner requirement 2026-11-23):** a passphrase `.cyclus` file from either platform imports on the other (FORMAT.md, IOS_PLAN §6.4.4).
 
 ### 11.10 Privacy manifest
 `NSPrivacyTracking = false`, `NSPrivacyTrackingDomains = []`, `NSPrivacyCollectedDataTypes = []`. Required-reason APIs:
@@ -1075,6 +1049,8 @@ Turns the patterns that passed §11.12 into a forecast for today + 6 days, so pa
 ## 12. Quality & validation
 
 ### 12.1 Testing
+As built: shared engine tests on JVM with golden vectors from the prototype (also on Android, later on the iOS simulator), store migration checks, export vectors, Compose UI tests on the emulator, `verifyNoInternet`; platform specifics in ANDROID_PLAN §9 / IOS_PLAN §9. The table below is the first draft's iOS view.
+
 | Layer | Approach | Where it runs |
 |---|---|---|
 | CycleCore / Engine / Insights | Swift Testing unit + property-based (fuzzed logs, time zones, DST, leap days); ≥ 90% coverage | Every push (Xcode Cloud, small) |
@@ -1115,6 +1091,8 @@ Turns the patterns that passed §11.12 into a forecast for today + 6 days, so pa
 ---
 
 ## 13. Delivery plan
+> Current phase plans: ANDROID_PLAN §10 (A0–A5 done, A6–A7 open) and IOS_PLAN §11 (S0, I0–I6). The phases below are the first draft's single-platform plan, kept for the outside lead times and the fallback scope.
+
 Delivery is planned as **ordered phases with exit criteria**, not as effort or time estimates (the app is built AI-assisted; effort numbers don't apply). The only durations in this plan are **outside lead times** that coding speed cannot change.
 
 ### 13.1 Phases
@@ -1151,12 +1129,11 @@ Apple Developer (Organization) €99/yr · FDA establishment registration fee if
 
 ---
 
-## 14. Open questions
-1. Sign-off of all open decisions in §0.1.
-2. ~~Apple Watch for testing?~~ **Answered 2026-11-22: no Apple Watch.** Consequences:
-   - wrist temperature is not used by the fertility engine in v1 (it is display-only and flag-gated);
-   - the wrist likelihood (§11.11.3) and the Watch app (v1.5) need a test device, meaning a used Series 8+ / Ultra (~€250–400; SE models have no temperature sensor), or ≥ 3 TestFlight testers with one using the on-device back-test;
-   - decide before v1.1.
-3. Name & brand: needs trademark search EU/US before assets are made.
-4. Clinician reviewer: candidate names (gynaecologist + midwife, DE-speaking).
-5. Ask App Review in writing about guideline 5.1.3(ii) for (a) CloudKit `encryptedValues` and (b) the store in iCloud Backup. Keep the response; it decides sync in v2.
+## 14. Open questions (owner, as of 2026-11-23)
+1. **Legal entity + organization developer accounts** (Apple, Google; D3/D14) — start early, 4–8 weeks.
+2. **Regulatory specialist** (qualification opinion per region, fertility flag) and **clinician reviewer** (gynaecologist + midwife, DE-speaking).
+3. **Lawyer review** of the „Bevor du startest“ notice wording before public release (§7.1).
+4. **Name & brand:** trademark search EU/US before assets are made.
+5. **App Review question** on guideline 5.1.3(ii) (in writing; decides any sync in v2).
+6. **iOS:** a Mac / macOS CI for iOS builds; test devices (an older iPhone, an iPad); HealthKit-only categories later? (IOS_PLAN I7).
+7. **Apple Watch / wrist temperature:** answered 2026-11-22 — no Apple Watch; wrist temperature is display-only and flag-gated; the Watch app (v1.5) needs a test device (Series 8+ / Ultra) or testers.

@@ -1,7 +1,7 @@
 # Cyclus for Android — Design & Delivery Plan
 
-> Date: 2026-11-22 · Status: **Signed off 2026-11-22 (Android first, KMP confirmed)** · Companion to `DESIGN_SPEC.md` (iOS-first spec, v1.0 + amendments).
-> Goal (owner): **100% feature parity with iOS**, built to **current Google standards (Material 3 Expressive)**, elegant, and visually "more or less 100% the same" as the HTML prototype (`prototype/index.html`).
+> Date: 2026-11-22, updated 2026-11-23 · Status: **Signed off; A0–A5 built** (Android first, KMP confirmed) · Companion to `DESIGN_SPEC.md` (product spec) and `IOS_PLAN.md`. **The Android app is the reference implementation** for iOS; reference screenshots: `screens/`.
+> Goal (owner): **100% feature parity between Android and iOS**, built to **current Google standards (Material 3 Expressive)**, elegant, and visually "more or less 100% the same" as the HTML prototype (`prototype/index.html`).
 
 ---
 
@@ -46,7 +46,7 @@ Local first, data security and trust beat every feature.
 Moved to **`PARITY.md` › Allowed platform differences** on 2026-11-23 (one canonical list for both plans, extended for IOS_PLAN I4). Anything not listed there is a parity bug.
 
 ### 1.2 Parity matrix (process)
-- `docs/PARITY.md` (to be created at the start of Android work, phase A1): one row per feature ID (`F-001 Today ring`, `F-002 Log flow` …), with columns *Spec §*, *Prototype screen*, *iOS status*, *Android status*, *Screenshot pair*, *Notes*.
+- `docs/PARITY.md`: one row per feature ID (`F-001 Today ring`, `F-002 Log flow` …), with columns *Spec §*, *Prototype screen*, *iOS status*, *Android status*, *Screenshot pair*, *Notes*.
 - Every PR touching UI updates the row. Release gate: all rows "done" on both platforms, or explicitly flagged off on both.
 
 ---
@@ -56,7 +56,7 @@ Moved to **`PARITY.md` › Allowed platform differences** on 2026-11-23 (one can
 ### 2.1 Repository layout (monorepo)
 ```
 cyclus/
-├── docs/                         PLAN, REVIEW, DESIGN_SPEC, ANDROID_PLAN, PARITY
+├── docs/                         DESIGN_SPEC, ANDROID_PLAN, IOS_PLAN, PARITY, export/, screens/, archive/
 ├── prototype/                    HTML prototype = visual + behavioural reference
 ├── shared/                       Kotlin Multiplatform module (commonMain / androidMain / iosMain)
 │   ├── core/                     LocalDate, DayLog, Episode, Tag, enums (pure)
@@ -399,21 +399,11 @@ Phases with exit criteria, no effort or time estimates (same rule as DESIGN_SPEC
 
 ## 11. Handoff checklist (continue on another machine)
 1. `git clone https://github.com/moonwhaler/cyclus` (private).
-2. Read in order: `docs/DESIGN_SPEC.md` §0 (decisions) → this file §0–§2 → `prototype/README.md`.
+2. Read in order: `README.md` → `docs/DESIGN_SPEC.md` §0 → this file §0–§2 → `docs/PARITY.md` → `docs/screens/README.md`.
 3. Open the prototype (`python3 -m http.server` in `prototype/`), or use the published link in `prototype/README.md`.
-4. Owner decisions still open:
-   - D3/D14 legal entity + organization accounts (Apple + Google);
-   - D10 KMP confirmation;
-   - regulatory specialist booked;
-   - clinician reviewer named;
-   - App Review question on guideline 5.1.3(ii).
+4. Owner decisions still open: see DESIGN_SPEC §14 (legal entity + organization accounts, regulatory specialist, clinician reviewer, lawyer review of the notice, App Review question).
 5. Toolchain: latest stable Android Studio + Kotlin Multiplatform plugin, JDK 21, Xcode (latest), SKIE, Ruby/Bundler only if fastlane is wanted.
-6. First engineering task: **port the prototype's JS engines to Kotlin `shared/engine` + `shared/insights`**, with golden vectors exported from the prototype harness:
-   - `predict`;
-   - `fertility`;
-   - `learnFromHistory`;
-   - `patternWatch`;
-   - `forecast`.
+6. Build & run: see `README.md`. Next Android work: open `.cyclus` files from other apps + moving guide (PARITY S-005), CSV export, then A6 closed testing together with iOS (IOS_PLAN §11).
 
 ---
 

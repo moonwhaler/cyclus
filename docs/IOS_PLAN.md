@@ -36,7 +36,7 @@ Canonical, exhaustive table: **`PARITY.md` › Allowed platform differences** (m
 
 ### 1.2 Reference order
 1. Behaviour as the Android app does it today (code in `shared/` and `androidApp/`, tests, `PARITY.md` notes).
-2. Visuals and copy as in `prototype/index.html` (strings via the generator, never retyped).
+2. Visuals and copy as in `prototype/index.html` (strings via the generator, never retyped) and the Android reference screenshots in `docs/screens/` (every area, German).
 3. Product intent and constraints from `DESIGN_SPEC.md`.
 
 ---
@@ -263,6 +263,7 @@ watchOS app = Wear OS app scope (log period/symptom, glance, complication), same
 ---
 
 ## 10. Changes to DESIGN_SPEC for iOS (superseded sections)
+The spec sections below were rewritten platform-neutral on 2026-11-23 (docs cleanup); this table records what changed against the first iOS-first draft. Spec sections that still use iOS API names (§11.3 data model, §11.4 rules, §11.10 privacy manifest, §12.1 table) describe intent; the implementation follows this plan.
 | Spec § | Was (iOS-first draft) | Now |
 |---|---|---|
 | 0.1 D5 | Store included in backups + "Device only" | I3 (§6.4) |

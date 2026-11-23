@@ -1,6 +1,6 @@
 # Cyclus parity matrix
 
-One row per user-visible feature. Rules: ANDROID_PLAN §1 and IOS_PLAN §1. A release ships only when every row is **done** on both platforms, or flagged off on both. Every PR that touches UI updates its row. **The Android app is the reference implementation for iOS** (IOS_PLAN §1.2); a row's notes describe what both platforms must do.
+One row per user-visible feature. Rules: ANDROID_PLAN §1 and IOS_PLAN §1. A release ships only when every row is **done** on both platforms, or flagged off on both. Every PR that touches UI updates its row (and, for visible changes, re-runs `tools/screens/capture.py` for `docs/screens/`). **The Android app is the reference implementation for iOS** (IOS_PLAN §1.2); a row's notes describe what both platforms must do.
 
 ## Allowed platform differences (exhaustive)
 Same function and the same privacy defaults on both platforms; only the surface or mechanism differs (owner decision 2026-11-23, IOS_PLAN I4). Anything not listed here is a parity bug.

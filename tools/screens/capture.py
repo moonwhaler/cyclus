@@ -1,0 +1,324 @@
+#!/usr/bin/env python3
+"""Reference screenshots of every area of the Android app (docs/screens/), driven over adb on an EMULATOR only.
+
+    python3 tools/screens/capture.py                  # German, light + dark extras, into docs/screens/android/
+    python3 tools/screens/capture.py --lang en        # English set (docs/screens/android-en/)
+    python3 tools/screens/capture.py --only today     # one area while iterating
+
+It clears the debug app's data (pm clear), walks onboarding, then uses the debug demo menu (long-press „Heute“) for
+the prototype scenarios. Never point it at a real phone: it erases the app's data. Requires the debug build installed
+(tools/deploy.sh) and Pillow (python3 -m pip install pillow).
+"""
+import argparse
+import io
+import re
+import subprocess
+import sys
+import time
+from pathlib import Path
+
+from PIL import Image
+
+PKG = "com.nordinary.cyclus.debug"
+ACT = "com.nordinary.cyclus.MainActivity"
+ROOT = Path(__file__).resolve().parents[2]
+
+# UI text per language (generated strings; keep in sync with strings_tx.xml / strings.xml)
+T = {
+    "de": dict(
+        start="Los geht", cont="Weiter", read="Ich habe das gelesen", agree="Zustimmen und weiter", skip="Überspringen",
+        noMemory="Weiß ich nicht mehr", notNow="Jetzt nicht", today="Heute", calendar="Kalender", insights="Einblicke",
+        day12="Tag 12", expected="Periode fällig", period="Periodentag 2", hbc="Mit Pille", conceive="Kinderwunsch · vor LH+",
+        twoww="Kinderwunsch · nach Temperaturanstieg", ringHelp="Ring erklären", done="Fertig", cancel="Abbrechen",
+        customize="Ansicht anpassen", compact="Kompakt", large="Groß", addWeek="Hinzufügen: Woche", editQuick="Schnellauswahl bearbeiten",
+        reset="Auf Standard zurücksetzen", log="Eintragen", more="Weitere Angaben", allPatterns="Muster ansehen", how="So funktioniert",
+        report="Arztbericht", privacy="Datenschutz", settings="Einstellungen", notice="Wichtiger Hinweis", erase="Alles löschen",
+        export="Verschlüsselte Sicherung erstellen", notifications="Mitteilungen", custom="Eigene", pin="Cyclus-PIN",
+        appLock="App-Sperre", why="Warum dieses Fenster", preview="Vorschau", back="Zurück", close="Schließen",
+    ),
+    "en": dict(
+        start="Get started", cont="Continue", read="I have read", agree="Agree and continue", skip="Skip",
+        noMemory="remember", notNow="Not now", today="Today", calendar="Calendar", insights="Insights",
+        day12="Tag 12", expected="Periode fällig", period="Periodentag 2", hbc="Mit Pille", conceive="Kinderwunsch · vor LH+",
+        twoww="Kinderwunsch · nach Temperaturanstieg", ringHelp="Explain the ring", done="Done", cancel="Cancel",
+        customize="Customize", compact="Compact", large="Large", addWeek="Add: This week", editQuick="Edit quick picks",
+        reset="Reset to default", log="Log", more="More details", allPatterns="patterns", how="How it works",
+        report="Doctor Visit Pack", privacy="Privacy", settings="Settings", notice="Important notice", erase="Erase everything",
+        export="Create encrypted backup", notifications="Notifications", custom="Custom", pin="Cyclus PIN",
+        appLock="App lock", why="Why this window", preview="Preview", back="Back", close="Close",
+    ),
+}
+
+
+class Emu:
+    def __init__(self, serial: str, out: Path, scale: float):
+        if not serial.startswith("emulator-"):
+            sys.exit(f"refusing {serial}: emulators only (this erases the app's data)")
+        self.serial, self.out, self.scale = serial, out, scale
+        self.w, self.h = map(int, re.findall(r"(\d+)x(\d+)", self.sh("wm size"))[-1])
+        out.mkdir(parents=True, exist_ok=True)
+
+    def adb(self, *a, binary=False):
+        r = subprocess.run(["adb", "-s", self.serial, *a], capture_output=True)
+        return r.stdout if binary else r.stdout.decode(errors="replace")
+
+    def sh(self, cmd):
+        return self.adb("shell", cmd)
+
+    def nodes(self):
+        self.sh("uiautomator dump /sdcard/ui.xml")
+        xml = self.adb("exec-out", "cat", "/sdcard/ui.xml")
+        for m in re.finditer(r"<node [^>]*>", xml):
+            n = m.group(0)
+            b = list(map(int, re.findall(r"\d+", re.search(r'bounds="([^"]*)"', n).group(1))))
+            yield re.search(r' text="([^"]*)"', n).group(1), re.search(r'content-desc="([^"]*)"', n).group(1), b
+
+    def find(self, label, desc=False, tries=3):
+        for _ in range(tries):
+            ns = list(self.nodes())
+            # by text first, then by content description (icon-only buttons such as the collapsed FAB)
+            for text, d, b in ns:
+                if (label in d) if desc else (label in text):
+                    return (b[0] + b[2]) // 2, (b[1] + b[3]) // 2
+            if not desc:
+                for text, d, b in ns:
+                    if label in d:
+                        return (b[0] + b[2]) // 2, (b[1] + b[3]) // 2
+            time.sleep(0.8)
+        return None
+
+    def tap(self, label, desc=False, wait=1.2, required=True, seek=3):
+        p = self.find(label, desc, tries=2)
+        # below the fold: scroll down a little at a time until it shows up
+        steps = [(.70, .40)] * seek + [(.35, .75)] * (seek * 2)  # down first, then back up past the start
+        for a, b in steps:
+            if p is not None:
+                break
+            self.sh(f"input swipe {self.w // 2} {int(self.h * a)} {self.w // 2} {int(self.h * b)} 300")
+            time.sleep(0.6)
+            p = self.find(label, desc, tries=1)
+        if p is None:
+            if required:
+                raise RuntimeError(f"not on screen: {label!r}")
+            return False
+        self.sh(f"input tap {p[0]} {p[1]}")
+        time.sleep(wait)
+        return True
+
+    def tap_exact(self, label, wait=0.35):
+        hits = [((b[0] + b[2]) // 2, (b[1] + b[3]) // 2) for text, _, b in self.nodes() if text == label]
+        if not hits:
+            raise RuntimeError(f"not on screen: {label!r}")
+        x, y = max(hits, key=lambda q: q[1])  # the keypad sits low on the screen
+        self.sh(f"input tap {x} {y}")
+        time.sleep(wait)
+
+    def long_press(self, label):
+        # the topmost match (the screen title, not the tab label of the same name)
+        hits = [((b[0] + b[2]) // 2, (b[1] + b[3]) // 2) for text, _, b in self.nodes() if text == label]
+        p = min(hits, key=lambda q: q[1]) if hits else None
+        if p is None:
+            raise RuntimeError(f"not on screen: {label!r}")
+        self.sh(f"input swipe {p[0]} {p[1]} {p[0]} {p[1]} 900")
+        time.sleep(1.2)
+
+    def scroll(self, times=1, up=False):
+        a, b = (int(self.h * .30), int(self.h * .78)) if up else (int(self.h * .78), int(self.h * .30))
+        for _ in range(times):
+            self.sh(f"input swipe {self.w // 2} {a} {self.w // 2} {b} 350")
+            time.sleep(0.7)
+
+    def top(self):
+        self.scroll(6, up=True)
+
+    def home(self, t):
+        """Back to the app's Today tab, whatever happened before (brings the task to the front, taps the bottom tab)."""
+        self.sh(f"am start -n {PKG}/{ACT}")
+        time.sleep(1.2)
+        for _ in range(4):
+            # the tab bar shows „Heute“ near the bottom; pushed screens and sheets don't: go back until it appears
+            hits = [((b[0] + b[2]) // 2, (b[1] + b[3]) // 2) for text, _, b in self.nodes() if text == t["today"]]
+            tab = [q for q in hits if q[1] > self.h * .8]
+            if tab:
+                self.sh(f"input tap {tab[0][0]} {tab[0][1]}")
+                time.sleep(1.0)
+                break
+            self.key("KEYCODE_BACK")
+        self.top()
+
+    def key(self, k):
+        self.sh(f"input keyevent {k}")
+        time.sleep(1.0)
+
+    def shot(self, name):
+        raw = self.adb("exec-out", "screencap", "-p", binary=True)
+        img = Image.open(io.BytesIO(raw)).convert("RGB")
+        if self.scale != 1:
+            img = img.resize((round(img.width * self.scale), round(img.height * self.scale)), Image.LANCZOS)
+        # 256-colour palette: UI screenshots look the same at about 40% of the size (keeps the repo small)
+        img.quantize(colors=256, method=Image.Quantize.MEDIANCUT, dither=Image.Dither.NONE).save(self.out / f"{name}.png", optimize=True)
+        print("  ", name)
+
+
+def demo(e: Emu, t, scenario):
+    e.top()
+    e.long_press(t["today"])
+    e.tap(scenario, wait=2.5)
+    e.top()
+
+
+def run(e: Emu, lang: str, only: str | None, dark: bool):
+    t = T[lang]
+    want = lambda area: only in (None, area)
+
+    print("reset")
+    e.sh(f"pm clear {PKG}")
+    e.sh("cmd uimode night no")
+    e.sh(f"cmd locale set-app-locales {PKG} --locales {'de-DE' if lang == 'de' else 'en-US'}")
+    e.sh(f"am start -n {PKG}/{ACT}")
+    time.sleep(3)
+
+    # onboarding (always walked: the rest needs it)
+    if want("onboarding"): e.shot("01-onboarding-1-welcome")
+    e.tap(t["start"])
+    if want("onboarding"): e.shot("01-onboarding-2-privacy")
+    e.tap(t["cont"])
+    if want("onboarding"): e.shot("01-onboarding-3-notice")
+    e.tap(t["read"]); e.tap(t["agree"])
+    if want("onboarding"): e.shot("01-onboarding-4-import")
+    e.tap(t["skip"])
+    if want("onboarding"): e.shot("01-onboarding-5-last-period")
+    e.tap(t["noMemory"])
+    if want("onboarding"): e.shot("01-onboarding-6-life-stage")
+    e.tap(t["cont"])
+    if want("onboarding"): e.shot("01-onboarding-7-app-lock")
+    e.tap(t["notNow"], wait=2)
+    if want("today"): e.shot("02-today-empty")
+
+    demo(e, t, t["day12"])
+    if want("today"):
+        e.shot("02-today-track-1")
+        e.scroll(); e.shot("02-today-track-2")
+        e.scroll(2); e.shot("02-today-track-3")
+        e.top(); e.tap(t["ringHelp"], desc=True); e.shot("02-today-ring-explainer"); e.tap(t["done"])
+    if want("edit"):
+        e.home(t)
+        e.scroll(5); e.tap(t["customize"], wait=1.8)
+        e.shot("03-edit-1")
+        e.scroll(); e.shot("03-edit-2")
+        e.scroll(2); e.shot("03-edit-3-library")
+        e.tap(t["addWeek"], desc=True)
+        e.top(); e.scroll(); e.tap(t["editQuick"], wait=1.8); e.shot("03-edit-quick-picks"); e.tap(t["done"])
+        e.top(); e.tap(t["compact"]); e.shot("03-edit-compact-ring")
+        e.tap(t["done"]); e.shot("03-today-compact-1")
+        e.scroll(5); e.shot("03-today-compact-2-week")
+        # back to the default layout for the rest
+        e.tap(t["customize"], wait=1.8); e.scroll(6); e.tap(t["reset"], required=False)
+        e.top(); e.tap(t["large"], required=False); e.tap(t["done"])
+    if want("log"):
+        e.home(t)
+        e.top(); e.tap(t["log"], wait=1.8)
+        e.shot("04-log-1")
+        e.scroll(); e.shot("04-log-2")
+        e.scroll(2); e.shot("04-log-3")
+        e.tap(t["more"], required=False); e.scroll(2); e.shot("04-log-4-more")
+        e.key("KEYCODE_BACK")
+    if want("calendar"):
+        e.home(t)
+        e.tap(t["calendar"], wait=1.8); e.shot("05-calendar-1")
+        e.scroll(); e.shot("05-calendar-2-day")
+        e.scroll(2); e.shot("05-calendar-3-legend")
+        e.top(); e.tap(t["today"], wait=1.5)
+    if want("insights"):
+        e.home(t)
+        e.tap(t["insights"], wait=1.8); e.shot("06-insights-1")
+        e.scroll(); e.shot("06-insights-2")
+        e.scroll(); e.shot("06-insights-3")
+        e.scroll(2); e.shot("06-insights-4")
+        e.top()
+        if e.tap(t["allPatterns"], required=False):
+            e.shot("06-patterns-1"); e.scroll(); e.shot("06-patterns-2"); e.key("KEYCODE_BACK")
+        e.top(); e.scroll()
+        if e.tap(t["how"], required=False):
+            e.shot("06-method-sheet"); e.tap(t["done"])
+    if want("report"):
+        e.home(t)
+        e.top(); e.tap(t["insights"], wait=1.2)
+        for _ in range(3):
+            if e.tap(t["report"], required=False, wait=1.8): break
+            e.scroll()
+        e.shot("07-report-1"); e.scroll(); e.shot("07-report-2")
+        e.scroll(3)
+        if e.tap(t["preview"], required=False, wait=4):
+            e.shot("07-report-3-pdf"); e.scroll(); e.shot("07-report-4-pdf")
+        e.key("KEYCODE_BACK"); e.key("KEYCODE_BACK")
+        e.tap(t["today"], required=False)
+    if want("privacy"):
+        e.home(t)
+        e.top(); e.tap(t["privacy"], desc=True, wait=1.8)
+        e.shot("08-privacy-1"); e.scroll(); e.shot("08-privacy-2"); e.scroll(); e.shot("08-privacy-3"); e.scroll(2); e.shot("08-privacy-4")
+        e.tap(t["notice"]); e.shot("08-privacy-notice-history"); e.tap(t["close"], seek=0)
+        e.tap(t["erase"]); e.shot("08-privacy-erase"); e.tap(t["cancel"], seek=0)
+        e.tap(t["export"]); e.shot("08-privacy-export"); e.tap(t["cancel"], seek=0)
+        e.key("KEYCODE_BACK")
+    if want("settings"):
+        e.home(t)
+        e.top(); e.tap(t["settings"], desc=True, wait=1.8)
+        e.shot("09-settings-1"); e.scroll(); e.shot("09-settings-2"); e.scroll(2); e.shot("09-settings-3")
+        e.top()
+        if e.tap(t["custom"], required=False, wait=1.8):
+            e.shot("09-settings-custom-colours"); e.key("KEYCODE_BACK")
+        e.scroll(3)
+        if e.tap(t["notifications"], required=False, wait=1.8):
+            e.shot("09-notifications"); e.key("KEYCODE_BACK")
+        e.key("KEYCODE_BACK")
+    if want("lock"):
+        e.home(t)
+        e.top(); e.tap(t["privacy"], desc=True, wait=1.8)
+        e.tap(t["pin"], wait=1.8); e.shot("10-lock-pin-setup")
+        for _ in range(2):
+            for d in "123456":
+                e.tap_exact(d)
+            time.sleep(1.2)
+        e.tap(t["appLock"], required=False)  # app lock on (the PIN is what unlocks it on an emulator without a screen lock)
+        e.key("KEYCODE_HOME"); time.sleep(1.5)
+        e.sh(f"am start -n {PKG}/{ACT}"); time.sleep(2.5)
+        e.shot("10-lock-screen")
+        for d in "123456":
+            e.tap_exact(d)
+        time.sleep(1.5)
+    for key, name in [("period", "11-today-in-period"), ("expected", "11-today-expected"), ("hbc", "11-today-paused")]:
+        if want("states"):
+            e.home(t); demo(e, t, t[key]); e.shot(name)
+    if want("conceive"):
+        e.home(t)
+        demo(e, t, t["conceive"]); e.shot("12-conceive-1"); e.scroll(); e.shot("12-conceive-2")
+        e.top(); e.scroll(3)
+        if e.tap(t["why"], required=False, wait=1.8):
+            e.shot("12-conceive-why-sheet"); e.key("KEYCODE_BACK")
+        e.top(); e.tap(t["calendar"], wait=1.8); e.shot("12-conceive-calendar"); e.tap(t["today"])
+        demo(e, t, t["twoww"]); e.shot("12-conceive-2ww")
+    if dark and want("dark"):
+        e.home(t); e.sh("cmd uimode night yes"); time.sleep(2)
+        demo(e, t, t["day12"]); e.shot("13-dark-today")
+        e.tap(t["calendar"], wait=1.5); e.shot("13-dark-calendar")
+        e.tap(t["insights"], wait=1.5); e.shot("13-dark-insights")
+        e.tap(t["today"]); e.tap(t["log"], wait=1.8); e.shot("13-dark-log"); e.key("KEYCODE_BACK")
+        e.sh("cmd uimode night no")
+
+
+def main():
+    ap = argparse.ArgumentParser()
+    ap.add_argument("--serial", default="emulator-5554")
+    ap.add_argument("--lang", choices=["de", "en"], default="de")
+    ap.add_argument("--only")
+    ap.add_argument("--scale", type=float, default=0.5)
+    ap.add_argument("--no-dark", action="store_true")
+    a = ap.parse_args()
+    out = ROOT / "docs" / "screens" / ("android" if a.lang == "de" else "android-en")
+    e = Emu(a.serial, out, a.scale)
+    run(e, a.lang, a.only, dark=not a.no_dark)
+
+
+if __name__ == "__main__":
+    main()
