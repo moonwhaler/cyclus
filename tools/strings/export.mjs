@@ -56,7 +56,6 @@ const ANDROID_OVERRIDES = {
   },
   unlockBtn: { de: 'Entsperren', en: 'Unlock' },
   // Onboarding (slice 4): no iPhone / Apple Health / Face ID on Android; import step is a .cyclus backup (Health Connect: A4)
-  onb0B: { de: 'Ein privates Zyklus- und Symptomtagebuch.', en: 'A private cycle and symptom diary.' },
   pr1s: { de: 'Deine Daten bleiben auf deinem Gerät.', en: 'Your data stays on your device.' },
   pr3: { de: 'Du bestimmst, was du teilst.', en: 'You decide what you share.' },
   pr3s: { de: 'Exporte und Arztberichte gibt es nur, wenn du sie selbst erstellst.', en: 'Exports and doctor reports exist only when you create them.' },
