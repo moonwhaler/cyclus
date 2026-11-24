@@ -3,6 +3,17 @@
 Version scheme: `major.minor.patch`. Android `versionCode` only ever goes up, by 1 per release; the public 1.0.0 starts
 at 10200 (internal test builds before it reached 10101).
 
+## 1.2.0 — 2026-11-25
+
+### New
+- **Three more languages:** Polish, Czech and Croatian. Choose one in Settings › Language or follow your phone's
+  language.
+- **Doctor Visit Pack in nine languages.**
+
+### Improved
+- Screen titles no longer break inside a word.
+- Erasing everything: the confirmation word can be typed without accents.
+
 ## 1.1.0 — 2026-11-24
 
 ### New
