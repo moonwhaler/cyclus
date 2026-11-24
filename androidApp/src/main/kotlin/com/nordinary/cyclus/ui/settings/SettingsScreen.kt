@@ -1,5 +1,6 @@
 package com.nordinary.cyclus.ui.settings
 
+import com.nordinary.cyclus.ui.theme.BarTitleStyle
 import android.app.LocaleManager
 import com.nordinary.cyclus.ui.common.LanguageOption
 import com.nordinary.cyclus.ui.common.LanguagePicker
@@ -82,7 +83,7 @@ fun SettingsScreen(
         containerColor = c.bg,
         topBar = {
             LargeFlexibleTopAppBar(
-                title = { Text(fmt.s("setT"), fontWeight = FontWeight.Bold) },
+                title = { Text(fmt.s("setT"), style = BarTitleStyle) },
                 navigationIcon = { IconButton(onClick = onBack) { Icon(CyclusIcons.Back, fmt.s("back"), tint = c.accent) } },
                 scrollBehavior = scroll,
                 colors = TopAppBarDefaults.topAppBarColors(containerColor = c.bg, scrolledContainerColor = c.bg),

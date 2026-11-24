@@ -125,8 +125,16 @@ val RobotoFlex = FontFamily(flex(400), flex(500), flex(600), flex(700), flex(800
 /** Rounded numerals, as in the prototype. */
 val Nunito = FontFamily(nunito(600), nunito(700), nunito(800))
 
+/** Large top bar titles: balanced lines and never a hyphen ("Podsumowanie / dla lekarza", not "Podsumowa-nie …"). */
+val BarTitleStyle: TextStyle
+    @Composable get() = androidx.compose.material3.LocalTextStyle.current.copy(
+        fontWeight = FontWeight.Bold,
+        lineBreak = androidx.compose.ui.text.style.LineBreak.Heading,
+        hyphens = androidx.compose.ui.text.style.Hyphens.None,
+    )
+
 private fun typography(): Typography {
-    // Line breaking for six languages: headings balanced (no lone last word), body text high quality with
+    // Line breaking for nine languages: headings balanced (no lone last word), body text high quality with
     // hyphenation (long German, French, Italian … words), short UI labels high quality without hyphens.
     val b0 = Typography()
     fun TextStyle.heading() = copy(lineBreak = androidx.compose.ui.text.style.LineBreak.Heading)

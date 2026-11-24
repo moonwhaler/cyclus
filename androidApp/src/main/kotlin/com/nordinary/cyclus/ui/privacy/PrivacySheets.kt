@@ -174,7 +174,9 @@ fun EraseSheet(fmt: Fmt, healthWritten: Boolean, onErase: (deleteHealth: Boolean
         shape = RoundedCornerShape(12.dp),
         colors = OutlinedTextFieldDefaults.colors(unfocusedBorderColor = c.line, focusedBorderColor = c.accent, unfocusedContainerColor = c.surface, focusedContainerColor = c.surface),
     )
-    val ok = text.trim().uppercase() == word.uppercase()
+    // accents optional ("USUN" for "USUŃ", "IZBRISI" for "IZBRIŠI"): not every keyboard has them at hand
+    val plain = { t: String -> java.text.Normalizer.normalize(t.trim().uppercase(), java.text.Normalizer.Form.NFD).replace(MARKS, "") }
+    val ok = plain(text) == plain(word)
     PrimaryButton(fmt.s("eraseT"), { if (ok) onErase(healthWritten && deleteHealth) }, Modifier.fillMaxWidth(), enabled = ok)
 }
 
@@ -196,3 +198,5 @@ fun PinSetupSheet(fmt: Fmt, onSet: (String) -> Unit, onDismiss: () -> Unit) = Sh
     }) }
     Text(stringResource(R.string.pin_setup_note), fontSize = 12.sp, color = c.ink2)
 }
+
+private val MARKS = Regex("\\p{Mn}+")

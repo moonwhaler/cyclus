@@ -1,5 +1,6 @@
 package com.nordinary.cyclus.ui.privacy
 
+import com.nordinary.cyclus.ui.theme.BarTitleStyle
 import android.os.Build
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -98,7 +99,7 @@ fun PrivacyScreen(
         containerColor = c.bg,
         topBar = {
             LargeFlexibleTopAppBar(
-                title = { Text(fmt.s("privT"), fontWeight = FontWeight.Bold) },
+                title = { Text(fmt.s("privT"), style = BarTitleStyle) },
                 navigationIcon = { IconButton(onClick = onBack) { Icon(CyclusIcons.Back, fmt.s("back"), tint = c.accent) } },
                 scrollBehavior = scroll,
                 colors = TopAppBarDefaults.topAppBarColors(containerColor = c.bg, scrolledContainerColor = c.bg),

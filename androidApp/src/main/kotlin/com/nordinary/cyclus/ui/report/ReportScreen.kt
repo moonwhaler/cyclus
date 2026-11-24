@@ -1,5 +1,6 @@
 package com.nordinary.cyclus.ui.report
 
+import com.nordinary.cyclus.ui.theme.BarTitleStyle
 import android.graphics.Bitmap
 import android.graphics.Color
 import android.graphics.pdf.PdfRenderer
@@ -109,7 +110,7 @@ fun ReportScreen(vm: AppViewModel, fmt: Fmt, snackbar: SnackbarHostState, onBack
         containerColor = c.bg,
         topBar = {
             LargeFlexibleTopAppBar(
-                title = { Text(fmt.s("reportT"), fontWeight = FontWeight.Bold) },
+                title = { Text(fmt.s("reportT"), style = BarTitleStyle) },
                 navigationIcon = { IconButton(onClick = back) { Icon(CyclusIcons.Back, fmt.s("back"), tint = c.accent) } },
                 scrollBehavior = scroll,
                 colors = TopAppBarDefaults.topAppBarColors(containerColor = c.bg, scrolledContainerColor = c.bg),

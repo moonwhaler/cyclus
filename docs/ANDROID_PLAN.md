@@ -188,7 +188,7 @@ Pin exact versions at project start and record them in the SOUP list.
 | Chips (symptoms, feelings, tags, LH) | `FilterChip` (selected = check icon + `primaryContainer`; LH uses the `tertiary` variant) | Suggested chips: dashed outline (custom border) |
 | Flow droplets (5) | Custom toggle tiles in a 5-column row (`selectable` semantics, role = RadioButton) | Same labels incl. "Spotting" hyphenation |
 | 1–5 scale | Expressive `ButtonGroup` (connected), single select | End labels below, as prototype |
-| Segmented control (goal, period of time; language and PDF language use a sheet with six endonyms) | `SingleChoiceSegmentedButtonRow` | — |
+| Segmented control (goal, period of time; language and PDF language use a sheet with nine endonyms) | `SingleChoiceSegmentedButtonRow` | — |
 | iOS switch rows | `ListItem` + `Switch` (thumb icon) | Whole row clickable |
 | Status / tier badges | Custom pill `Surface` (non-interactive). Pattern statuses: filled / dashed / success text | Same wording |
 | Grouped lists | `Card` containing `ListItem`s with dividers (`outlineVariant`) | — |

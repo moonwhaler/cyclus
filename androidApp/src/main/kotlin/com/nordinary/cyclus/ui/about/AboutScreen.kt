@@ -1,5 +1,6 @@
 package com.nordinary.cyclus.ui.about
 
+import com.nordinary.cyclus.ui.theme.BarTitleStyle
 import android.content.Context
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -255,7 +256,7 @@ private fun PushedScaffold(fmt: Fmt, title: String, onBack: () -> Unit, content:
 private fun TopBar(fmt: Fmt, title: String, onBack: () -> Unit, scroll: androidx.compose.material3.TopAppBarScrollBehavior) {
     val c = Cyclus.colors
     LargeFlexibleTopAppBar(
-        title = { Text(title, fontWeight = FontWeight.Bold) },
+        title = { Text(title, style = BarTitleStyle) },
         navigationIcon = { IconButton(onClick = onBack) { Icon(CyclusIcons.Back, fmt.s("back"), tint = c.accent) } },
         scrollBehavior = scroll,
         colors = TopAppBarDefaults.topAppBarColors(containerColor = c.bg, scrolledContainerColor = c.bg),

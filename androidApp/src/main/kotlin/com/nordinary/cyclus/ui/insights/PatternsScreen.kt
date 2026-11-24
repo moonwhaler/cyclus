@@ -1,5 +1,6 @@
 package com.nordinary.cyclus.ui.insights
 
+import com.nordinary.cyclus.ui.theme.BarTitleStyle
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
@@ -80,7 +81,7 @@ fun PatternsScreen(sec: PatternSection, fmt: Fmt, onBack: () -> Unit, onMute: (S
         containerColor = c.bg,
         topBar = {
             LargeFlexibleTopAppBar(
-                title = { Text(fmt.s("pwT"), fontWeight = FontWeight.Bold) },
+                title = { Text(fmt.s("pwT"), style = BarTitleStyle) },
                 navigationIcon = { IconButton(onClick = onBack) { Icon(CyclusIcons.Back, fmt.s("back"), tint = c.accent) } },
                 scrollBehavior = scroll,
                 colors = TopAppBarDefaults.topAppBarColors(containerColor = c.bg, scrolledContainerColor = c.bg),

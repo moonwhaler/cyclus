@@ -1,5 +1,6 @@
 package com.nordinary.cyclus.ui.privacy
 
+import com.nordinary.cyclus.ui.theme.BarTitleStyle
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
@@ -66,7 +67,7 @@ fun NotificationsScreen(
         containerColor = c.bg,
         topBar = {
             LargeFlexibleTopAppBar(
-                title = { Text(fmt.s("notifT"), fontWeight = FontWeight.Bold) },
+                title = { Text(fmt.s("notifT"), style = BarTitleStyle) },
                 navigationIcon = { IconButton(onClick = onBack) { Icon(CyclusIcons.Back, fmt.s("back"), tint = c.accent) } },
                 scrollBehavior = scroll,
                 colors = TopAppBarDefaults.topAppBarColors(containerColor = c.bg, scrolledContainerColor = c.bg),

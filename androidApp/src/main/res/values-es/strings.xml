@@ -190,7 +190,12 @@
     <string name="w_small_desc">Día del ciclo y próxima regla, si permites los detalles</string>
     <string name="w_medium_desc">Con botones para anotar</string>
     <string name="w_day">Día %1$d</string>
-    <string name="w_in_range">Regla en %1$d–%2$d días</string>
+    <!-- form follows the second number ("2–4 dny", "3–5 dní") -->
+    <plurals name="w_in_range">
+        <item quantity="one">Regla en %1$d–%2$d días</item>
+        <item quantity="many">Regla en %1$d–%2$d días</item>
+        <item quantity="other">Regla en %1$d–%2$d días</item>
+    </plurals>
     <plurals name="w_in_days">
         <item quantity="one">Regla en %1$d día</item>
         <item quantity="many">Regla en %1$d días</item>

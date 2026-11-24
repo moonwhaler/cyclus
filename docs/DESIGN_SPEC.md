@@ -24,7 +24,7 @@ Defaults are marked ✅. The rest of this spec is written against them. Changing
 | **D7** | Platform baseline | ✅ **Deployment target iOS 26.0, built with the iOS 27 SDK.** Use iOS 27 APIs behind `if #available`. | iOS 27 minimum (smaller audience, simpler code) |
 | **D9** | Patterns & outlook | ✅ **In v1 (owner decision 2026-11-22).** "Your patterns" (§11.12) watches body, mood & feelings, lifestyle, fertility and cycle health. "Outlook" (§11.13) turns patterns into a 7-day outlook. Fertility and cycle-health watchers follow the same regulatory gate as fertility (§1.4). | — (decided) |
 | **D10** | Platforms & code sharing | ✅ **Confirmed 2026-11-22, Android first (ANDROID_PLAN D11):** Android with 100% feature parity. **Kotlin Multiplatform shared core** (model, store schema, all engines, patterns, outlook, report model, backup, strings) + native UI (SwiftUI / Compose M3 Expressive). Changes §11.1–11.3 and §12.1 as listed in `ANDROID_PLAN.md` §2.5. | Fully native twice, or Compose Multiplatform UI (see ANDROID_PLAN §0) |
-| **D8** | Markets & languages | ✅ **German first** (owner decision 2026-11-22): DACH is the primary market, all copy is authored in German (source language), App Store primary locale `de-DE`, German screenshots first, in-app language selector. English second. EU + US. **Extended 2026-11-23 (owner):** six languages, German, English, French, Spanish (es-ES), Portuguese (pt-PT) and Italian; **English is the fallback** for any other phone language; generic `es`/`pt` resources, so es-419 and pt-BR phones get the European texts with their own date formats. German and English are authored in the prototype; the other four are translated from English (`tools/strings/i18n/`) and need a native review of the notice, intended purpose and medical wording before a public release. | — (decided) |
+| **D8** | Markets & languages | ✅ **German first** (owner decision 2026-11-22): DACH is the primary market, all copy is authored in German (source language), App Store primary locale `de-DE`, German screenshots first, in-app language selector. English second. EU + US. **Extended 2026-11-23 (owner):** six languages, German, English, French, Spanish (es-ES), Portuguese (pt-PT) and Italian; **2026-11-24:** plus Polish, Czech and Croatian (nine); **English is the fallback** for any other phone language; generic `es`/`pt` resources, so es-419 and pt-BR phones get the European texts with their own date formats. German and English are authored in the prototype; the others are translated from English (`tools/strings/i18n/`) and need a native review of the notice, intended purpose and medical wording before a public release. | — (decided) |
 
 ### 0.2 What changed vs. the first plan (`archive/PLAN.md`, summary)
 - **Removed from v1:** anomaly/deviation nudges, Siri/App Shortcuts, Control Center control, LLM features.
@@ -455,7 +455,7 @@ Header: dates, length, period length, episode badges. Day strip with logs. Actio
 - Range: last 3 / 6 / 12 cycles / custom.
 - Include toggles: Bleeding calendar ✓, Cycle & period lengths ✓, Symptoms ✓, Pain ✓, Mood/energy ✓, Temperature ☐, Notes ☐, Contraception ☐, Sexual activity ☐.
 - "Questions for my appointment" (free text list, optional).
-- Output language: any of the six app languages (independent of the UI; starts in the app language, else English).
+- Output language: any of the nine app languages (independent of the UI; starts in the app language, else English).
 
 **PDF** (A4 / US Letter by locale):
 | Page | Content |
@@ -599,7 +599,7 @@ Warm, plain, direct; second person; short sentences. Say "period", "bleeding", "
 |---|---|
 | safe days, infertile days, unsafe days, "can't get pregnant", "low risk", protection, birth control (as a claim) — DE: *sichere Tage, unfruchtbare Tage, „kann nicht schwanger werden“, geringes Risiko, Schutz, Verhütung (als Aussage)* | **Banned everywhere.** Only allowed: "Not for birth control." / DE „Nicht zur Verhütung geeignet.“ |
 | DE: *Diagnose, diagnostizieren, erkennen (bei Erkrankungen), bestätigter Eisprung* | Banned (same rules as EN) |
-| FR: *jours sûrs, jours sans risque, jours (non) infertiles, ovulation confirmée, diagnostiquer* · ES: *días seguros, días infértiles, ovulación confirmada, diagnosticar* · PT: *dias seguros, dias inférteis, ovulação confirmada, diagnosticar* · IT: *giorni sicuri, giorni infertili, ovulazione confermata, diagnosticare* | Banned (same rules as EN); "not a diagnosis" disclaimers are the only allowed use of the diagnosis words. Enforced by `tools/strings/export.mjs`, which fails on any of them |
+| FR: *jours sûrs, jours sans risque, jours (non) infertiles, ovulation confirmée, diagnostiquer* · ES: *días seguros, días infértiles, ovulación confirmada, diagnosticar* · PT: *dias seguros, dias inférteis, ovulação confirmada, diagnosticar* · IT: *giorni sicuri, giorni infertili, ovulazione confermata, diagnosticare* · PL: *bezpieczne dni, dni niepłodne, potwierdzona owulacja, diagnozować* · CS: *bezpečné dny, neplodné dny, potvrzená ovulace, diagnostikovat* · HR: *sigurni dani, neplodni dani, potvrđena ovulacija, dijagnosticirati* | Banned (same rules as EN); "not a diagnosis" disclaimers are the only allowed use of the diagnosis words. Enforced by `tools/strings/export.mjs`, which fails on any of them |
 | fertile, fertile window, ovulation, conceive | Allowed **only** when the fertility flag is on (Conceive mode or Track with "Show fertile window"), always with uncertainty ("likely", "estimated") |
 | "confirmed ovulation", "you ovulated" | Banned. Use "ovulation likely occurred around …" |
 | % chance of pregnancy | Banned (age-dependent, a claim). Use tiers: Lower chance / Possible / High / Peak |
@@ -650,6 +650,21 @@ Address the user with informal **„du“** throughout (gender-neutral, standard
 | Patterns | Tendances | Patrones | Padrões | Andamenti |
 | Quick picks | Sélection rapide | Selección rápida | Seleção rápida | Selezione rapida |
 | Not for birth control. | Pas adapté à la contraception. | No sirve como anticonceptivo. | Não serve como contraceção. | Non adatto alla contraccezione. |
+
+**Polish, Czech, Croatian (2026-11-24).** Informal address (ty / ty / ti). These languages mark gender in past-tense verbs and many adjectives, so copy for the reader uses the present tense, passive or impersonal forms ("zanotowano", "zapsáno", "zabilježeno"; "Rozumiem", "Rozumím", "Razumijem" in the notice checkbox), never a gendered form. Feelings are nouns (*Smutek*, *Smutek*, *Tuga*); scale changes are nouns after a colon (*Nastrój: spadek …*, *Nálada: pokles …*, *Raspoloženje: pad …*). Nouns after a number take the form the number requires (PL *1 dzień, 2 dni, 5 dni*; CS *1 den, 2 dny, 5 dní*; HR *1 dan, 2 dana, 21 dan*): plural resources where the app has them, otherwise an inline marker `{N|one:…|few:…|many:…|other:…}` that `Fmt` resolves with the locale's CLDR rules, or a "label: number" phrasing. A one-letter word (w, z, i, a, o, u, v, k, s) never ends a line (non-breaking space, added by the exporter). Croatian quotes „…”, Czech „…“, Polish „…”.
+
+| EN | PL | CS | HR |
+|---|---|---|---|
+| Period | Okres | Menstruace | Menstruacija |
+| Pre-period window | Dni przed okresem | Dny před menstruací | Dani prije menstruacije |
+| Fertile window (estimate) | Okno płodne (szacunek) | Plodné okno (odhad) | Plodni prozor (procjena) |
+| Trying to conceive (mode) | Staranie się o ciążę | Snaha otěhotnět | Pokušaj začeća |
+| Doctor Visit Pack | Podsumowanie dla lekarza | Souhrn pro lékaře | Sažetak za liječnika |
+| Discharge | Wydzielina | Výtok | Iscjedak |
+| Spotting | Plamienie | Špinění | Točkasto krvarenje |
+| Patterns | Wzorce | Vzorce | Obrasci |
+| Quick picks | Szybkie wybory | Rychlé volby | Brzi odabiri |
+| Not for birth control. | Nie do antykoncepcji. | Není to antikoncepce. | Nije za kontracepciju. |
 
 ---
 

@@ -191,7 +191,11 @@
     <string name="w_small_desc">Zyklustag und nächste Periode, wenn du Details erlaubst</string>
     <string name="w_medium_desc">Mit Knöpfen zum Eintragen</string>
     <string name="w_day">Tag %1$d</string>
-    <string name="w_in_range">Periode in %1$d–%2$d Tagen</string>
+    <!-- form follows the second number ("2–4 dny", "3–5 dní") -->
+    <plurals name="w_in_range">
+        <item quantity="one">Periode in %1$d–%2$d Tagen</item>
+        <item quantity="other">Periode in %1$d–%2$d Tagen</item>
+    </plurals>
     <plurals name="w_in_days">
         <item quantity="one">Periode in %1$d Tag</item>
         <item quantity="other">Periode in %1$d Tagen</item>

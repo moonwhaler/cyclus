@@ -3,7 +3,7 @@ package com.nordinary.cyclus.i18n
 import java.util.Locale
 
 /**
- * The languages Cyclus ships (resource folders values/ = English, values-de, -fr, -es, -pt, -it). Names are endonyms
+ * The languages Cyclus ships (resource folders values/ = English, values-de, -fr, -es, -pt, -it, -pl, -cs, -hr). Names are endonyms
  * and never translated. Spanish and Portuguese are the European variants; phones set to other variants (es-419,
  * pt-BR) get the same texts with their own date formats.
  */
@@ -15,6 +15,7 @@ object AppLanguages {
     val ALL = listOf(
         Lang("de", "Deutsch"), Lang("en", "English"), Lang("fr", "Français"),
         Lang("es-ES", "Español"), Lang("pt-PT", "Português"), Lang("it", "Italiano"),
+        Lang("pl", "Polski"), Lang("cs", "Čeština"), Lang("hr", "Hrvatski"),
     )
     private val ENGLISH = ALL[1]
 

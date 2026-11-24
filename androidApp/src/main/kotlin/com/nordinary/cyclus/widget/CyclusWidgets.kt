@@ -124,7 +124,7 @@ private fun ring(progress: Float, px: Int): Bitmap {
 private fun lineText(ctx: Context, l: WidgetLine): String = when (l) {
     is WidgetLine.InPeriod -> ctx.getString(R.string.w_in_period, l.periodDay)
     is WidgetLine.In -> if (l.from == l.to) ctx.resources.getQuantityString(R.plurals.w_in_days, l.from, l.from)
-        else ctx.getString(R.string.w_in_range, l.from, l.to)
+        else ctx.resources.getQuantityString(R.plurals.w_in_range, l.to, l.from, l.to)
     WidgetLine.Window -> ctx.getString(R.string.w_window)
     WidgetLine.Later -> ctx.getString(R.string.w_later)
     WidgetLine.Paused -> ctx.getString(R.string.w_paused)

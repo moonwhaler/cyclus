@@ -18,7 +18,7 @@
 </p>
 
 No account, no servers, no tracking: all predictions and insights are calculated on your phone, and the app has no
-internet access at all. Available in English, German, French, Spanish, Portuguese and Italian.
+internet access at all. Available in English, German, French, Spanish, Portuguese, Italian, Polish, Czech and Croatian.
 
 <table>
   <tr>
@@ -41,7 +41,7 @@ internet access at all. Available in English, German, French, Spanish, Portugues
 - **Calendar and insights:** your cycle history, typical lengths, patterns found in your own records and a 7-day
   outlook.
 - **Trying to conceive:** an optional mode with an estimated fertile window and an LH test plan.
-- **Doctor Visit Pack:** a PDF summary for your appointment, in any of the six languages, including your own questions.
+- **Doctor Visit Pack:** a PDF summary for your appointment, in any of the nine languages, including your own questions.
 - **Your data stays yours:** encrypted backup files you can import again, also on a new phone; Health Connect import
   and optional writing.
 - Widgets, a Quick Settings tile, discreet reminders (off until you turn them on), colour themes including Material
@@ -99,7 +99,7 @@ python3 tools/screens/capture.py # reference screenshots (emulator only)
 - **Release signing:** `storeFile`, `storePassword`, `keyAlias`, `keyPassword` in an untracked `keystore.properties`
   (ignored by git, like `*.jks`). Keep the key file outside the repository and backed up: every update must be signed
   with the same key.
-- **Strings:** German and English come from the prototype's translation table, French, Spanish, Portuguese and Italian
+- **Strings:** German and English come from the prototype's translation table, the other seven languages
   from `tools/strings/i18n/<lang>.json`; `node tools/strings/export.mjs` writes the resources and fails on missing
   keys, mismatched placeholders or banned wording. Golden vectors:
   `node tools/golden/export.mjs`.

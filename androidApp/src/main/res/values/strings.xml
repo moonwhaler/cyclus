@@ -192,7 +192,11 @@
     <string name="w_small_desc">Cycle day and next period, if you allow details</string>
     <string name="w_medium_desc">With buttons for logging</string>
     <string name="w_day">Day %1$d</string>
-    <string name="w_in_range">Period in %1$d–%2$d days</string>
+    <!-- form follows the second number ("2–4 dny", "3–5 dní") -->
+    <plurals name="w_in_range">
+        <item quantity="one">Period in %1$d–%2$d days</item>
+        <item quantity="other">Period in %1$d–%2$d days</item>
+    </plurals>
     <plurals name="w_in_days">
         <item quantity="one">Period in %1$d day</item>
         <item quantity="other">Period in %1$d days</item>

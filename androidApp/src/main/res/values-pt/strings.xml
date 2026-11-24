@@ -190,7 +190,12 @@
     <string name="w_small_desc">Dia do ciclo e próxima menstruação, se permitires detalhes</string>
     <string name="w_medium_desc">Com botões para registar</string>
     <string name="w_day">Dia %1$d</string>
-    <string name="w_in_range">Menstruação daqui a %1$d–%2$d dias</string>
+    <!-- form follows the second number ("2–4 dny", "3–5 dní") -->
+    <plurals name="w_in_range">
+        <item quantity="one">Menstruação daqui a %1$d–%2$d dias</item>
+        <item quantity="many">Menstruação daqui a %1$d–%2$d dias</item>
+        <item quantity="other">Menstruação daqui a %1$d–%2$d dias</item>
+    </plurals>
     <plurals name="w_in_days">
         <item quantity="one">Menstruação daqui a %1$d dia</item>
         <item quantity="many">Menstruação daqui a %1$d dias</item>

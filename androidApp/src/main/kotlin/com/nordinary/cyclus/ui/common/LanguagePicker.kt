@@ -41,7 +41,7 @@ import com.nordinary.cyclus.ui.theme.Cyclus
 data class LanguageOption(val key: String?, val label: String, val sub: String? = null)
 
 /**
- * A row showing the current language; a tap opens a sheet with one radio row per option (six languages are too many
+ * A row showing the current language; a tap opens a sheet with one radio row per option (nine languages are too many
  * for a segmented control, and their names don't shrink). Used by Settings and the Doctor Visit Pack.
  */
 @OptIn(ExperimentalMaterial3Api::class)

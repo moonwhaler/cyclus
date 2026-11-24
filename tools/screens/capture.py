@@ -25,8 +25,10 @@ ACT = "com.nordinary.cyclus.MainActivity"
 ROOT = Path(__file__).resolve().parents[2]
 
 # UI text per language, read from the app's own string resources (so every language works without a label list)
-LANG_DIRS = {"en": "values", "de": "values-de", "fr": "values-fr", "es": "values-es", "pt": "values-pt", "it": "values-it"}
-LOCALE_TAGS = {"en": "en-US", "de": "de-DE", "fr": "fr-FR", "es": "es-ES", "pt": "pt-PT", "it": "it-IT"}
+LANG_DIRS = {"en": "values", "de": "values-de", "fr": "values-fr", "es": "values-es", "pt": "values-pt", "it": "values-it",
+             "pl": "values-pl", "cs": "values-cs", "hr": "values-hr"}
+LOCALE_TAGS = {"en": "en-US", "de": "de-DE", "fr": "fr-FR", "es": "es-ES", "pt": "pt-PT", "it": "it-IT",
+               "pl": "pl-PL", "cs": "cs-CZ", "hr": "hr-HR"}
 
 
 def res_strings(lang: str) -> dict:
@@ -66,7 +68,8 @@ def labels(lang: str) -> dict:
         showCard=s("showCard"), dqPlus="+ " + s("dqAdd"), dqAdd=s("dqAdd"),
         # typed with adb, so plain ASCII
         question={"de": "Ist das noch normal?", "en": "Is this still normal?", "fr": "Est-ce normal?",
-                  "es": "Es normal esto?", "pt": "Isto e normal?", "it": "E normale?"}[lang],
+                  "es": "Es normal esto?", "pt": "Isto e normal?", "it": "E normale?",
+                  "pl": "Czy to normalne?", "cs": "Je to normalni?", "hr": "Je li to normalno?"}[lang],
     )
 
 
@@ -125,6 +128,11 @@ class Emu:
             if required:
                 raise RuntimeError(f"not on screen: {label!r}")
             return False
+        # half under the sticky screen header (a tap there hits the header): bring the target down a little first
+        if not desc and self.h * 0.105 < p[1] < self.h * 0.16:
+            self.sh(f"input swipe {self.w // 2} {int(self.h * .45)} {self.w // 2} {int(self.h * .55)} 400")
+            time.sleep(0.8)
+            p = self.find(label, desc, tries=1) or p
         # the floating "Log" button covers the bottom right (wider in long languages): bring the target up first
         if p[1] > self.h * 0.72:
             self.sh(f"input swipe {self.w // 2} {int(self.h * .70)} {self.w // 2} {int(self.h * .45)} 400")

@@ -1,5 +1,6 @@
 package com.nordinary.cyclus.ui
 
+import com.nordinary.cyclus.ui.theme.BarTitleStyle
 import com.nordinary.cyclus.ui.theme.AppearanceStore
 import androidx.compose.animation.togetherWith
 import androidx.compose.animation.slideOutHorizontally
@@ -414,7 +415,7 @@ private fun MainScreen(
             topBar = {
                 LargeFlexibleTopAppBar(
                     title = {
-                        Text(fmt.s(shownTab.key), Modifier.combinedClickable(onClick = {}, onLongClick = { if (BuildConfig.DEBUG) debugMenu = true }), fontWeight = FontWeight.Bold)
+                        Text(fmt.s(shownTab.key), Modifier.combinedClickable(onClick = {}, onLongClick = { if (BuildConfig.DEBUG) debugMenu = true }), style = BarTitleStyle)
                     },
                     // the date belongs to Today; Calendar has its month, Insights covers many cycles
                     subtitle = if (shownTab == Tab.TODAY) ({ Text(fmt.wmd(model?.snapshot?.today ?: java.time.LocalDate.now().toEpochDay().toInt()), color = c.ink2) }) else null,

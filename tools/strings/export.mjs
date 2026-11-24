@@ -1,7 +1,8 @@
 // Generates Android string resources from the prototype's translation table (prototype/index.html `TX` + item
 // labels). Until the shared string source exists (PARITY X-001), the prototype is the copy source for German and
 // English, so the apps say exactly what the prototype says. English is the base locale (values/), German values-de/.
-// French, Spanish (es-ES), Portuguese (pt-PT) and Italian come from tools/strings/i18n/<lang>.json, translated from
+// French, Spanish (es-ES), Portuguese (pt-PT), Italian, Polish, Czech and Croatian come from tools/strings/i18n/<lang>.json,
+// translated from
 // the generated English source (tools/strings/i18n/en.json, plain text). Every locale is checked against English:
 // same keys, same placeholders (%1$s …) and bold markers ({b}…{/b}), no banned wording (spec §9.3).
 //
@@ -163,11 +164,32 @@ const BANNED = {
   es: ['días seguros', 'días infértiles', 'días no fértiles', 'ovulación confirmada', 'diagnóstic', 'diagnostic'],
   pt: ['dias seguros', 'dias inférteis', 'dias não férteis', 'ovulação confirmada', 'diagnóstic', 'diagnostic'],
   it: ['giorni sicuri', 'giorni infertili', 'giorni non fertili', 'ovulazione confermata', 'diagnostic', 'diagnosi'],
+  pl: ['bezpieczne dni', 'dni bezpieczne', 'niepłodne dni', 'dni niepłodne', 'potwierdzona owulacja', 'potwierdzoną owulację', 'diagnoz'],
+  cs: ['bezpečné dny', 'bezpečných dn', 'neplodné dny', 'neplodných dn', 'potvrzená ovulace', 'potvrzenou ovulaci', 'diagnó', 'diagnost'],
+  hr: ['sigurni dani', 'sigurne dane', 'sigurnih dana', 'neplodni dani', 'neplodne dane', 'neplodnih dana', 'potvrđena ovulacija', 'potvrđenu ovulaciju', 'dijagno'],
 };
 // "diagnosis" itself is allowed only in the disclaimers ("keine Diagnose", "not a diagnosis")
-const DISCLAIMER_OK = /(keine diagnose|stellt keine diagnosen|not a diagnosis|does not diagnose|pas un diagnostic|ne pose aucun diagnostic|no es un diagnóstico|no hace diagnósticos|não é um diagnóstico|não faz diagnósticos|non è una diagnosi|non fa diagnosi|nessuna diagnosi)/i;
+const DISCLAIMER_OK = /(keine diagnose|stellt keine diagnosen|not a diagnosis|does not diagnose|pas un diagnostic|ne pose aucun diagnostic|no es un diagnóstico|no hace diagnósticos|não é um diagnóstico|não faz diagnósticos|non è una diagnosi|non fa diagnosi|nessuna diagnosi|nie jest diagnozą|nie stawia diagnoz|nie służy do stawiania diagnoz|nejde o diagnózu|není diagnóza|nestanovuje diagnózy|nestanovuje žádné diagnózy|nije dijagnoza|ne postavlja dijagnoze)/i;
+// the diagnosis words (not the "safe days" kind) are allowed inside a disclaimer
+const isDiagnosisWord = (w) => /^(diagn|dijagn)/.test(w);
+// non-breaking spaces (French typography, one-letter words) count as spaces here
+const disclaimer = (t) => DISCLAIMER_OK.test(String(t).replace(/\u00a0/g, ' '));
 
 const errors = [];
+// inline plural forms {2|one:…|few:…|many:…|other:…} (Fmt.inlinePlurals): Polish, Czech, Croatian only
+const MARK = /\{(\d)\|([^{}]*)\}/g;
+const CATS = new Set(['zero', 'one', 'two', 'few', 'many', 'other']);
+function checkMarks(L, k, t, phs) {
+  for (const m of String(t).matchAll(MARK)) {
+    if (!PLURAL_NEEDS[L]) { errors.push(`${L}: plural marker not supported in ${k}`); continue; }
+    if (!phs.split(',').some((p) => p.startsWith(`%${m[1]}$`))) errors.push(`${L}: plural marker for missing argument ${m[1]} in ${k}`);
+    const forms = m[2].split('|').map((f) => f.split(':')[0]);
+    for (const f of forms) if (!CATS.has(f)) errors.push(`${L}: bad plural category "${f}" in ${k}`);
+    for (const q of PLURAL_NEEDS[L]) if (!forms.includes(q)) errors.push(`${L}: plural marker in ${k} lacks ${q}`);
+  }
+  const rest = String(t).replace(MARK, '');
+  if (/\{\d/.test(rest)) errors.push(`${L}: malformed plural marker in ${k}: "${t}"`);
+}
 const phSet = (t) => [...String(t).matchAll(PH)].map((m) => m[0]).sort().join(',');
 const boldCount = (t) => (String(t).match(/\{b\}/g) || []).length + '/' + (String(t).match(/\{\/b\}/g) || []).length;
 function check(L, data) {
@@ -180,9 +202,10 @@ function check(L, data) {
   for (const [k, t] of Object.entries(data.strings || {})) if (k in en.strings) {
     if (phSet(t) !== phSet(en.strings[k])) errors.push(`${L}: placeholders differ in ${k}: "${t}"`);
     if (boldCount(t) !== boldCount(en.strings[k])) errors.push(`${L}: bold markers differ in ${k}`);
+    checkMarks(L, k, t, phSet(en.strings[k]));
   }
   for (const [k, f] of Object.entries(data.plurals || {})) if (k in en.plurals) {
-    for (const q of ['one', 'other']) if (!f[q]) errors.push(`${L}: plural ${k} lacks ${q}`);
+    for (const q of PLURAL_NEEDS[L] || ['one', 'other']) if (!f[q]) errors.push(`${L}: plural ${k} lacks ${q}`);
     for (const q of Object.keys(f)) if (phSet(f[q]) !== phSet(en.plurals[k].other)) errors.push(`${L}: placeholders differ in plural ${k}.${q}`);
   }
   for (const [k, arr] of Object.entries(data.arrays || {})) if (k in en.arrays && arr.length !== en.arrays[k].length) errors.push(`${L}: array ${k} length`);
@@ -190,12 +213,15 @@ function check(L, data) {
     ...Object.values(data.plurals || {}).flatMap((f) => Object.values(f))];
   for (const t of all) for (const w of BANNED[L] || []) {
     const low = String(t).toLowerCase();
-    if (low.includes(w) && !(w.startsWith('diagnos') || w.startsWith('diagnós') ? DISCLAIMER_OK.test(t) : false)) errors.push(`${L}: banned wording "${w}" in "${t}"`);
+    if (low.includes(w) && !(isDiagnosisWord(w) ? disclaimer(t) : false)) errors.push(`${L}: banned wording "${w}" in "${t}"`);
   }
 }
+// CLDR plural categories a translation must provide (integers only: Czech "many" is for fractions, Polish "other" too)
+const PLURAL_NEEDS = { pl: ['one', 'few', 'many'], cs: ['one', 'few', 'other'], hr: ['one', 'few', 'other'] };
 const LOCALES = { de: 'values-de', en: 'values' };
 const data = { de: plainOf('de'), en: plainOf('en') };
-for (const L of ['fr', 'es', 'pt', 'it']) {
+const JSON_LOCALES = ['fr', 'es', 'pt', 'it', 'pl', 'cs', 'hr'];
+for (const L of JSON_LOCALES) {
   const f = join(I18N, `${L}.json`);
   if (!existsSync(f)) { console.warn(`strings: ${L}.json missing, skipped`); continue; }
   data[L] = JSON.parse(readFileSync(f, 'utf8'));
@@ -211,8 +237,12 @@ const mapText = (d, f) => ({
   items: Object.fromEntries(Object.entries(d.items).map(([k, v]) => [k, f(v)])),
 });
 if (data.fr) data.fr = mapText(data.fr, frSpace);
+// Polish, Czech, Croatian typesetting: a one-letter word (w, z, i, a, o, u, v, k, s) never ends a line
+const ONE_LETTER = /(^|[\s\u00a0(„])([aiouwzkvsAIOUWZKVS]) /gu;
+const glueOneLetter = (t) => typeof t !== 'string' ? t : t.replace(ONE_LETTER, '$1$2\u00a0').replace(ONE_LETTER, '$1$2\u00a0');
+for (const L of ['pl', 'cs', 'hr']) if (data[L]) data[L] = mapText(data[L], glueOneLetter);
 // every language: a number placeholder stays on the line of the word after it ("8 cycles", "29 jours")
-const keepUnit = (t) => typeof t !== 'string' ? t : t.replace(/(%\d+\$[sd]) (?=\p{Ll})/gu, '$1\u00a0');
+const keepUnit = (t) => typeof t !== 'string' ? t : t.replace(/(%\d+\$[sd]) (?=\p{Ll}|\{\d\|)/gu, '$1\u00a0');
 for (const L of Object.keys(data)) data[L] = mapText(data[L], keepUnit);
 for (const L of Object.keys(data)) check(L, data[L]);
 // hand-written Android strings (strings.xml): same keys and placeholders as English, no banned wording
@@ -242,8 +272,9 @@ for (const [L, dir] of Object.entries(LOCALES)) {
     const enK = k in handEn ? k : (k.includes('#') ? `${k.split('#')[0]}#other` : null);
     if (!enK || !(enK in handEn)) { errors.push(`${L}: strings.xml extra ${k}`); continue; }
     if (phAny(t) !== phAny(handEn[enK])) errors.push(`${L}: strings.xml placeholders differ in ${k}: "${t}"`);
-    for (const w of BANNED[L] || []) if (t.toLowerCase().includes(w) && !DISCLAIMER_OK.test(t)) errors.push(`${L}: strings.xml banned "${w}" in ${k}`);
+    for (const w of BANNED[L] || []) if (t.toLowerCase().includes(w) && !disclaimer(t)) errors.push(`${L}: strings.xml banned "${w}" in ${k}`);
     if (L === 'fr' && / [:;!?»]|« /.test(t)) errors.push(`fr: strings.xml needs a non-breaking space in ${k}: "${t}"`);
+    if (['pl', 'cs', 'hr'].includes(L) && glueOneLetter(t) !== t) errors.push(`${L}: strings.xml needs a non-breaking space after a one-letter word in ${k}: "${t}"`);
   }
 }
 if (errors.length) { console.error(errors.join('\n')); console.error(`strings: ${errors.length} problem(s), nothing written`); process.exit(1); }
@@ -256,8 +287,11 @@ const emitText = (t, fmt) => {
   return esc(t).replace(/%(?!\d+\$[sd])/g, '%%');
 };
 const header = '<?xml version="1.0" encoding="utf-8"?>\n<!-- GENERATED by tools/strings/export.mjs. Do not edit by hand. -->\n<resources>\n';
-// many: Romance languages use it for large numbers (CLDR); same text as other
-const MANY = new Set(['fr', 'es', 'pt', 'it']);
+// plural categories written per language (CLDR): Romance "many" (large numbers) = other; Polish other (fractions) =
+// many; Czech many (fractions) = other; Croatian has no many
+const QUANTITIES = { fr: ['one', 'many', 'other'], es: ['one', 'many', 'other'], pt: ['one', 'many', 'other'], it: ['one', 'many', 'other'],
+  pl: ['one', 'few', 'many', 'other'], cs: ['one', 'few', 'many', 'other'], hr: ['one', 'few', 'other'] };
+const quantityText = (L, f, q) => f[q] || (q === 'other' ? f.many : f.other);
 for (const [L, dir] of Object.entries(LOCALES)) {
   const d = data[L];
   const lines = [];
@@ -269,7 +303,7 @@ for (const [L, dir] of Object.entries(LOCALES)) {
   }
   for (const [prefix] of itemTables) for (const k of itemKeys[prefix]) lines.push(`    <string name="${resName(prefix, k)}">${esc(d.items[prefix + k])}</string>`);
   for (const [k, f] of Object.entries(d.plurals)) {
-    const q = [['one', f.one], ...(MANY.has(L) ? [['many', f.many || f.other]] : []), ['other', f.other]];
+    const q = (QUANTITIES[L] || ['one', 'other']).map((n) => [n, quantityText(L, f, n)]);
     lines.push(`    <plurals name="${resName('tx_', k)}">\n${q.map(([n, t]) => `        <item quantity="${n}">${esc(t)}</item>`).join('\n')}\n    </plurals>`);
   }
   for (const [k, arr] of Object.entries(d.arrays)) lines.push(`    <string-array name="${resName('tx_', k)}">\n${arr.map((x) => `        <item>${esc(String(x))}</item>`).join('\n')}\n    </string-array>`);
