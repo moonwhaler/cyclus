@@ -19,7 +19,7 @@ you contact the developer. An iOS version is planned. This policy will be update
 
 Responsible for this website and for answering your messages (controller under the GDPR):
 
-Christian Petersen
+Christian Petersen\
 Email: [me@nordinary.com](mailto:me@nordinary.com)
 
 Cyclus is a free, open-source app (GPL-3.0) by a single developer. We are not legally required to appoint a data

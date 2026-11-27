@@ -21,7 +21,7 @@ aktualisiert.
 
 Verantwortlich für diese Website und für die Beantwortung deiner Nachrichten (Verantwortlicher im Sinne der DSGVO):
 
-Christian Petersen
+Christian Petersen\
 E-Mail: [me@nordinary.com](mailto:me@nordinary.com)
 
 Cyclus ist eine kostenlose Open-Source-App (GPL-3.0) eines einzelnen Entwicklers. Ein Datenschutzbeauftragter ist
