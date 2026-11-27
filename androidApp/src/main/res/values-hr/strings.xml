@@ -307,4 +307,6 @@
     <string name="cu_adjusted">Svjetlina je prilagođena kako bi tekst i gumbi ostali lako čitljivi.</string>
     <string name="cu_apply">Primijeni</string>
     <string name="on_phone_s_open">Šifrirano. Ključ je u hardverskoj pohrani ključeva i nikad ne napušta ovaj uređaj.</string>
+    <string name="privacy_policy">Pravila o privatnosti</string>
+    <string name="privacy_policy_s">Otvara se u pregledniku</string>
 </resources>

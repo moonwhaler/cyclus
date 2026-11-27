@@ -321,7 +321,9 @@ Compose for Wear OS + Wear M3 (Expressive): log period/symptom, glance at cycle 
   - target API 36;
   - **Health apps declaration** and Health Connect data-type justifications (with a demo video);
   - **Data safety: "No data collected / shared"** (backed by the missing `INTERNET` permission);
-  - privacy policy and Consumer Health Data policy links;
+  - privacy policy and Consumer Health Data policy links: `PRIVACY.md` / `PRIVACY.de.md` (the US consumer health
+    data policy is section 8), published by `.github/workflows/pages.yml` at moonwhaler.github.io/cyclus/privacy/ and
+    /de/datenschutz/; linked from About and the Health Connect rationale screen;
   - IARC content rating;
   - DE-first store listing;
   - medical-device information as requested by the declaration;

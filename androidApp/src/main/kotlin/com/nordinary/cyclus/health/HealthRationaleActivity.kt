@@ -27,8 +27,9 @@ import com.nordinary.cyclus.ui.theme.CyclusTheme
 import com.nordinary.cyclus.ui.today.PrimaryButton
 
 /**
- * Why Cyclus asks for Health Connect access (shown by Health Connect / the system permission screens). Static text,
- * no data and no app lock involved, so it is safe to export and reviewers can read it.
+ * Why Cyclus asks for Health Connect access (shown by Health Connect / the system permission screens). Static text and
+ * a link to the privacy policy (Health Connect requirement); no data and no app lock involved, so it is safe to export
+ * and reviewers can read it.
  */
 class HealthRationaleActivity : ComponentActivity() {
     override fun attachBaseContext(newBase: android.content.Context) {
@@ -54,6 +55,12 @@ class HealthRationaleActivity : ComponentActivity() {
                         Text(stringResource(R.string.hr_title), fontSize = 24.sp, fontWeight = FontWeight.Bold, color = Cyclus.colors.ink)
                         for (id in listOf(R.string.hr_read, R.string.hr_write, R.string.hr_local, R.string.hr_revoke)) {
                             Text(stringResource(id), color = Cyclus.colors.ink2, fontSize = 15.sp)
+                        }
+                        androidx.compose.material3.TextButton(
+                            onClick = { com.nordinary.cyclus.ui.about.PrivacyPolicy.open(this@HealthRationaleActivity) },
+                            contentPadding = androidx.compose.foundation.layout.PaddingValues(vertical = 8.dp),
+                        ) {
+                            Text(stringResource(R.string.privacy_policy), color = Cyclus.colors.accent, fontWeight = FontWeight.SemiBold)
                         }
                         PrimaryButton(stringResource(R.string.hr_close), { finish() })
                     }

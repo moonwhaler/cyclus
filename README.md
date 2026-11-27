@@ -52,6 +52,7 @@ internet access at all. Available in English, German, French, Spanish, Portugues
 - Optional app lock with biometrics or a Cyclus PIN.
 - The Privacy Center shows where your data is and lets you erase everything at any time.
 - Cyclus never receives your data: there are no Cyclus servers.
+- [Privacy policy](https://moonwhaler.github.io/cyclus/privacy/) · [Datenschutzerklärung](https://moonwhaler.github.io/cyclus/de/datenschutz/)
 
 ## Important
 Cyclus is **not for birth control** and is **not a medical device**. Predictions are estimates based on your own

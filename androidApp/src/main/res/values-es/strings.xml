@@ -304,4 +304,6 @@
     <string name="cu_adjusted">Se ha ajustado el brillo para que los textos y los botones se lean bien.</string>
     <string name="cu_apply">Aplicar</string>
     <string name="on_phone_s_open">Cifrados. La clave está en el almacén de claves del hardware y nunca sale de este dispositivo.</string>
+    <string name="privacy_policy">Política de privacidad</string>
+    <string name="privacy_policy_s">Se abre en tu navegador</string>
 </resources>

@@ -51,6 +51,7 @@ import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.semantics
@@ -155,6 +156,9 @@ fun AboutScreen(
             LinkRow(fmt.s("noticeRow"), consentLine, onNotice)
             HorizontalDivider(color = c.line)
             LinkRow(fmt.s("methodT"), null, onMethod)
+            HorizontalDivider(color = c.line)
+            val ctx = LocalContext.current
+            LinkRow(stringResource(R.string.privacy_policy), stringResource(R.string.privacy_policy_s)) { PrivacyPolicy.open(ctx) }
             HorizontalDivider(color = c.line)
             LinkRow(fmt.s("ossLic"), fmt.s("licS")) { showLicense = true }
             HorizontalDivider(color = c.line)

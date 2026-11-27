@@ -1,0 +1,35 @@
+<!doctype html>
+<html lang="{{ page.lang | default: site.lang }}">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>{{ page.title }}</title>
+<meta name="robots" content="index, follow">
+<!-- No external fonts, scripts, analytics or cookies (see the privacy policy, section 5). -->
+<style>
+  :root { color-scheme: light dark; --bg: #fbf8f6; --ink: #1f1a1c; --ink2: #5b5257; --accent: #9b3d5c; --line: #e6dfe2; }
+  @media (prefers-color-scheme: dark) { :root { --bg: #171315; --ink: #efe8eb; --ink2: #b9aeb3; --accent: #f0a3bd; --line: #352d31; } }
+  html { background: var(--bg); color: var(--ink); }
+  body { font: 17px/1.6 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; max-width: 46rem; margin: 0 auto; padding: 2rem 1.25rem 4rem; }
+  h1 { font-size: 1.9rem; line-height: 1.25; margin: 0 0 .5rem; }
+  h2 { font-size: 1.3rem; margin: 2.2rem 0 .5rem; padding-top: 1rem; border-top: 1px solid var(--line); }
+  h3 { font-size: 1.08rem; margin: 1.6rem 0 .3rem; }
+  a { color: var(--accent); }
+  code { font-size: .92em; }
+  ul { padding-left: 1.3rem; }
+  li { margin: .25rem 0; }
+  footer { margin-top: 3rem; padding-top: 1rem; border-top: 1px solid var(--line); color: var(--ink2); font-size: .9rem; }
+</style>
+</head>
+<body>
+<main>
+{{ content }}
+</main>
+<footer>
+  <a href="{{ '/' | relative_url }}">Cyclus</a> ·
+  <a href="{{ '/privacy/' | relative_url }}">Privacy policy</a> ·
+  <a href="{{ '/de/datenschutz/' | relative_url }}">Datenschutzerklärung</a> ·
+  <a href="https://github.com/moonwhaler/cyclus">Source code</a>
+</footer>
+</body>
+</html>

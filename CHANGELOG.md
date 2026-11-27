@@ -3,6 +3,11 @@
 Version scheme: `major.minor.patch`. Android `versionCode` only ever goes up, by 1 per release; the public 1.0.0 starts
 at 10200 (internal test builds before it reached 10101).
 
+## Unreleased
+
+### New
+- **Privacy policy** in English and German, linked from About and from the Health Connect permission screen.
+
 ## 1.2.0 — 2026-11-25
 
 ### New

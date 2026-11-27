@@ -304,4 +304,6 @@
     <string name="cu_adjusted">La luminosità è stata regolata perché testi e pulsanti restino ben leggibili.</string>
     <string name="cu_apply">Applica</string>
     <string name="on_phone_s_open">Crittografati. La chiave si trova nell’archivio chiavi hardware e non lascia mai questo dispositivo.</string>
+    <string name="privacy_policy">Informativa sulla privacy</string>
+    <string name="privacy_policy_s">Si apre nel browser</string>
 </resources>

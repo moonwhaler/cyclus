@@ -304,4 +304,6 @@
     <string name="cu_adjusted">La luminosité a été ajustée pour que les textes et les boutons restent bien lisibles.</string>
     <string name="cu_apply">Appliquer</string>
     <string name="on_phone_s_open">Chiffrées. La clé se trouve dans le coffre matériel et ne quitte jamais cet appareil.</string>
+    <string name="privacy_policy">Politique de confidentialité</string>
+    <string name="privacy_policy_s">S’ouvre dans ton navigateur</string>
 </resources>

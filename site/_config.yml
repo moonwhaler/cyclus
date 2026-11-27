@@ -1,0 +1,10 @@
+# GitHub Pages site for Cyclus (privacy policy). Built by .github/workflows/pages.yml, which copies PRIVACY*.md in.
+title: Cyclus
+lang: en
+markdown: kramdown
+kramdown:
+  input: GFM
+  auto_ids: true
+defaults:
+  - scope: { path: "" }
+    values: { layout: default }

@@ -304,4 +304,6 @@
     <string name="cu_adjusted">O brilho foi ajustado para que os textos e os botões continuem fáceis de ler.</string>
     <string name="cu_apply">Aplicar</string>
     <string name="on_phone_s_open">Encriptados. A chave fica no armazenamento de chaves do hardware e nunca sai deste dispositivo.</string>
+    <string name="privacy_policy">Política de privacidade</string>
+    <string name="privacy_policy_s">Abre no teu navegador</string>
 </resources>

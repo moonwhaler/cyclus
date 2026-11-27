@@ -1,0 +1,61 @@
+# Publishes the privacy policy (PRIVACY.md, PRIVACY.de.md) and site/ to GitHub Pages.
+# URLs: /privacy/ and /de/datenschutz/ (linked from the app and the Play listing; keep them stable).
+name: Pages
+
+on:
+  push:
+    branches: [main]
+    paths: [PRIVACY.md, PRIVACY.de.md, "site/**", .github/workflows/pages.yml]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/configure-pages@v6
+      - name: Assemble site
+        run: |
+          set -euo pipefail
+          mkdir -p build/site
+          cp -r site/. build/site/
+          # Each policy gets front matter (stable permalink, language); the first heading is the page title.
+          page() { # source, permalink, lang
+            title=$(sed -n '1s/^# //p' "$1")
+            { printf -- '---\ntitle: "%s"\nlang: %s\npermalink: %s\n---\n\n' "$title" "$3" "$2"; cat "$1"; } > "build/site/$1"
+          }
+          page PRIVACY.md /privacy/ en
+          page PRIVACY.de.md /de/datenschutz/ de
+      - uses: actions/jekyll-build-pages@v1
+        with:
+          source: ./build/site
+          destination: ./_site
+      - name: Check pages
+        run: |
+          set -euo pipefail
+          for f in _site/index.html _site/privacy/index.html _site/de/datenschutz/index.html; do test -s "$f"; done
+          # The policy files link to each other; on the site those links must point at the permalinks.
+          grep -qE 'href="[^"]*/de/datenschutz/">Deutsche Fassung<' _site/privacy/index.html
+          grep -qE 'href="[^"]*/privacy/">English version<' _site/de/datenschutz/index.html
+          # No externally loaded scripts or styles (the policy promises none).
+          if grep -rqE '<(script|link)[^>]+(src|href)="(https?:)?//' _site; then echo "external resource found"; exit 1; fi
+      - uses: actions/upload-pages-artifact@v5
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v5
